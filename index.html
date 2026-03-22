@@ -4667,17 +4667,32 @@ async function handleVoiceInput(text) {
     S.loading = false;
     console.error('Voice AI error:', e);
     setVoiceState('idle');
-    toast('Fehler beim Laden der Antwort', 'err');
+    toast('Error loading response', 'err');
   }
 }
 
+// Browser built-in TTS — used when no ElevenLabs key is set
+function speakBrowser(text) {
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'en-US';
+  utt.rate = 1.0;
+  return new Promise(resolve => {
+    utt.onend = resolve;
+    utt.onerror = resolve;
+    window.speechSynthesis.speak(utt);
+  });
+}
+
 async function speakTextEL(text) {
-  // Strip markdown for cleaner speech
   const clean = text
     .replace(/\*\*/g, '').replace(/\*/g, '')
     .replace(/#+\s/g, '').replace(/\[.*?\]/g, '')
     .replace(/<br>/gi, ' ').trim();
   const speakText = clean.length > 600 ? clean.slice(0, 600) + '.' : clean;
+
+  // No ElevenLabs key — use browser TTS
+  if (!EL_KEY) return speakBrowser(speakText);
 
   try {
     const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}/stream`, {
@@ -4689,7 +4704,7 @@ async function speakTextEL(text) {
         voice_settings: { stability: 0.5, similarity_boost: 0.75, speed: 1.0 }
       })
     });
-    if (!res.ok) { console.error('ElevenLabs:', res.status, await res.text()); return; }
+    if (!res.ok) { console.error('ElevenLabs:', res.status); return speakBrowser(speakText); }
     const blob = await res.blob();
     const url  = URL.createObjectURL(blob);
     stopAudio();
@@ -4699,7 +4714,7 @@ async function speakTextEL(text) {
       S.audio.onerror = resolve;
       S.audio.play().catch(resolve);
     });
-  } catch(e) { console.error('TTS error:', e); }
+  } catch(e) { console.error('TTS error:', e); return speakBrowser(speakText); }
 }
 
 // ══════════════════════════════════════════════
