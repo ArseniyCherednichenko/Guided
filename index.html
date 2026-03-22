@@ -1787,15 +1787,15 @@ input[type=range]::-webkit-slider-thumb:hover {
     <div style="background:var(--white);border:1px solid var(--border);border-radius:24px;padding:32px 36px;box-shadow:var(--shadow-lg)">
       <div class="fgroup" style="margin-bottom:18px">
         <label style="font-size:10.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink4)">Featherless API Key <span style="color:var(--red)">*</span></label>
-        <input class="fi" id="setup-fl-key" type="text" placeholder="rc_..." autocomplete="off" spellcheck="false"/>
+        <input class="fi" id="setup-fl-key" type="password" placeholder="rc_..." autocomplete="off" spellcheck="false"/>
       </div>
       <div class="fgroup" style="margin-bottom:18px">
         <label style="font-size:10.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink4)">ElevenLabs API Key <span style="color:var(--ink5);font-weight:400;text-transform:none;letter-spacing:0">(optional — for voice)</span></label>
-        <input class="fi" id="setup-el-key" type="text" placeholder="bb0..." autocomplete="off" spellcheck="false"/>
+        <input class="fi" id="setup-el-key" type="password" placeholder="bb0..." autocomplete="off" spellcheck="false"/>
       </div>
       <div class="fgroup" style="margin-bottom:24px">
         <label style="font-size:10.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink4)">Needle API Key <span style="color:var(--ink5);font-weight:400;text-transform:none;letter-spacing:0">(optional — for curriculum)</span></label>
-        <input class="fi" id="setup-nd-key" type="text" placeholder="apk_..." autocomplete="off" spellcheck="false"/>
+        <input class="fi" id="setup-nd-key" type="password" placeholder="apk_..." autocomplete="off" spellcheck="false"/>
       </div>
       <button class="btn-next" style="width:100%" onclick="saveSetup()">Save & Continue →</button>
     </div>
@@ -2056,6 +2056,22 @@ input[type=range]::-webkit-slider-thumb:hover {
         </div>
 
         <div class="fgroup">
+          <label>Main subject to focus on</label>
+          <select class="fs" id="ob-subj">
+            <option value="General / Mixed">General / Mixed</option>
+            <option value="Mathematics">Mathematics</option>
+            <option value="Physics">Physics</option>
+            <option value="Chemistry">Chemistry</option>
+            <option value="Biology">Biology</option>
+            <option value="History">History</option>
+            <option value="Literature">Literature</option>
+            <option value="Geography">Geography</option>
+            <option value="Computer Science">Computer Science</option>
+            <option value="Economics">Economics</option>
+          </select>
+        </div>
+
+        <div class="fgroup">
           <label>Anything the tutor should know?</label>
           <textarea class="fta" id="ob-notes" placeholder="e.g. Gets frustrated quickly, loves football analogies, dyslexic, prefers short answers, struggles with fractions..."></textarea>
         </div>
@@ -2192,12 +2208,11 @@ input[type=range]::-webkit-slider-thumb:hover {
       <span class="nav-tab-badge" id="dash-badge">Live</span>
     </div>
     <div class="nav-right">
-      <div class="profile-chip" id="profile-chip" onclick="if(confirm('Reset and start a new session?'))location.reload()">
+      <div class="profile-chip" id="profile-chip" onclick="document.getElementById('reset-modal').style.display='flex'">
         <div class="chip-av" id="chip-av">?</div>
         <span id="chip-name">Student</span>
       </div>
       <button class="nav-pill on" id="img-pill" onclick="toggleImgs()">🖼 Images</button>
-      <button class="nav-pill on" id="dev-pill" onclick="toggleDev()">⌥ Dev</button>
     </div>
   </div>
 
@@ -2277,7 +2292,7 @@ input[type=range]::-webkit-slider-thumb:hover {
     </div>
 
     <!-- DEV PANEL -->
-    <div id="dev-col">
+    <div id="dev-col" class="hide">
       <div class="dev-hdr">
         <h3>Dev Panel</h3>
         <div class="dev-close" onclick="toggleDev()">✕</div>
@@ -2400,6 +2415,19 @@ input[type=range]::-webkit-slider-thumb:hover {
 
 <div class="toast" id="toast"></div>
 
+<!-- Reset Confirmation Modal -->
+<div id="reset-modal" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(28,28,28,.45);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:24px">
+  <div style="background:var(--white);border:1px solid var(--border);border-radius:20px;padding:32px 36px;max-width:360px;width:100%;box-shadow:var(--shadow-lg);text-align:center">
+    <div style="font-size:28px;margin-bottom:12px">🔄</div>
+    <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--forest);margin-bottom:8px">Start a new session?</div>
+    <div style="font-size:13.5px;color:var(--ink3);line-height:1.6;margin-bottom:24px">This will clear the current conversation and all session data.</div>
+    <div style="display:flex;gap:10px">
+      <button onclick="document.getElementById('reset-modal').style.display='none'" style="flex:1;padding:12px;border:1.5px solid var(--border2);border-radius:11px;background:transparent;font-size:14px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;color:var(--ink3);cursor:pointer">Cancel</button>
+      <button onclick="location.reload()" style="flex:1;padding:12px;border:none;border-radius:11px;background:linear-gradient(145deg,var(--forest2),var(--forest));color:#fff;font-size:14px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(26,51,40,.25)">Reset</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ══════════════════════════════════════════════
 //  API KEYS (loaded from localStorage — never hardcoded)
@@ -2411,8 +2439,8 @@ let ND_KEY = localStorage.getItem('guided_needle_key') || '';
 // ══════════════════════════════════════════════
 //  CONFIG
 // ══════════════════════════════════════════════
-const MODEL    = 'meta-llama/Meta-Llama-3.1-8B-Instruct';
-const MAX_TOK  = 400;
+const MODEL    = 'meta-llama/Llama-3.3-70B-Instruct';
+const MAX_TOK  = 600;
 const TEMP     = 0.75;
 const CTX_WIN  = 8000;
 const VOICE_ID = '21m00Tcm4TlvDq8ikWAM';
@@ -2683,7 +2711,7 @@ function renderOb() {
 async function launch() {
   S.name   = document.getElementById('ob-name').value.trim();
   S.age    = document.getElementById('ob-age').value;
-  S.subj   = 'General / Mixed';
+  S.subj   = document.getElementById('ob-subj').value || 'General / Mixed';
   S.notes  = document.getElementById('ob-notes').value.trim();
   S.school = document.getElementById('ob-school').value.trim();
 
@@ -3274,7 +3302,7 @@ function switchView(v) {
 }
 
 function toggleImgs()  { S.imgsOn = !S.imgsOn; document.getElementById('img-pill').classList.toggle('on', S.imgsOn); toast(S.imgsOn ? 'Images ON' : 'Images OFF'); }
-function toggleDev()   { document.getElementById('dev-col').classList.toggle('hide'); document.getElementById('dev-pill').classList.toggle('on'); }
+function toggleDev()   { document.getElementById('dev-col').classList.toggle('hide'); }
 
 // ══════════════════════════════════════════════
 //  LOGIN SYSTEM
@@ -3693,7 +3721,7 @@ function startVoiceListening() {
   voiceRecog.onerror = (e) => {
     console.error('Speech recognition error:', e.error);
     setVoiceState('idle');
-    if (e.error !== 'no-speech') toast('Mikrofon-Fehler: ' + e.error, 'err');
+    if (e.error !== 'no-speech') toast('Microphone error: ' + e.error, 'err');
   };
 
   voiceRecog.onend = () => {
@@ -3850,6 +3878,11 @@ function toast(msg, type = '') {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
 }
+
+// Alt+D opens the dev panel (hidden from UI)
+document.addEventListener('keydown', e => {
+  if (e.altKey && e.key.toLowerCase() === 'd') toggleDev();
+});
 </script>
 </body>
 </html>
