@@ -6,7 +6,6 @@
 <title>Guided — AI Tutor</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
 <style>
 /* ══════════════════════════════════════════════
    TOKENS & RESET
@@ -4199,6 +4198,12 @@ function schTab(tab) {
   document.getElementById('sch-admin-panel').style.display = !isStudent ? 'flex' : 'none';
 }
 
+// ── Crypto helpers ───────────────────────────────────────
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
 // ── Helpers ──────────────────────────────────────────────
 function genCode() {
   const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -4221,7 +4226,7 @@ async function createSchool() {
   if (pw.length < 4) { toast('Password must be at least 4 characters', 'err'); return; }
   if (!SB) { toast('Supabase not connected — add keys in setup', 'err'); return; }
   const code = genCode();
-  const hash = await bcrypt.hash(pw, 10);
+  const hash = await sha256(pw);
   const { error } = await SB.from('schools').insert({ code, name, admin_password_hash: hash });
   if (error) { toast('Error creating school: ' + error.message, 'err'); return; }
   document.getElementById('admin-code').value = code;
@@ -4241,7 +4246,7 @@ async function adminLogin() {
   toast('Checking…');
   const { data: school, error } = await SB.from('schools').select('*').eq('code', code).single();
   if (error || !school) { toast('School code not found', 'err'); return; }
-  const ok = await bcrypt.compare(pw, school.admin_password_hash);
+  const ok = (await sha256(pw)) === school.admin_password_hash;
   if (!ok) { toast('Incorrect password', 'err'); return; }
   currentSchoolId   = school.id;
   currentSchoolCode = school.code;
