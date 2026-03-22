@@ -4,18 +4,30 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Guided — AI Tutor</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 /* ══════════════════════════════════════════════
    TOKENS & RESET
 ══════════════════════════════════════════════ */
 :root {
+  /* ── Backgrounds ── */
   --cream:    #F5F3EF;
   --cream2:   #EDE9E2;
   --cream3:   #E2DAD0;
   --paper:    #F9F7F4;
   --white:    #FFFFFF;
+  --bg:       #FFFFFF;
+  --surface:  #F7F6F3;
+
+  /* ── Dark auth theme ── */
+  --dark-bg:       #070D09;
+  --dark-surface:  rgba(255,255,255,.07);
+  --dark-border:   rgba(255,255,255,.11);
+  --dark-text:     #FFFFFF;
+  --dark-muted:    rgba(255,255,255,.42);
+
+  /* ── Brand ── */
   --forest:   #1A3328;
   --forest2:  #264D3A;
   --forest3:  #2E5C44;
@@ -23,13 +35,20 @@
   --gold2:    #D4A04E;
   --gold-dim: rgba(184,130,42,.12);
   --gold-glow:rgba(184,130,42,.25);
+
+  /* ── Text ── */
   --ink:      #1C1C1C;
   --ink2:     #2E2E2E;
   --ink3:     #6B6560;
   --ink4:     #9E9790;
   --ink5:     #C8C3BC;
-  --border:   #E2DAD0;
-  --border2:  #D4CAC0;
+
+  /* ── Borders ── */
+  --border:      #E2DAD0;
+  --border2:     #D4CAC0;
+  --border-soft: #EEEBE5;
+
+  /* ── Status ── */
   --red:      #C0392B;
   --red-dim:  rgba(192,57,43,.1);
   --blue:     #2563EB;
@@ -38,29 +57,37 @@
   --hint-bdr: rgba(184,130,42,.3);
   --aha-bg:   #EDFAF3;
   --aha-bdr:  rgba(26,51,40,.25);
-  --shadow-sm: 0 1px 4px rgba(0,0,0,.04), 0 4px 24px rgba(0,0,0,.06);
-  --shadow:    0 4px 24px rgba(0,0,0,.08), 0 1px 4px rgba(0,0,0,.04);
-  --shadow-lg: 0 8px 40px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.06);
-  --shadow-card: 0 4px 24px rgba(0,0,0,.08), 0 1px 4px rgba(0,0,0,.04);
-  --r:         12px;
-  --r-lg:      16px;
-  --r-xl:      24px;
-  --btn-gradient: linear-gradient(135deg, #1A3328, #2E5C44);
-  --btn-gradient-hover: linear-gradient(135deg, #2E5C44, #1A3328);
+
+  /* ── Shadows ── */
+  --shadow-sm:   0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.06);
+  --shadow:      0 4px 24px rgba(0,0,0,.1),  0 1px 4px rgba(0,0,0,.05);
+  --shadow-lg:   0 12px 48px rgba(0,0,0,.16), 0 4px 12px rgba(0,0,0,.08);
+  --shadow-card: 0 2px 16px rgba(0,0,0,.07), 0 1px 3px rgba(0,0,0,.04);
+
+  /* ── Radii ── */
+  --r:    12px;
+  --r-lg: 16px;
+  --r-xl: 24px;
+
+  /* ── Fonts ── */
+  --font-body:  'Inter', sans-serif;
+  --font-serif: 'Playfair Display', serif;
+
+  /* ── Buttons ── */
+  --btn-gradient:       linear-gradient(150deg, #1E3D2F 0%, #2E5C44 100%);
+  --btn-gradient-hover: linear-gradient(150deg, #2E5C44 0%, #1E3D2F 100%);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  background: var(--cream);
+  font-family: var(--font-body);
+  background: var(--bg);
   color: var(--ink);
   height: 100vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  /* Subtle noise texture */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.022'/%3E%3C/svg%3E");
 }
 
 /* Smooth font rendering */
@@ -1938,76 +1965,50 @@ input[type=range]::-webkit-slider-thumb:hover {
 #ob-student { position: fixed; inset: 0; background: var(--cream); z-index: 400; display: none; align-items: center; justify-content: center; padding: 24px; overflow-y: auto;
   background-image: radial-gradient(ellipse at 10% 60%, rgba(26,51,40,.09) 0%, transparent 50%), radial-gradient(ellipse at 88% 12%, rgba(184,130,42,.1) 0%, transparent 45%), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.022'/%3E%3C/svg%3E"); }
 
+
 /* ══════════════════════════════════════════════
-   ██████  REDESIGN OVERRIDES  ██████
-   Dark hero screens + clean white app interior
+   DESIGN SYSTEM v2 — Clean, no !important
 ══════════════════════════════════════════════ */
 
-/* ── Dark base for all auth/onboarding screens ── */
+/* Replace Plus Jakarta Sans globally */
+* { font-family: var(--font-body); }
+.ob-wordmark, .ob-brand-wordmark, .ob-step-title, .section-title, .dash-heading,
+.score-num, .age-num, .empty-title, .de-title, .voice-status,
+.path-choice-name, .login-type-name, .parent-greeting, .nav-logo,
+[style*="Playfair"] { font-family: var(--font-serif) !important; }
+
+/* ── AUTH SCREENS: dark near-black ── */
 #login-screen,
 #school-screen,
 #ob,
 #ob-student,
 #setup-screen {
-  background: #060D09 !important;
-  background-image: none !important;
+  background: var(--dark-bg);
+  background-image:
+    radial-gradient(ellipse at 50% -5%, rgba(46,139,87,.32) 0%, rgba(26,51,40,.1) 40%, transparent 70%),
+    radial-gradient(ellipse at 15% 100%, rgba(26,51,40,.2) 0%, transparent 50%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Ccircle cx='1' cy='1' r='1' fill='rgba(255,255,255,.055)'/%3E%3C/svg%3E");
+  background-size: auto, auto, 40px 40px;
 }
 
-/* ── Shared glowing orb backdrop ── */
-#login-screen::before,
-#school-screen::before,
-#ob::before,
-#ob-student::before,
-#setup-screen::before {
-  content: '';
-  position: absolute;
-  top: -10%; left: 50%;
-  transform: translateX(-50%);
-  width: 900px; height: 700px;
-  background: radial-gradient(ellipse at center, rgba(46,139,87,.22) 0%, rgba(26,51,40,.12) 35%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* ── Dot grid overlay ── */
-#login-screen::after,
-#school-screen::after,
-#ob::after,
-#ob-student::after,
-#setup-screen::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,.055) 1px, transparent 0);
-  background-size: 40px 40px;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* ── All containers above the decorative layers ── */
+/* Containers above background layers */
 .login-container,
 #ob .ob-container,
 #school-screen .ob-container,
-#ob-student .ob-container {
-  position: relative;
-  z-index: 1;
-}
+#ob-student .ob-container { position: relative; z-index: 1; }
+#setup-screen > div { position: relative; z-index: 1; }
 
-#setup-screen > div {
-  position: relative;
-  z-index: 1;
-}
-
-/* ── White wordmark on dark screens ── */
+/* ── BRAND BLOCK on dark ── */
 #login-screen .ob-wordmark,
 #school-screen .ob-wordmark,
 #ob .ob-wordmark,
 #ob-student .ob-wordmark,
 #setup-screen .ob-wordmark {
-  color: #FFFFFF !important;
-  font-size: 44px !important;
-  letter-spacing: -1.4px !important;
-  font-weight: 700 !important;
+  font-family: var(--font-serif) !important;
+  color: #FFFFFF;
+  font-size: 48px;
+  letter-spacing: -1.6px;
+  font-weight: 700;
 }
 
 #login-screen .ob-tagline,
@@ -2015,277 +2016,287 @@ input[type=range]::-webkit-slider-thumb:hover {
 #ob .ob-tagline,
 #ob-student .ob-tagline,
 #setup-screen .ob-tagline {
-  color: rgba(255,255,255,.45) !important;
-  font-size: 15px !important;
-  font-weight: 400 !important;
-  margin-top: 8px !important;
+  color: rgba(255,255,255,.4);
+  font-size: 15px;
+  font-weight: 400;
+  margin-top: 10px;
 }
 
-/* ── Brand mark: bigger glow on dark ── */
 #login-screen .ob-brand-mark,
 #school-screen .ob-brand-mark,
 #ob .ob-brand-mark,
 #ob-student .ob-brand-mark,
 #setup-screen .ob-brand-mark {
-  width: 76px !important;
-  height: 76px !important;
-  border-radius: 24px !important;
-  background: linear-gradient(145deg, #2E8B57, #1A3328) !important;
+  width: 80px;
+  height: 80px;
+  border-radius: 26px;
+  background: linear-gradient(150deg, #2E8B57, #1A3328);
   box-shadow:
-    0 0 0 1px rgba(46,139,87,.4),
-    0 16px 56px rgba(0,0,0,.5),
-    0 0 80px rgba(46,139,87,.25),
-    inset 0 1px 0 rgba(255,255,255,.2) !important;
-  margin-bottom: 20px !important;
+    0 0 0 1px rgba(46,139,87,.35),
+    0 20px 60px rgba(0,0,0,.55),
+    0 0 80px rgba(46,139,87,.28),
+    inset 0 1px 0 rgba(255,255,255,.18);
+  margin-bottom: 22px;
 }
 
-/* ── Login role-selector cards: frosted glass on dark ── */
-.login-type-grid {
-  gap: 16px !important;
-}
-
+/* ── ROLE CARDS: true frosted glass ── */
 .login-type-card {
-  background: rgba(255,255,255,.06) !important;
-  border: 1px solid rgba(255,255,255,.12) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  box-shadow: 0 8px 32px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.08) !important;
-  border-radius: 24px !important;
-  padding: 36px 22px !important;
-  transition: all .3s cubic-bezier(.16,1,.3,1) !important;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.12);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border-radius: 24px;
+  padding: 40px 24px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.09);
+  transition: all .32s cubic-bezier(.16,1,.3,1);
 }
+
+.login-type-card::before { display: none; }
 
 .login-type-card:hover {
-  background: rgba(255,255,255,.1) !important;
-  border-color: rgba(46,139,87,.5) !important;
-  transform: translateY(-8px) scale(1.01) !important;
+  background: rgba(255,255,255,.11);
+  border-color: rgba(46,139,87,.5);
+  transform: translateY(-10px) scale(1.015);
   box-shadow:
-    0 24px 64px rgba(0,0,0,.5),
-    0 0 40px rgba(46,139,87,.15),
-    inset 0 1px 0 rgba(255,255,255,.12) !important;
+    0 28px 72px rgba(0,0,0,.55),
+    0 0 48px rgba(46,139,87,.18),
+    inset 0 1px 0 rgba(255,255,255,.14);
 }
-
-.login-type-card::before { display: none !important; }
 
 .login-type-icon {
-  background: linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.04)) !important;
-  border: 1px solid rgba(255,255,255,.14) !important;
-  box-shadow: 0 4px 16px rgba(0,0,0,.3) !important;
-  width: 80px !important; height: 80px !important;
-  border-radius: 24px !important;
-  font-size: 36px !important;
-  backdrop-filter: blur(8px) !important;
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.14);
+  width: 80px;
+  height: 80px;
+  border-radius: 24px;
+  font-size: 36px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.35);
+  backdrop-filter: blur(8px);
+  transition: transform .32s cubic-bezier(.16,1,.3,1);
 }
 
+.login-type-card:hover .login-type-icon { transform: scale(1.06); }
+
 .login-type-name {
-  color: #FFFFFF !important;
-  font-size: 20px !important;
-  font-weight: 700 !important;
-  letter-spacing: -.3px !important;
+  font-family: var(--font-serif);
+  color: #FFFFFF;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -.3px;
 }
 
 .login-type-desc {
-  color: rgba(255,255,255,.45) !important;
-  font-size: 13px !important;
-  line-height: 1.65 !important;
+  color: rgba(255,255,255,.44);
+  font-size: 13px;
+  line-height: 1.65;
 }
 
-/* ── "Change API keys" link on dark ── */
+/* Change API keys button on dark bg */
 #login-screen button[onclick="showSetupScreen()"] {
-  color: rgba(255,255,255,.3) !important;
-  font-size: 12.5px !important;
-  letter-spacing: .2px !important;
-  transition: color .2s !important;
+  color: rgba(255,255,255,.28);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  transition: color .2s;
 }
 #login-screen button[onclick="showSetupScreen()"]:hover {
-  color: rgba(255,255,255,.6) !important;
+  color: rgba(255,255,255,.58);
 }
 
-/* ── School screen card on dark ── */
+/* ── ONBOARDING WHITE CARD on dark ── */
 #school-screen .ob-card,
 #ob .ob-card,
 #ob-student .ob-card {
-  background: rgba(255,255,255,.95) !important;
-  box-shadow:
-    0 32px 80px rgba(0,0,0,.5),
-    0 8px 24px rgba(0,0,0,.3),
-    inset 0 1px 0 rgba(255,255,255,.9) !important;
-  border-color: rgba(255,255,255,.3) !important;
+  background: #FFFFFF;
+  border: none;
+  border-radius: 28px;
+  box-shadow: 0 40px 100px rgba(0,0,0,.55), 0 8px 24px rgba(0,0,0,.28);
 }
 
-/* ── Setup screen card on dark ── */
-#setup-screen > div > div[style*="background:var(--white)"],
-#setup-screen > div > div[style*="background: var(--white)"] {
-  background: rgba(255,255,255,.95) !important;
-  box-shadow: 0 32px 80px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.3) !important;
-}
-
-/* ══ CLEAN WHITE APP INTERIOR ══ */
-body {
+/* Setup screen card */
+#setup-screen [style*="background:var(--white)"],
+#setup-screen [style*="background: var(--white)"] {
   background: #FFFFFF !important;
-  background-image: none !important;
+  border: none !important;
+  border-radius: 28px !important;
+  box-shadow: 0 40px 100px rgba(0,0,0,.55), 0 8px 24px rgba(0,0,0,.28) !important;
 }
+
+/* ── APP BODY: pure white ── */
+body { background: #FFFFFF; }
 
 #chat-col {
-  background: #FFFFFF !important;
-  border-right: 1px solid #F0EDE8 !important;
+  background: #FFFFFF;
+  border-right: 1px solid #F0EDE8;
 }
 
+/* ── TOP NAV ── */
+.topnav {
+  height: 60px;
+  background: rgba(255,255,255,.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid #F0EDE8;
+  box-shadow: none;
+}
+
+.nav-logo {
+  font-family: var(--font-serif);
+  font-size: 21px;
+  letter-spacing: -.5px;
+}
+
+.nav-tab {
+  height: 60px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ── MESSAGES ── */
 #msgs {
-  padding: 40px 36px !important;
-  gap: 28px !important;
-  background: #FFFFFF !important;
+  background: #FFFFFF;
+  padding: 40px 40px;
+  gap: 24px;
 }
 
-/* Bigger, cleaner user bubbles */
 .msg.user .bubble {
-  background: linear-gradient(135deg, #1A3328 0%, #2D5B43 100%) !important;
-  border-radius: 22px 22px 6px 22px !important;
-  padding: 15px 22px !important;
-  font-size: 15px !important;
-  line-height: 1.78 !important;
-  box-shadow:
-    0 8px 32px rgba(26,51,40,.28),
-    0 2px 8px rgba(26,51,40,.12),
-    inset 0 1px 0 rgba(255,255,255,.12) !important;
-  border: none !important;
+  background: var(--btn-gradient);
+  border: none;
+  border-radius: 20px 20px 6px 20px;
+  padding: 14px 20px;
+  font-size: 15px;
+  line-height: 1.72;
+  box-shadow: 0 6px 24px rgba(26,51,40,.24), 0 1px 4px rgba(26,51,40,.1);
+  color: rgba(255,255,255,.96);
 }
 
-/* AI bubbles: clean elevated white */
 .msg.ai .bubble {
-  background: #FAFAFA !important;
-  border: 1px solid #EEEBE5 !important;
-  border-radius: 6px 22px 22px 22px !important;
-  padding: 15px 22px !important;
-  font-size: 15px !important;
-  line-height: 1.82 !important;
-  box-shadow: 0 2px 16px rgba(0,0,0,.055), 0 1px 3px rgba(0,0,0,.035) !important;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 6px 20px 20px 20px;
+  padding: 14px 20px;
+  font-size: 15px;
+  line-height: 1.82;
+  box-shadow: 0 2px 12px rgba(0,0,0,.05);
+  color: var(--ink);
 }
 
-/* Message avatars */
 .msg.ai .msg-av {
-  background: linear-gradient(145deg, #1A3328, #2E5C44) !important;
-  border: none !important;
-  box-shadow: 0 4px 12px rgba(26,51,40,.3) !important;
+  background: linear-gradient(150deg, #1A3328, #2E5C44);
+  border: none;
+  box-shadow: 0 3px 10px rgba(26,51,40,.28);
 }
 
-/* ── Chat input area ── */
+.typing-ring {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 6px 20px 20px 20px;
+}
+
+/* ── INPUT AREA ── */
 .input-area {
-  background: #FFFFFF !important;
-  border-top: 1px solid #F0EDE8 !important;
-  padding: 18px 28px 26px !important;
+  background: #FFFFFF;
+  border-top: 1px solid #F0EDE8;
+  padding: 16px 28px 24px;
 }
 
 .input-wrap {
-  border-radius: 22px !important;
-  padding: 12px 12px 12px 22px !important;
-  border: 1.5px solid #E8E4DE !important;
-  box-shadow:
-    0 4px 24px rgba(0,0,0,.07),
-    0 1px 4px rgba(0,0,0,.04) !important;
-  background: #FFFFFF !important;
+  border-radius: 20px;
+  border: 1.5px solid #E8E4DE;
+  padding: 10px 10px 10px 20px;
+  background: #FFFFFF;
+  box-shadow: 0 4px 20px rgba(0,0,0,.07), 0 1px 3px rgba(0,0,0,.04);
 }
 
 .input-wrap:focus-within {
-  border-color: #1A3328 !important;
-  box-shadow:
-    0 0 0 3px rgba(26,51,40,.08),
-    0 4px 24px rgba(0,0,0,.07) !important;
+  border-color: var(--forest);
+  box-shadow: 0 0 0 3px rgba(26,51,40,.07), 0 4px 20px rgba(0,0,0,.07);
 }
 
-/* ── Top nav: sharper clean ── */
-.topnav {
-  height: 62px !important;
-  background: rgba(255,255,255,.98) !important;
-  border-bottom: 1px solid #F0EDE8 !important;
-  box-shadow: 0 1px 0 #F0EDE8, 0 4px 20px rgba(0,0,0,.03) !important;
+#sbtn {
+  background: var(--btn-gradient);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(26,51,40,.3);
+}
+#sbtn:hover {
+  background: var(--btn-gradient-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(26,51,40,.36);
 }
 
-.nav-logo { font-size: 22px !important; letter-spacing: -.5px !important; }
-
-.nav-tab {
-  height: 62px !important;
-  font-size: 13.5px !important;
-  font-weight: 600 !important;
-  letter-spacing: -.1px !important;
-}
-
-/* ── Admin screen: clean professional white ── */
-#admin-screen {
-  background: #F8F9FB !important;
-  background-image: none !important;
-}
-
-/* ── Parent dashboard: clean white ── */
-#parent-dashboard {
-  background: #F8F9FB !important;
-  background-image: none !important;
-}
-
-/* ── Onboarding: form cards inside dark screens ── */
-#ob .ob-step-title,
-#ob-student .ob-step-title {
-  font-size: 32px !important;
-}
-
-/* ── Starter chips in chat ── */
-.starter {
-  background: #FFFFFF !important;
-  border: 1.5px solid #EEEBE5 !important;
-  border-radius: 28px !important;
-  font-size: 13px !important;
-  padding: 10px 20px !important;
-  box-shadow: 0 2px 10px rgba(0,0,0,.05) !important;
-}
-
-.starter:hover {
-  border-color: #1A3328 !important;
-  background: rgba(26,51,40,.03) !important;
-  transform: translateY(-3px) !important;
-  box-shadow: 0 8px 20px rgba(26,51,40,.1) !important;
-}
-
-/* ── Action / hint bar ── */
+/* ── ACTION BAR ── */
 .action-bar {
-  background: #FFFFFF !important;
-  border-top: 1px solid #F0EDE8 !important;
+  background: #FFFFFF;
+  border-top: 1px solid #F0EDE8;
 }
 
-/* ── Toast ── */
+/* ── ADMIN + PARENT DASHBOARDS ── */
+#admin-screen {
+  background: #F8F9FB;
+  background-image: none;
+}
+
+#parent-dashboard {
+  background: #F8F9FB;
+  background-image: none;
+}
+
+#v-parent {
+  background: #F8F9FB;
+}
+
+/* ── STARTERS ── */
+.starter {
+  background: #FFFFFF;
+  border: 1.5px solid #EEEBE5;
+  border-radius: 28px;
+  font-family: var(--font-body);
+}
+.starter:hover {
+  border-color: var(--forest);
+  background: rgba(26,51,40,.025);
+  box-shadow: 0 8px 20px rgba(26,51,40,.1);
+}
+
+/* ── TOAST ── */
 .toast {
-  border-radius: 28px !important;
-  font-size: 14px !important;
-  padding: 13px 26px !important;
-  box-shadow: 0 12px 40px rgba(26,51,40,.38), inset 0 1px 0 rgba(255,255,255,.12) !important;
+  font-family: var(--font-body);
+  border-radius: 28px;
+  font-size: 14px;
+  padding: 13px 26px;
+  box-shadow: 0 12px 40px rgba(26,51,40,.38), inset 0 1px 0 rgba(255,255,255,.12);
 }
 
-/* ── Voice overlay: enhanced ── */
+/* ── VOICE OVERLAY ── */
 #voice-overlay {
-  background: radial-gradient(ellipse at 50% 35%, #0E2218 0%, #070F0A 55%, #040805 100%) !important;
+  background: radial-gradient(ellipse at 50% 35%, #0E2218 0%, #070F0A 55%, #040805 100%);
 }
 
-#voice-overlay::before {
-  background: radial-gradient(circle, rgba(46,139,87,.5) 0%, transparent 65%) !important;
-  width: 800px !important; height: 800px !important;
-  top: -25% !important;
+/* ── ADMIN STUDENT ROWS ── */
+.student-row {
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.06);
 }
 
-.voice-status {
-  font-size: 28px !important;
-  color: rgba(255,255,255,.92) !important;
-  letter-spacing: -.5px !important;
+/* ── PRIMARY BUTTONS ── */
+.btn-next {
+  background: var(--btn-gradient);
+  font-family: var(--font-body);
+  box-shadow: 0 4px 20px rgba(26,51,40,.32), 0 1px 3px rgba(26,51,40,.2);
+}
+.btn-next:hover {
+  background: var(--btn-gradient-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(26,51,40,.38), 0 2px 6px rgba(26,51,40,.2);
 }
 
-.voice-transcript {
-  font-size: 16px !important;
-  color: rgba(255,255,255,.4) !important;
+/* ── INSIGHT CARDS ── */
+.insight-card {
+  transition: transform .2s cubic-bezier(.16,1,.3,1), box-shadow .2s;
 }
-
-/* ── Back buttons on dark auth screens get white text ── */
-#school-screen .ob-step-eyebrow,
-#ob .ob-step-eyebrow,
-#ob-student .ob-step-eyebrow {
-  /* eyebrow text inside white ob-card is fine, no override needed */
+.insight-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 32px rgba(0,0,0,.1);
 }
 </style>
 </head>
