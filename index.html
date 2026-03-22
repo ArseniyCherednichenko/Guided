@@ -1770,6 +1770,39 @@ input[type=range]::-webkit-slider-thumb:hover {
 <body>
 
 <!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║            SETUP SCREEN                 ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<div id="setup-screen" style="display:none;position:fixed;inset:0;background:var(--cream);z-index:400;align-items:center;justify-content:center;padding:24px">
+  <div style="width:100%;max-width:460px">
+    <div class="ob-brand" style="text-align:center;margin-bottom:24px">
+      <div class="ob-brand-mark" style="display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;background:linear-gradient(145deg,var(--forest2),var(--forest));border-radius:15px;margin-bottom:14px">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </div>
+      <span class="ob-wordmark" style="display:block">Guided</span>
+      <span class="ob-tagline" style="display:block">Enter your API keys to get started</span>
+    </div>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:24px;padding:32px 36px;box-shadow:var(--shadow-lg)">
+      <div class="fgroup" style="margin-bottom:18px">
+        <label style="font-size:10.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink4)">Featherless API Key <span style="color:var(--red)">*</span></label>
+        <input class="fi" id="setup-fl-key" type="text" placeholder="rc_..." autocomplete="off" spellcheck="false"/>
+      </div>
+      <div class="fgroup" style="margin-bottom:18px">
+        <label style="font-size:10.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink4)">ElevenLabs API Key <span style="color:var(--ink5);font-weight:400;text-transform:none;letter-spacing:0">(optional — for voice)</span></label>
+        <input class="fi" id="setup-el-key" type="text" placeholder="bb0..." autocomplete="off" spellcheck="false"/>
+      </div>
+      <div class="fgroup" style="margin-bottom:24px">
+        <label style="font-size:10.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink4)">Needle API Key <span style="color:var(--ink5);font-weight:400;text-transform:none;letter-spacing:0">(optional — for curriculum)</span></label>
+        <input class="fi" id="setup-nd-key" type="text" placeholder="apk_..." autocomplete="off" spellcheck="false"/>
+      </div>
+      <button class="btn-next" style="width:100%" onclick="saveSetup()">Save & Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗ -->
 <!-- ║            LOGIN SCREEN                 ║ -->
 <!-- ╚══════════════════════════════════════════╝ -->
 <div id="login-screen">
@@ -1796,6 +1829,9 @@ input[type=range]::-webkit-slider-thumb:hover {
         <div class="login-type-name">School</div>
         <div class="login-type-desc">Schools manage student accounts and give each child their own access</div>
       </div>
+    </div>
+    <div style="text-align:center;margin-top:20px">
+      <button onclick="showSetupScreen()" style="background:none;border:none;color:var(--ink5);font-size:12px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">⚙ Change API keys</button>
     </div>
   </div>
 </div>
@@ -2013,7 +2049,7 @@ input[type=range]::-webkit-slider-thumb:hover {
         <div class="fgroup">
           <label>Which school does your child go to?</label>
           <div class="school-wrap">
-            <input class="fi" id="ob-school" placeholder="e.g. Goethe-Gymnasium Berlin, St Mary's London..."
+            <input class="fi" id="ob-school" placeholder="e.g. Lincoln High School, St Mary's London..."
               oninput="debounceSchool(this.value)"/>
             <div class="school-status" id="school-status"></div>
           </div>
@@ -2115,6 +2151,13 @@ input[type=range]::-webkit-slider-thumb:hover {
           </div>
         </div>
 
+        <div id="ob3-status" style="background:var(--aha-bg);border:1px solid var(--aha-bdr);border-radius:12px;padding:14px 16px;display:flex;gap:10px;align-items:flex-start">
+          <span style="font-size:18px;margin-top:1px" id="ob3-icon">✅</span>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--forest);margin-bottom:3px" id="ob3-title">All tools connected</div>
+            <div style="font-size:12px;color:var(--ink3);line-height:1.5" id="ob3-desc">AI · ElevenLabs · Needle — ready. Curriculum will load automatically on start.</div>
+          </div>
+        </div>
       </div>
 
       <!-- Nav -->
@@ -2350,20 +2393,20 @@ input[type=range]::-webkit-slider-thumb:hover {
     </div>
   </div>
 
-  <div class="voice-status" id="voice-status">Tippe zum Sprechen</div>
+  <div class="voice-status" id="voice-status">Tap to Speak</div>
   <div class="voice-transcript" id="voice-transcript"></div>
-  <div class="voice-tap-hint">Tippe auf den Kreis zum Starten · × zum Beenden</div>
+  <div class="voice-tap-hint">Tap the circle to start · × to close</div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
 // ══════════════════════════════════════════════
-//  HARDCODED API KEYS
+//  API KEYS (loaded from localStorage — never hardcoded)
 // ══════════════════════════════════════════════
-const FL_KEY = 'rc_de034f3571a2964c24c7a61cf45a3516e3f1f9124c986230d7bbd420e5263e8c';
-const EL_KEY = 'bb012f02ea7501ab0c48a16c39e4a9df5cdda0b5a5c75cdc5e6ec2f36bd07879';
-const ND_KEY = 'apk_01KKNVHMHMHTN3YHVYJ77G6WS9';
+let FL_KEY = localStorage.getItem('guided_featherless_key') || '';
+let EL_KEY = localStorage.getItem('guided_elevenlabs_key') || '';
+let ND_KEY = localStorage.getItem('guided_needle_key') || '';
 
 // ══════════════════════════════════════════════
 //  CONFIG
@@ -2592,7 +2635,7 @@ async function lookupSchool(name) {
   el.innerHTML = `✓ Found: <strong>${country} curriculum</strong> detected — <em>${curriculumDesc}</em> will be loaded into Needle automatically when you start.`;
 
   // Update step 3 status
-  document.getElementById('ob3-desc').textContent = `Featherless · ElevenLabs · Needle — ready. ${curriculumDesc} will load automatically.`;
+  document.getElementById('ob3-desc').textContent = `AI · ElevenLabs · Needle — ready. ${curriculumDesc} will load automatically.`;
 }
 
 function pickStyle(el) {
@@ -3609,10 +3652,10 @@ function setVoiceState(state) {
   const scene = document.getElementById('voice-orb-scene');
   scene.className = 'voice-orb-scene' + (state !== 'idle' ? ' ' + state : '');
   const statusMap = {
-    idle:      'Tippe zum Sprechen',
-    listening: 'Höre zu…',
-    thinking:  'Denke nach…',
-    speaking:  'Guided spricht…',
+    idle:      'Tap to Speak',
+    listening: 'Listening…',
+    thinking:  'Thinking…',
+    speaking:  'Guided is speaking…',
   };
   document.getElementById('voice-status').textContent = statusMap[state] || '';
 }
@@ -3630,7 +3673,7 @@ function toggleVoiceListen() {
 function startVoiceListening() {
   const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
   voiceRecog = new SpeechRec();
-  voiceRecog.lang = navigator.language || 'de-DE';
+  voiceRecog.lang = navigator.language || 'en-US';
   voiceRecog.interimResults = true;
   voiceRecog.continuous = false;
   voiceRecog.maxAlternatives = 1;
@@ -3760,9 +3803,39 @@ async function speakTextEL(text) {
   } catch(e) { console.error('TTS error:', e); }
 }
 
-// ── On page load: hide ob, show login ───────────────────
+// ══════════════════════════════════════════════
+//  SETUP SCREEN
+// ══════════════════════════════════════════════
+function saveSetup() {
+  const fl = document.getElementById('setup-fl-key').value.trim();
+  if (!fl) { toast('Featherless API key is required', 'err'); return; }
+  localStorage.setItem('guided_featherless_key', fl);
+  FL_KEY = fl;
+  const el = document.getElementById('setup-el-key').value.trim();
+  if (el) { localStorage.setItem('guided_elevenlabs_key', el); EL_KEY = el; }
+  const nd = document.getElementById('setup-nd-key').value.trim();
+  if (nd) { localStorage.setItem('guided_needle_key', nd); ND_KEY = nd; }
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  toast('Keys saved', 'ok');
+}
+
+function showSetupScreen() {
+  document.getElementById('setup-fl-key').value = FL_KEY;
+  document.getElementById('setup-el-key').value = EL_KEY;
+  document.getElementById('setup-nd-key').value = ND_KEY;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('school-screen').style.display = 'none';
+  document.getElementById('setup-screen').style.display = 'flex';
+}
+
+// ── On page load: check for API keys, then show login ───
 (function() {
   document.getElementById('ob').style.display = 'none';
+  if (!localStorage.getItem('guided_featherless_key')) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('setup-screen').style.display = 'flex';
+  }
 })();
 
 function fillInput(t) { const el = document.getElementById('minput'); el.value = t; el.focus(); autoResize(el); }
