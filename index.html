@@ -1937,6 +1937,356 @@ input[type=range]::-webkit-slider-thumb:hover {
 /* ── Student personal use onboarding ─────── */
 #ob-student { position: fixed; inset: 0; background: var(--cream); z-index: 400; display: none; align-items: center; justify-content: center; padding: 24px; overflow-y: auto;
   background-image: radial-gradient(ellipse at 10% 60%, rgba(26,51,40,.09) 0%, transparent 50%), radial-gradient(ellipse at 88% 12%, rgba(184,130,42,.1) 0%, transparent 45%), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.022'/%3E%3C/svg%3E"); }
+
+/* ══════════════════════════════════════════════
+   ██████  REDESIGN OVERRIDES  ██████
+   Dark hero screens + clean white app interior
+══════════════════════════════════════════════ */
+
+/* ── Dark base for all auth/onboarding screens ── */
+#login-screen,
+#school-screen,
+#ob,
+#ob-student,
+#setup-screen {
+  background: #060D09 !important;
+  background-image: none !important;
+}
+
+/* ── Shared glowing orb backdrop ── */
+#login-screen::before,
+#school-screen::before,
+#ob::before,
+#ob-student::before,
+#setup-screen::before {
+  content: '';
+  position: absolute;
+  top: -10%; left: 50%;
+  transform: translateX(-50%);
+  width: 900px; height: 700px;
+  background: radial-gradient(ellipse at center, rgba(46,139,87,.22) 0%, rgba(26,51,40,.12) 35%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Dot grid overlay ── */
+#login-screen::after,
+#school-screen::after,
+#ob::after,
+#ob-student::after,
+#setup-screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,.055) 1px, transparent 0);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── All containers above the decorative layers ── */
+.login-container,
+#ob .ob-container,
+#school-screen .ob-container,
+#ob-student .ob-container {
+  position: relative;
+  z-index: 1;
+}
+
+#setup-screen > div {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── White wordmark on dark screens ── */
+#login-screen .ob-wordmark,
+#school-screen .ob-wordmark,
+#ob .ob-wordmark,
+#ob-student .ob-wordmark,
+#setup-screen .ob-wordmark {
+  color: #FFFFFF !important;
+  font-size: 44px !important;
+  letter-spacing: -1.4px !important;
+  font-weight: 700 !important;
+}
+
+#login-screen .ob-tagline,
+#school-screen .ob-tagline,
+#ob .ob-tagline,
+#ob-student .ob-tagline,
+#setup-screen .ob-tagline {
+  color: rgba(255,255,255,.45) !important;
+  font-size: 15px !important;
+  font-weight: 400 !important;
+  margin-top: 8px !important;
+}
+
+/* ── Brand mark: bigger glow on dark ── */
+#login-screen .ob-brand-mark,
+#school-screen .ob-brand-mark,
+#ob .ob-brand-mark,
+#ob-student .ob-brand-mark,
+#setup-screen .ob-brand-mark {
+  width: 76px !important;
+  height: 76px !important;
+  border-radius: 24px !important;
+  background: linear-gradient(145deg, #2E8B57, #1A3328) !important;
+  box-shadow:
+    0 0 0 1px rgba(46,139,87,.4),
+    0 16px 56px rgba(0,0,0,.5),
+    0 0 80px rgba(46,139,87,.25),
+    inset 0 1px 0 rgba(255,255,255,.2) !important;
+  margin-bottom: 20px !important;
+}
+
+/* ── Login role-selector cards: frosted glass on dark ── */
+.login-type-grid {
+  gap: 16px !important;
+}
+
+.login-type-card {
+  background: rgba(255,255,255,.06) !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.08) !important;
+  border-radius: 24px !important;
+  padding: 36px 22px !important;
+  transition: all .3s cubic-bezier(.16,1,.3,1) !important;
+}
+
+.login-type-card:hover {
+  background: rgba(255,255,255,.1) !important;
+  border-color: rgba(46,139,87,.5) !important;
+  transform: translateY(-8px) scale(1.01) !important;
+  box-shadow:
+    0 24px 64px rgba(0,0,0,.5),
+    0 0 40px rgba(46,139,87,.15),
+    inset 0 1px 0 rgba(255,255,255,.12) !important;
+}
+
+.login-type-card::before { display: none !important; }
+
+.login-type-icon {
+  background: linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.04)) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.3) !important;
+  width: 80px !important; height: 80px !important;
+  border-radius: 24px !important;
+  font-size: 36px !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+.login-type-name {
+  color: #FFFFFF !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  letter-spacing: -.3px !important;
+}
+
+.login-type-desc {
+  color: rgba(255,255,255,.45) !important;
+  font-size: 13px !important;
+  line-height: 1.65 !important;
+}
+
+/* ── "Change API keys" link on dark ── */
+#login-screen button[onclick="showSetupScreen()"] {
+  color: rgba(255,255,255,.3) !important;
+  font-size: 12.5px !important;
+  letter-spacing: .2px !important;
+  transition: color .2s !important;
+}
+#login-screen button[onclick="showSetupScreen()"]:hover {
+  color: rgba(255,255,255,.6) !important;
+}
+
+/* ── School screen card on dark ── */
+#school-screen .ob-card,
+#ob .ob-card,
+#ob-student .ob-card {
+  background: rgba(255,255,255,.95) !important;
+  box-shadow:
+    0 32px 80px rgba(0,0,0,.5),
+    0 8px 24px rgba(0,0,0,.3),
+    inset 0 1px 0 rgba(255,255,255,.9) !important;
+  border-color: rgba(255,255,255,.3) !important;
+}
+
+/* ── Setup screen card on dark ── */
+#setup-screen > div > div[style*="background:var(--white)"],
+#setup-screen > div > div[style*="background: var(--white)"] {
+  background: rgba(255,255,255,.95) !important;
+  box-shadow: 0 32px 80px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.3) !important;
+}
+
+/* ══ CLEAN WHITE APP INTERIOR ══ */
+body {
+  background: #FFFFFF !important;
+  background-image: none !important;
+}
+
+#chat-col {
+  background: #FFFFFF !important;
+  border-right: 1px solid #F0EDE8 !important;
+}
+
+#msgs {
+  padding: 40px 36px !important;
+  gap: 28px !important;
+  background: #FFFFFF !important;
+}
+
+/* Bigger, cleaner user bubbles */
+.msg.user .bubble {
+  background: linear-gradient(135deg, #1A3328 0%, #2D5B43 100%) !important;
+  border-radius: 22px 22px 6px 22px !important;
+  padding: 15px 22px !important;
+  font-size: 15px !important;
+  line-height: 1.78 !important;
+  box-shadow:
+    0 8px 32px rgba(26,51,40,.28),
+    0 2px 8px rgba(26,51,40,.12),
+    inset 0 1px 0 rgba(255,255,255,.12) !important;
+  border: none !important;
+}
+
+/* AI bubbles: clean elevated white */
+.msg.ai .bubble {
+  background: #FAFAFA !important;
+  border: 1px solid #EEEBE5 !important;
+  border-radius: 6px 22px 22px 22px !important;
+  padding: 15px 22px !important;
+  font-size: 15px !important;
+  line-height: 1.82 !important;
+  box-shadow: 0 2px 16px rgba(0,0,0,.055), 0 1px 3px rgba(0,0,0,.035) !important;
+}
+
+/* Message avatars */
+.msg.ai .msg-av {
+  background: linear-gradient(145deg, #1A3328, #2E5C44) !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(26,51,40,.3) !important;
+}
+
+/* ── Chat input area ── */
+.input-area {
+  background: #FFFFFF !important;
+  border-top: 1px solid #F0EDE8 !important;
+  padding: 18px 28px 26px !important;
+}
+
+.input-wrap {
+  border-radius: 22px !important;
+  padding: 12px 12px 12px 22px !important;
+  border: 1.5px solid #E8E4DE !important;
+  box-shadow:
+    0 4px 24px rgba(0,0,0,.07),
+    0 1px 4px rgba(0,0,0,.04) !important;
+  background: #FFFFFF !important;
+}
+
+.input-wrap:focus-within {
+  border-color: #1A3328 !important;
+  box-shadow:
+    0 0 0 3px rgba(26,51,40,.08),
+    0 4px 24px rgba(0,0,0,.07) !important;
+}
+
+/* ── Top nav: sharper clean ── */
+.topnav {
+  height: 62px !important;
+  background: rgba(255,255,255,.98) !important;
+  border-bottom: 1px solid #F0EDE8 !important;
+  box-shadow: 0 1px 0 #F0EDE8, 0 4px 20px rgba(0,0,0,.03) !important;
+}
+
+.nav-logo { font-size: 22px !important; letter-spacing: -.5px !important; }
+
+.nav-tab {
+  height: 62px !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  letter-spacing: -.1px !important;
+}
+
+/* ── Admin screen: clean professional white ── */
+#admin-screen {
+  background: #F8F9FB !important;
+  background-image: none !important;
+}
+
+/* ── Parent dashboard: clean white ── */
+#parent-dashboard {
+  background: #F8F9FB !important;
+  background-image: none !important;
+}
+
+/* ── Onboarding: form cards inside dark screens ── */
+#ob .ob-step-title,
+#ob-student .ob-step-title {
+  font-size: 32px !important;
+}
+
+/* ── Starter chips in chat ── */
+.starter {
+  background: #FFFFFF !important;
+  border: 1.5px solid #EEEBE5 !important;
+  border-radius: 28px !important;
+  font-size: 13px !important;
+  padding: 10px 20px !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,.05) !important;
+}
+
+.starter:hover {
+  border-color: #1A3328 !important;
+  background: rgba(26,51,40,.03) !important;
+  transform: translateY(-3px) !important;
+  box-shadow: 0 8px 20px rgba(26,51,40,.1) !important;
+}
+
+/* ── Action / hint bar ── */
+.action-bar {
+  background: #FFFFFF !important;
+  border-top: 1px solid #F0EDE8 !important;
+}
+
+/* ── Toast ── */
+.toast {
+  border-radius: 28px !important;
+  font-size: 14px !important;
+  padding: 13px 26px !important;
+  box-shadow: 0 12px 40px rgba(26,51,40,.38), inset 0 1px 0 rgba(255,255,255,.12) !important;
+}
+
+/* ── Voice overlay: enhanced ── */
+#voice-overlay {
+  background: radial-gradient(ellipse at 50% 35%, #0E2218 0%, #070F0A 55%, #040805 100%) !important;
+}
+
+#voice-overlay::before {
+  background: radial-gradient(circle, rgba(46,139,87,.5) 0%, transparent 65%) !important;
+  width: 800px !important; height: 800px !important;
+  top: -25% !important;
+}
+
+.voice-status {
+  font-size: 28px !important;
+  color: rgba(255,255,255,.92) !important;
+  letter-spacing: -.5px !important;
+}
+
+.voice-transcript {
+  font-size: 16px !important;
+  color: rgba(255,255,255,.4) !important;
+}
+
+/* ── Back buttons on dark auth screens get white text ── */
+#school-screen .ob-step-eyebrow,
+#ob .ob-step-eyebrow,
+#ob-student .ob-step-eyebrow {
+  /* eyebrow text inside white ob-card is fine, no override needed */
+}
 </style>
 </head>
 <body>
@@ -3161,7 +3511,7 @@ const MODEL    = 'Qwen/Qwen2.5-72B-Instruct';
 const MAX_TOK  = 600;
 const TEMP     = 0.75;
 const CTX_WIN  = 8000;
-const VOICE_ID = '21m00Tcm4TlvDq8ikWAM';
+const VOICE_ID = 'EXAVITQu4vr4xnSDxMaL'; // Bella — warm, natural, clear
 
 // ══════════════════════════════════════════════
 //  STATE
@@ -4848,7 +5198,7 @@ async function speakTextEL(text) {
       headers: { 'xi-api-key': EL_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         text: speakText,
-        model_id: 'eleven_turbo_v2',
+        model_id: 'eleven_multilingual_v2',
         voice_settings: { stability: 0.5, similarity_boost: 0.75, speed: 1.0 }
       })
     });
