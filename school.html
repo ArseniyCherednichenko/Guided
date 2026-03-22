@@ -1,0 +1,3405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Guided — AI Tutor</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+/* ══════════════════════════════════════════════
+   TOKENS & RESET
+══════════════════════════════════════════════ */
+:root {
+  --cream:    #F8F4EE;
+  --cream2:   #F1EBE1;
+  --cream3:   #E8E0D4;
+  --paper:    #FDFAF6;
+  --white:    #FFFFFF;
+  --forest:   #1A3328;
+  --forest2:  #264D3A;
+  --forest3:  #2E5C44;
+  --gold:     #B8822A;
+  --gold2:    #D4A04E;
+  --gold-dim: rgba(184,130,42,.12);
+  --gold-glow:rgba(184,130,42,.2);
+  --ink:      #1C1C1C;
+  --ink2:     #3A3A3A;
+  --ink3:     #6B6560;
+  --ink4:     #9E9790;
+  --ink5:     #C8C3BC;
+  --border:   #E2DAD0;
+  --border2:  #D4CAC0;
+  --red:      #C0392B;
+  --red-dim:  rgba(192,57,43,.1);
+  --blue:     #2563EB;
+  --blue-dim: rgba(37,99,235,.08);
+  --hint-bg:  #FEF3E2;
+  --hint-bdr: rgba(184,130,42,.3);
+  --aha-bg:   #EDFAF3;
+  --aha-bdr:  rgba(26,51,40,.25);
+  --shadow-sm: 0 1px 4px rgba(28,28,28,.06);
+  --shadow:    0 4px 16px rgba(28,28,28,.08);
+  --shadow-lg: 0 12px 40px rgba(28,28,28,.12);
+  --r:         14px;
+  --r-lg:      20px;
+  --r-xl:      28px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  /* Subtle paper texture */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.018'/%3E%3C/svg%3E");
+}
+
+/* ══════════════════════════════════════════════
+   ONBOARDING
+══════════════════════════════════════════════ */
+#ob {
+  position: fixed; inset: 0;
+  background: var(--cream);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow-y: auto;
+  background-image:
+    radial-gradient(ellipse at 15% 55%, rgba(26,51,40,.07) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 15%, rgba(184,130,42,.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 90%, rgba(26,51,40,.04) 0%, transparent 45%);
+}
+
+.ob-container { width: 100%; max-width: 520px; }
+
+.ob-brand {
+  text-align: center;
+  margin-bottom: 28px;
+  animation: fadeUp .6s cubic-bezier(.16,1,.3,1) both;
+}
+
+.ob-brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px; height: 52px;
+  background: linear-gradient(145deg, var(--forest2), var(--forest));
+  border-radius: 15px;
+  margin-bottom: 14px;
+  box-shadow: 0 8px 28px rgba(26,51,40,.28), 0 2px 6px rgba(26,51,40,.15), inset 0 1px 0 rgba(255,255,255,.1);
+}
+
+.ob-brand-mark svg { color: #fff; }
+
+.ob-wordmark {
+  font-family: 'Playfair Display', serif;
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--forest);
+  display: block;
+  letter-spacing: -.6px;
+}
+
+.ob-tagline {
+  font-size: 13.5px;
+  color: var(--ink4);
+  margin-top: 5px;
+  display: block;
+  letter-spacing: .1px;
+}
+
+.ob-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(28,28,28,.1), 0 4px 16px rgba(28,28,28,.06), 0 1px 0 rgba(255,255,255,.8) inset;
+  animation: fadeUp .6s .08s cubic-bezier(.16,1,.3,1) both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ob-progress-track {
+  height: 2px;
+  background: var(--cream2);
+}
+
+.ob-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--forest3), var(--forest));
+  transition: width .5s cubic-bezier(.4,0,.2,1);
+}
+
+.ob-step {
+  display: none;
+  padding: 36px 40px 30px;
+  flex-direction: column;
+  gap: 24px;
+  animation: stepSlide .3s cubic-bezier(.16,1,.3,1) both;
+}
+
+.ob-step.active { display: flex; }
+
+@keyframes stepSlide {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.ob-step-eyebrow {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.ob-step-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--forest);
+  line-height: 1.2;
+  margin-top: -8px;
+  letter-spacing: -.3px;
+}
+
+.ob-step-desc {
+  font-size: 13.5px;
+  color: var(--ink3);
+  line-height: 1.7;
+  margin-top: -10px;
+}
+
+/* Form */
+.frow { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.fgroup { display: flex; flex-direction: column; gap: 7px; }
+.fgroup label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--ink4);
+}
+
+.fi, .fs, .fta {
+  background: var(--cream);
+  border: 1.5px solid var(--border);
+  border-radius: 11px;
+  padding: 12px 15px;
+  font-size: 14px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: var(--ink);
+  outline: none;
+  width: 100%;
+  transition: border-color .2s, box-shadow .2s, background .2s;
+}
+
+.fi:hover, .fs:hover { border-color: var(--border2); }
+.fi:focus, .fs:focus, .fta:focus {
+  border-color: var(--forest);
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(26,51,40,.07);
+}
+
+.fi::placeholder, .fta::placeholder { color: var(--ink5); }
+.fs { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239E9790' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 13px center; }
+.fs option { background: #fff; }
+.fta { resize: none; min-height: 84px; line-height: 1.55; }
+
+/* Age slider */
+.age-slider-wrap { display: flex; flex-direction: column; gap: 12px; }
+.age-display {
+  display: flex; align-items: baseline; gap: 7px;
+}
+.age-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 44px; font-weight: 700; color: var(--forest); line-height: 1;
+  letter-spacing: -1px;
+}
+.age-unit { font-size: 15px; color: var(--ink3); font-weight: 500; }
+
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%; height: 6px;
+  background: linear-gradient(to right, var(--forest) 0%, var(--forest) 50%, var(--cream3) 50%);
+  border-radius: 3px; outline: none; cursor: pointer;
+  transition: background .1s;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--white);
+  border: 2.5px solid var(--forest);
+  box-shadow: 0 2px 8px rgba(26,51,40,.2);
+  cursor: pointer;
+  transition: transform .15s, box-shadow .15s;
+}
+input[type=range]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 4px 12px rgba(26,51,40,.3);
+}
+.age-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--ink5); font-weight: 600; }
+
+/* School search */
+.school-wrap { position: relative; }
+.school-status {
+  margin-top: 8px; padding: 9px 12px; border-radius: 9px;
+  font-size: 12.5px; line-height: 1.5; display: none;
+  animation: fadeUp .2s ease;
+}
+.school-status.searching { background: var(--hint-bg); color: var(--gold); display: block; }
+.school-status.found     { background: var(--aha-bg); color: var(--forest); display: block; }
+.school-status.notfound  { background: var(--cream2); color: var(--ink3); display: block; }
+
+/* Learning goal chips */
+.goal-chips { display: flex; flex-direction: column; gap: 10px; }
+
+.goal-chip {
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 15px 18px;
+  cursor: pointer;
+  transition: all .2s cubic-bezier(.16,1,.3,1);
+  background: var(--cream);
+  display: flex; align-items: flex-start; gap: 14px;
+  position: relative;
+}
+.goal-chip:hover { border-color: var(--forest2); background: rgba(26,51,40,.02); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,51,40,.06); }
+.goal-chip.sel   { border-color: var(--forest); background: rgba(26,51,40,.04); box-shadow: 0 2px 8px rgba(26,51,40,.08); }
+
+.goal-chip-check {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid var(--border2);
+  flex-shrink: 0; margin-top: 1px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+}
+.goal-chip.sel .goal-chip-check {
+  background: var(--forest); border-color: var(--forest);
+}
+.goal-chip.sel .goal-chip-check::after {
+  content: '';
+  width: 6px; height: 6px;
+  background: white; border-radius: 50%;
+}
+
+.goal-chip-body { flex: 1; }
+.goal-chip-name { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+.goal-chip-desc { font-size: 12px; color: var(--ink3); line-height: 1.45; }
+.goal-chip.sel .goal-chip-name { color: var(--forest); }
+
+/* Parent updates */
+.update-options { display: flex; flex-direction: column; gap: 8px; }
+.update-opt {
+  border: 1.5px solid var(--border);
+  border-radius: 11px;
+  padding: 12px 16px;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 12px;
+  transition: all .15s;
+  background: var(--cream);
+}
+.update-opt:hover { border-color: var(--forest2); }
+.update-opt.sel   { border-color: var(--forest); background: rgba(26,51,40,.04); }
+
+.update-radio {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid var(--border2); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+}
+.update-opt.sel .update-radio { border-color: var(--forest); background: var(--forest); }
+.update-opt.sel .update-radio::after { content: ''; width: 6px; height: 6px; background: white; border-radius: 50%; }
+
+.update-opt-text { flex: 1; }
+.update-opt-name { font-size: 13.5px; font-weight: 700; color: var(--ink); }
+.update-opt-desc { font-size: 11.5px; color: var(--ink3); margin-top: 1px; }
+.update-opt.sel .update-opt-name { color: var(--forest); }
+
+/* Teaching style grid */
+.style-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.style-card {
+  border: 1.5px solid var(--border);
+  border-radius: 13px;
+  padding: 16px 17px;
+  cursor: pointer;
+  transition: all .2s cubic-bezier(.16,1,.3,1);
+  background: var(--cream);
+}
+
+.style-card:hover { border-color: var(--forest2); background: rgba(26,51,40,.02); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(26,51,40,.07); }
+.style-card.sel { border-color: var(--forest); background: rgba(26,51,40,.04); box-shadow: 0 2px 10px rgba(26,51,40,.08); }
+
+.style-emoji { font-size: 20px; margin-bottom: 6px; display: block; }
+.style-name { font-size: 13px; font-weight: 700; color: var(--ink); }
+.style-desc { font-size: 11.5px; color: var(--ink3); line-height: 1.45; margin-top: 3px; }
+.style-card.sel .style-name { color: var(--forest); }
+
+/* Key fields */
+.key-field { display: flex; flex-direction: column; gap: 6px; }
+.key-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ink3);
+}
+
+.key-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+.key-badge.req { background: var(--red-dim); color: var(--red); }
+.key-badge.opt { background: var(--cream2); color: var(--ink4); }
+.key-badge.ok  { background: var(--aha-bg); color: var(--forest); }
+
+.key-hint {
+  font-size: 11.5px;
+  color: var(--ink4);
+  line-height: 1.5;
+}
+
+.key-hint a { color: var(--forest); text-decoration: none; font-weight: 500; }
+
+/* Nav */
+.ob-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 40px 32px;
+}
+
+.step-dots { display: flex; gap: 5px; flex: 1; align-items: center; }
+
+.sdot {
+  width: 6px; height: 6px;
+  border-radius: 3px;
+  background: var(--cream3);
+  transition: all .3s cubic-bezier(.4,0,.2,1);
+}
+
+.sdot.cur { background: var(--forest); width: 20px; }
+.sdot.done { background: var(--forest3); opacity: .35; }
+
+.btn-back {
+  background: transparent;
+  border: 1.5px solid var(--border2);
+  color: var(--ink3);
+  border-radius: 11px;
+  padding: 11px 20px;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer;
+  transition: all .2s;
+}
+
+.btn-back:hover { border-color: var(--forest); color: var(--forest); background: rgba(26,51,40,.03); }
+
+.btn-next {
+  flex: 1;
+  background: linear-gradient(145deg, var(--forest2), var(--forest));
+  color: #fff;
+  border: none;
+  border-radius: 11px;
+  padding: 13px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer;
+  transition: all .2s cubic-bezier(.16,1,.3,1);
+  box-shadow: 0 4px 18px rgba(26,51,40,.28), inset 0 1px 0 rgba(255,255,255,.1);
+  letter-spacing: .2px;
+}
+
+.btn-next:hover { background: linear-gradient(145deg, var(--forest3), var(--forest2)); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(26,51,40,.32), inset 0 1px 0 rgba(255,255,255,.1); }
+.btn-next:active { transform: translateY(0); box-shadow: 0 2px 10px rgba(26,51,40,.2); }
+
+/* ══════════════════════════════════════════════
+   APP
+══════════════════════════════════════════════ */
+#app { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+#app.show { display: flex; }
+
+/* Top nav */
+.topnav {
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  height: 54px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+  box-shadow: 0 1px 8px rgba(28,28,28,.05);
+}
+
+.nav-logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--forest);
+  letter-spacing: -.3px;
+  margin-right: 28px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-logo-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 10px var(--gold-glow), 0 0 4px rgba(184,130,42,.4);
+  animation: glow 2.5s ease-in-out infinite;
+}
+
+@keyframes glow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .5; transform: scale(.85); }
+}
+
+.nav-tab {
+  height: 54px;
+  padding: 0 18px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink4);
+  cursor: pointer;
+  border-bottom: 2.5px solid transparent;
+  transition: all .15s;
+  user-select: none;
+}
+
+.nav-tab:hover { color: var(--ink2); }
+.nav-tab.active { color: var(--forest); border-bottom-color: var(--forest); }
+
+.nav-tab-badge {
+  background: var(--gold-dim);
+  color: var(--gold);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 20px;
+  opacity: 0;
+  transition: opacity .2s;
+}
+
+.nav-tab.has-data .nav-tab-badge { opacity: 1; }
+
+.nav-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+.profile-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 40px;
+  padding: 5px 14px 5px 6px;
+  cursor: pointer;
+  transition: all .15s;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink2);
+}
+
+.profile-chip:hover { border-color: var(--forest); color: var(--forest); }
+
+.chip-av {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--forest);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'Playfair Display', serif;
+}
+
+.nav-pill {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  color: var(--ink3);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer;
+  transition: all .2s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  letter-spacing: .1px;
+}
+
+.nav-pill:hover { border-color: var(--forest); color: var(--forest); background: rgba(26,51,40,.03); }
+.nav-pill.on { background: var(--forest); color: #fff; border-color: var(--forest); box-shadow: 0 2px 8px rgba(26,51,40,.2); }
+
+/* ══════════════════════════════════════════════
+   VIEWS
+══════════════════════════════════════════════ */
+.view { display: none; flex: 1; overflow: hidden; }
+.view.active { display: flex; }
+
+/* ══════════════════════════════════════════════
+   STUDENT VIEW
+══════════════════════════════════════════════ */
+#v-student { flex-direction: row; }
+
+/* CHAT */
+#chat-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-right: 1px solid var(--border);
+  background: var(--paper);
+}
+
+
+/* Messages */
+#msgs {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  scroll-behavior: smooth;
+}
+
+#msgs::-webkit-scrollbar { width: 5px; }
+#msgs::-webkit-scrollbar-track { background: transparent; }
+#msgs::-webkit-scrollbar-thumb { background: var(--cream3); border-radius: 3px; }
+
+/* Empty state */
+.empty-chat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 18px;
+  padding: 40px 24px;
+  color: var(--ink4);
+}
+
+.empty-icon-ring {
+  width: 68px; height: 68px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: linear-gradient(145deg, var(--white), var(--cream));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  box-shadow: 0 6px 20px rgba(28,28,28,.07), 0 1px 3px rgba(28,28,28,.05);
+}
+
+.empty-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 23px;
+  font-weight: 600;
+  color: var(--forest);
+  letter-spacing: -.2px;
+}
+
+.empty-sub { font-size: 14px; color: var(--ink3); line-height: 1.7; max-width: 290px; }
+
+.starter-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  max-width: 440px;
+  margin-top: 6px;
+}
+
+.starter {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 12.5px;
+  color: var(--ink2);
+  cursor: pointer;
+  transition: all .2s cubic-bezier(.16,1,.3,1);
+  font-weight: 500;
+  box-shadow: var(--shadow-sm);
+  letter-spacing: .1px;
+}
+
+.starter:hover { border-color: var(--forest); color: var(--forest); transform: translateY(-2px); box-shadow: 0 5px 14px rgba(26,51,40,.09); }
+
+/* Messages */
+.msg { display: flex; gap: 12px; animation: msgIn .25s ease; }
+@keyframes msgIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.msg.user { flex-direction: row-reverse; }
+
+.msg-av {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.msg.user .msg-av {
+  background: var(--forest);
+  color: #fff;
+  font-weight: 700;
+  font-family: 'Playfair Display', serif;
+}
+
+.msg.ai .msg-av {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.msg-body { max-width: 78%; display: flex; flex-direction: column; gap: 6px; }
+
+.bubble {
+  padding: 14px 18px;
+  border-radius: 18px;
+  font-size: 14.5px;
+  line-height: 1.75;
+}
+
+.msg.user .bubble {
+  background: linear-gradient(145deg, var(--forest2), var(--forest));
+  color: rgba(255,255,255,.94);
+  border-bottom-right-radius: 5px;
+  box-shadow: 0 4px 18px rgba(26,51,40,.22), inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+.msg.ai .bubble {
+  background: var(--white);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 5px;
+  box-shadow: 0 2px 8px rgba(28,28,28,.06);
+}
+
+/* Hint bubble */
+.bubble.hint {
+  background: var(--hint-bg) !important;
+  border-color: var(--hint-bdr) !important;
+}
+.bubble.hint::before {
+  content: '💡 Hint';
+  display: block;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 7px;
+}
+
+/* Aha bubble */
+.bubble.aha {
+  background: var(--aha-bg) !important;
+  border-color: var(--aha-bdr) !important;
+}
+.bubble.aha::before {
+  content: '✨ You got it!';
+  display: block;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--forest);
+  margin-bottom: 7px;
+}
+
+.msg-meta {
+  font-size: 11px;
+  color: var(--ink5);
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.msg.user .msg-meta { justify-content: flex-end; }
+
+.tok-tag {
+  background: var(--cream2);
+  border: 1px solid var(--cream3);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 10px;
+  color: var(--ink4);
+  font-weight: 600;
+}
+
+/* Thinking levels badge */
+.thinking-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+.thinking-badge.remember { background: #EFF6FF; color: #2563EB; }
+.thinking-badge.understand { background: #F0FDF4; color: #16A34A; }
+.thinking-badge.apply { background: #FEF9C3; color: #A16207; }
+.thinking-badge.analyze { background: #FFF7ED; color: #C2410C; }
+.thinking-badge.evaluate { background: #FDF4FF; color: #9333EA; }
+.thinking-badge.create { background: #FFF1F2; color: #E11D48; }
+
+/* Typing indicator */
+.typing-ring {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  border-bottom-left-radius: 4px;
+  padding: 14px 18px;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.typing-ring .dot {
+  width: 7px; height: 7px;
+  background: var(--ink5);
+  border-radius: 50%;
+  animation: tdot 1.3s infinite;
+}
+
+.typing-ring .dot:nth-child(2) { animation-delay: .2s; }
+.typing-ring .dot:nth-child(3) { animation-delay: .4s; }
+@keyframes tdot { 40% { background: var(--forest); transform: translateY(-4px); } }
+
+/* Generated image */
+.gen-img-card {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  max-width: 400px;
+  box-shadow: var(--shadow);
+}
+.gen-img-card img { width: 100%; display: block; }
+.gen-img-cap {
+  padding: 9px 14px;
+  font-size: 12px;
+  color: var(--ink3);
+  background: var(--white);
+  border-top: 1px solid var(--border);
+  font-style: italic;
+}
+
+
+/* Hint/got-it bar */
+.action-bar {
+  padding: 10px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--white);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.btn-hint {
+  background: var(--hint-bg);
+  border: 1.5px solid var(--hint-bdr);
+  color: var(--gold);
+  border-radius: 20px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer;
+  transition: all .15s;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.btn-hint:hover { background: #FDE8C4; }
+.btn-hint:disabled { opacity: .35; cursor: not-allowed; }
+
+.hint-count {
+  background: var(--gold);
+  color: #fff;
+  border-radius: 20px;
+  padding: 1px 7px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.btn-gotit {
+  background: var(--aha-bg);
+  border: 1.5px solid var(--aha-bdr);
+  color: var(--forest);
+  border-radius: 20px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer;
+  transition: all .15s;
+  margin-left: auto;
+}
+.btn-gotit:hover { background: #D4F5E5; }
+
+/* Input area */
+.input-area {
+  padding: 14px 20px 20px;
+  border-top: 1px solid var(--border);
+  background: rgba(255,255,255,.95);
+  backdrop-filter: blur(8px);
+  flex-shrink: 0;
+}
+
+.input-wrap {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  background: var(--cream);
+  border: 1.5px solid var(--border2);
+  border-radius: 18px;
+  padding: 10px 10px 10px 18px;
+  transition: border-color .2s, box-shadow .2s;
+}
+
+.input-wrap:focus-within {
+  border-color: var(--forest);
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(26,51,40,.07);
+}
+
+#minput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 14.5px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: var(--ink);
+  resize: none;
+  min-height: 24px;
+  max-height: 120px;
+  line-height: 1.55;
+}
+
+#minput::placeholder { color: var(--ink5); }
+
+#sbtn {
+  width: 38px; height: 38px;
+  background: linear-gradient(145deg, var(--forest2), var(--forest));
+  border: none;
+  border-radius: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all .2s cubic-bezier(.16,1,.3,1);
+  box-shadow: 0 3px 12px rgba(26,51,40,.28), inset 0 1px 0 rgba(255,255,255,.1);
+}
+#sbtn:hover { background: linear-gradient(145deg, var(--forest3), var(--forest2)); transform: translateY(-1px); box-shadow: 0 5px 16px rgba(26,51,40,.3); }
+#sbtn:active { transform: translateY(0); box-shadow: 0 2px 6px rgba(26,51,40,.2); }
+#sbtn:disabled { opacity: .28; cursor: not-allowed; transform: none; box-shadow: none; }
+#sbtn svg { color: #fff; }
+
+/* ══════════════════════════════════════════════
+   DEV PANEL
+══════════════════════════════════════════════ */
+#dev-col {
+  width: 272px;
+  background: var(--white);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: width .2s ease, opacity .2s;
+}
+
+#dev-col.hide { width: 0; opacity: 0; border-left: none; pointer-events: none; }
+
+.dev-hdr {
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  background: var(--cream);
+}
+
+.dev-hdr h3 {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--ink3);
+}
+
+.dev-close {
+  width: 20px; height: 20px;
+  border-radius: 5px;
+  background: var(--cream2);
+  border: 1px solid var(--border);
+  color: var(--ink4);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  transition: all .15s;
+}
+.dev-close:hover { color: var(--ink); }
+
+.dev-body { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.dev-body::-webkit-scrollbar { width: 3px; }
+.dev-body::-webkit-scrollbar-thumb { background: var(--cream3); }
+
+/* Dev sections */
+.ds {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.ds-title {
+  padding: 8px 12px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ink3);
+  border-bottom: 1px solid var(--border);
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dr {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.dr:last-child { border-bottom: none; }
+.dr .k { font-size: 9.5px; color: var(--ink4); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+.dr .v { font-size: 12px; color: var(--ink2); font-weight: 600; word-break: break-all; }
+.dr .v.g { color: var(--forest); }
+.dr .v.a { color: var(--gold); }
+.dr .v.sm { font-size: 10.5px; color: var(--ink3); font-weight: 400; }
+
+.cbar-wrap { padding: 8px 12px; }
+.cbar-labels { display: flex; justify-content: space-between; font-size: 9.5px; color: var(--ink4); margin-bottom: 5px; font-weight: 600; }
+.cbar { height: 4px; background: var(--cream3); border-radius: 2px; overflow: hidden; }
+.cbar-fill { height: 100%; background: var(--forest); border-radius: 2px; transition: width .4s ease; }
+
+/* History */
+.hist-entry { padding: 8px 12px; border-bottom: 1px solid var(--border); display: flex; gap: 6px; }
+.hist-entry:last-child { border-bottom: none; }
+.hrole { font-size: 8.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .8px; padding: 2px 6px; border-radius: 4px; flex-shrink: 0; height: fit-content; margin-top: 1px; }
+.hrole.user { background: rgba(26,51,40,.1); color: var(--forest); }
+.hrole.assistant { background: var(--blue-dim); color: var(--blue); }
+.hrole.system { background: var(--gold-dim); color: var(--gold); }
+.htext { font-size: 10.5px; color: var(--ink3); line-height: 1.55; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+
+/* Needle in dev */
+.nd-wrap { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.nd-in { background: var(--white); border: 1px solid var(--border2); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--ink); outline: none; width: 100%; transition: border-color .15s; }
+.nd-in:focus { border-color: var(--forest); }
+.nd-in::placeholder { color: var(--ink5); }
+.nd-btn { background: var(--white); border: 1.5px solid var(--forest); color: var(--forest); border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 700; font-family: 'Plus Jakarta Sans', sans-serif; cursor: pointer; transition: all .15s; width: 100%; }
+.nd-btn:hover { background: rgba(26,51,40,.04); }
+.nd-btn:disabled { opacity: .4; cursor: not-allowed; }
+.nd-status { font-size: 11px; padding: 7px 10px; border-radius: 7px; line-height: 1.5; display: none; }
+.nd-status.ld { background: var(--hint-bg); color: var(--gold); display: block; }
+.nd-status.ok { background: var(--aha-bg); color: var(--forest); display: block; }
+.nd-status.er { background: var(--red-dim); color: var(--red); display: block; }
+
+/* Raw */
+.raw-pre { padding: 10px 12px; font-size: 9.5px; color: var(--ink4); white-space: pre-wrap; word-break: break-all; line-height: 1.6; font-family: monospace; max-height: 200px; overflow-y: auto; }
+
+/* ══════════════════════════════════════════════
+   PARENT DASHBOARD
+══════════════════════════════════════════════ */
+#v-parent {
+  flex-direction: column;
+  background: var(--cream);
+  overflow-y: auto;
+}
+
+.dash-wrap { max-width: 920px; width: 100%; margin: 0 auto; padding: 36px 28px; display: flex; flex-direction: column; gap: 28px; }
+
+.dash-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+
+.dash-heading {
+  font-family: 'Playfair Display', serif;
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--forest);
+  letter-spacing: -.5px;
+  line-height: 1.1;
+}
+
+.dash-sub-head { font-size: 14px; color: var(--ink3); margin-top: 6px; }
+
+.dash-date {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink3);
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+}
+
+/* Score hero */
+.score-hero {
+  background: var(--forest);
+  border-radius: var(--r-xl);
+  padding: 32px 36px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  box-shadow: 0 8px 32px rgba(26,51,40,.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.score-hero::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 200px; height: 200px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.04);
+}
+
+.score-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -40px; left: 40px;
+  width: 140px; height: 140px;
+  border-radius: 50%;
+  background: rgba(184,130,42,.1);
+}
+
+.score-ring-outer { flex-shrink: 0; text-align: center; position: relative; z-index: 1; }
+
+.score-ring {
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.08);
+  border: 3px solid rgba(255,255,255,.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: border-color .5s;
+}
+
+.score-ring.hi { border-color: rgba(61,220,132,.6); box-shadow: 0 0 24px rgba(61,220,132,.2); }
+.score-ring.mid { border-color: var(--gold2); box-shadow: 0 0 24px var(--gold-glow); }
+.score-ring.lo { border-color: rgba(247,91,79,.6); }
+
+.score-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+}
+
+.score-ring.hi .score-num { color: #7FFFC4; }
+.score-ring.mid .score-num { color: var(--gold2); }
+.score-ring.lo .score-num { color: #FF9E9E; }
+
+.score-sublabel { font-size: 9px; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; }
+.score-label { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 8px; }
+
+.score-right { flex: 1; position: relative; z-index: 1; }
+
+.score-headline {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.3;
+  margin-bottom: 18px;
+}
+
+.score-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+
+.ss {
+  background: rgba(255,255,255,.07);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.ss-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--gold2);
+  line-height: 1;
+}
+
+.ss-key { font-size: 10px; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
+
+/* Bloom levels */
+.bloom-section {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 24px 28px;
+  box-shadow: var(--shadow-sm);
+}
+
+.section-eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--forest);
+  margin-bottom: 18px;
+}
+
+.bloom-bars { display: flex; flex-direction: column; gap: 10px; }
+
+.bloom-row { display: flex; align-items: center; gap: 12px; }
+.bloom-label { font-size: 12.5px; font-weight: 600; color: var(--ink2); width: 90px; flex-shrink: 0; }
+.bloom-track { flex: 1; height: 8px; background: var(--cream2); border-radius: 4px; overflow: hidden; }
+.bloom-fill { height: 100%; border-radius: 4px; transition: width .8s cubic-bezier(.4,0,.2,1); }
+.bloom-pct { font-size: 12px; font-weight: 700; color: var(--ink2); width: 36px; text-align: right; }
+
+/* Insight grid */
+.insight-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+
+.insight-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 22px 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.insight-icon { font-size: 22px; margin-bottom: 10px; }
+.insight-label { font-size: 10.5px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink4); margin-bottom: 5px; }
+.insight-val { font-size: 14px; color: var(--ink2); line-height: 1.6; }
+
+/* Struggle points */
+.struggle-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.sc-header { padding: 18px 24px; border-bottom: 1px solid var(--border); }
+.sc-body { padding: 8px 0; }
+
+.struggle-item {
+  padding: 12px 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.struggle-item:last-child { border-bottom: none; }
+.si-icon { font-size: 16px; flex-shrink: 0; margin-top: 2px; }
+.si-text { font-size: 13.5px; color: var(--ink2); line-height: 1.55; }
+.si-text strong { color: var(--forest); }
+
+/* Transcript */
+.transcript-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.tc-header { padding: 18px 24px; border-bottom: 1px solid var(--border); }
+.tc-body { padding: 0 24px; }
+
+.tr-entry {
+  padding: 13px 0;
+  border-bottom: 1px solid var(--cream2);
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.tr-entry:last-child { border-bottom: none; }
+
+.tr-role {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.tr-role.student { background: rgba(26,51,40,.1); color: var(--forest); }
+.tr-role.tutor   { background: var(--blue-dim); color: var(--blue); }
+.tr-role.hint    { background: var(--hint-bg); color: var(--gold); }
+.tr-role.aha     { background: var(--aha-bg); color: var(--forest); }
+
+.tr-text { font-size: 13.5px; color: var(--ink2); line-height: 1.6; }
+
+/* Empty dashboard */
+.dash-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  padding: 80px 24px;
+}
+
+.de-ring {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  box-shadow: var(--shadow);
+}
+
+.de-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--forest);
+}
+
+.de-sub { font-size: 14px; color: var(--ink3); max-width: 280px; line-height: 1.65; }
+.de-btn { background: var(--forest); color: #fff; border: none; border-radius: 10px; padding: 11px 22px; font-size: 14px; font-weight: 700; font-family: 'Plus Jakarta Sans', sans-serif; cursor: pointer; box-shadow: 0 4px 14px rgba(26,51,40,.2); transition: all .15s; }
+.de-btn:hover { background: var(--forest2); transform: translateY(-1px); }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(60px);
+  background: var(--forest);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  transition: transform .25s ease;
+  z-index: 999;
+  pointer-events: none;
+  box-shadow: 0 8px 24px rgba(26,51,40,.3);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+/* ══════════════════════════════════════════════
+   VOICE MODE
+══════════════════════════════════════════════ */
+#voice-overlay {
+  position: fixed; inset: 0;
+  z-index: 600;
+  background: #0A1410;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 36px;
+}
+
+.voice-close {
+  position: absolute; top: 24px; right: 24px;
+  width: 48px; height: 48px; border-radius: 50%;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.14);
+  color: rgba(255,255,255,.7);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all .2s; font-size: 20px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.voice-close:hover { background: rgba(255,255,255,.16); color: #fff; }
+
+.voice-orb-scene {
+  position: relative;
+  width: 220px; height: 220px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.voice-orb-ring {
+  position: absolute; border-radius: 50%;
+  border: 1px solid rgba(46,180,100,.18);
+  pointer-events: none;
+  animation: vRing 3s ease-in-out infinite;
+}
+.voice-orb-ring:nth-child(1) { inset: 0; }
+.voice-orb-ring:nth-child(2) { inset: -20px; animation-delay: .7s; opacity: .55; }
+.voice-orb-ring:nth-child(3) { inset: -42px; animation-delay: 1.4s; opacity: .25; }
+
+@keyframes vRing {
+  0%, 100% { transform: scale(1); opacity: .3; }
+  50%       { transform: scale(1.04); opacity: .7; }
+}
+
+.voice-orb {
+  position: relative; z-index: 1;
+  width: 160px; height: 160px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #2E8B57, #1A3328 55%, #0D1A14);
+  box-shadow: 0 0 60px rgba(46,139,87,.3), 0 0 120px rgba(26,51,40,.15),
+              inset 0 1px 0 rgba(255,255,255,.07);
+  display: flex; align-items: center; justify-content: center;
+  transition: background .4s, box-shadow .4s;
+}
+
+/* Listening */
+.voice-orb-scene.listening .voice-orb {
+  background: radial-gradient(circle at 35% 30%, #22C55E, #166534 50%, #0D1A14);
+  box-shadow: 0 0 80px rgba(34,197,94,.45), 0 0 160px rgba(34,197,94,.15),
+              inset 0 1px 0 rgba(255,255,255,.1);
+  animation: vPulse .9s ease-in-out infinite;
+}
+.voice-orb-scene.listening .voice-orb-ring { animation-duration: 1.1s; border-color: rgba(34,197,94,.35); }
+
+/* Thinking */
+.voice-orb-scene.thinking .voice-orb {
+  background: radial-gradient(circle at 35% 30%, #D4A04E, #92400E 50%, #0D1A14);
+  box-shadow: 0 0 80px rgba(212,160,78,.4), 0 0 140px rgba(212,160,78,.12),
+              inset 0 1px 0 rgba(255,255,255,.1);
+  animation: vThink 1.8s ease-in-out infinite;
+}
+.voice-orb-scene.thinking .voice-orb-ring { border-color: rgba(212,160,78,.3); animation-duration: 1.8s; }
+
+/* Speaking */
+.voice-orb-scene.speaking .voice-orb {
+  background: radial-gradient(circle at 35% 30%, #60A5FA, #1E40AF 50%, #0D1A14);
+  box-shadow: 0 0 80px rgba(96,165,250,.45), 0 0 160px rgba(96,165,250,.15),
+              inset 0 1px 0 rgba(255,255,255,.1);
+  animation: vSpeak .55s ease-in-out infinite alternate;
+}
+.voice-orb-scene.speaking .voice-orb-ring { border-color: rgba(96,165,250,.35); animation-duration: .8s; }
+
+@keyframes vPulse  { 0%,100% { transform: scale(1);    } 50% { transform: scale(1.07); } }
+@keyframes vThink  { 0%,100% { transform: scale(1);    } 50% { transform: scale(1.03); filter: brightness(1.15); } }
+@keyframes vSpeak  { from { transform: scale(1); } to { transform: scale(1.1); } }
+
+/* Sound-wave bars inside orb (shown while speaking) */
+.voice-wave { display: none; gap: 5px; align-items: center; }
+.voice-orb-scene.speaking .voice-wave { display: flex; }
+.voice-orb-scene.speaking .voice-orb-icon { display: none; }
+
+.vbar {
+  width: 4px; border-radius: 2px; background: rgba(255,255,255,.85);
+  animation: vBar .7s ease-in-out infinite alternate;
+}
+.vbar:nth-child(1) { height: 16px; animation-delay: 0s; }
+.vbar:nth-child(2) { height: 26px; animation-delay: .1s; }
+.vbar:nth-child(3) { height: 36px; animation-delay: .2s; }
+.vbar:nth-child(4) { height: 26px; animation-delay: .3s; }
+.vbar:nth-child(5) { height: 16px; animation-delay: .4s; }
+@keyframes vBar { from { transform: scaleY(.4); opacity:.5; } to { transform: scaleY(1); opacity:1; } }
+
+.voice-orb-icon { color: rgba(255,255,255,.85); transition: opacity .2s; }
+
+.voice-status {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px; font-weight: 500;
+  color: rgba(255,255,255,.85);
+  letter-spacing: -.2px;
+  text-align: center;
+  min-height: 32px;
+  transition: opacity .25s;
+}
+
+.voice-transcript {
+  font-size: 14.5px;
+  color: rgba(255,255,255,.38);
+  max-width: 400px; text-align: center;
+  line-height: 1.65; min-height: 50px;
+  font-style: italic; padding: 0 16px;
+}
+
+.voice-tap-hint {
+  font-size: 12px; color: rgba(255,255,255,.2);
+  letter-spacing: .3px;
+}
+
+/* ── Attach button & menu ──────────────────── */
+.btn-attach {
+  width: 38px; height: 38px;
+  background: transparent;
+  border: 1.5px solid var(--border2);
+  border-radius: 11px;
+  cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s; color: var(--ink3);
+}
+.btn-attach:hover { border-color: var(--forest); color: var(--forest); }
+.btn-attach.has-img { background: rgba(184,130,42,.1); border-color: var(--gold); color: var(--gold); }
+
+#attach-menu {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 12px 36px rgba(28,28,28,.14), 0 2px 8px rgba(28,28,28,.07);
+  overflow: hidden;
+  display: none;
+  z-index: 50;
+  min-width: 200px;
+  animation: fadeUp .2s cubic-bezier(.16,1,.3,1) both;
+}
+
+.attach-opt {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 18px;
+  font-size: 13.5px; font-weight: 600;
+  color: var(--ink2); cursor: pointer;
+  transition: background .12s;
+  border-bottom: 1px solid var(--border);
+}
+.attach-opt:last-child { border-bottom: none; }
+.attach-opt:hover { background: var(--cream); color: var(--forest); }
+.attach-opt-icon {
+  width: 32px; height: 32px;
+  border-radius: 9px;
+  background: var(--cream2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+
+/* ── Image preview in input area ──────────── */
+#img-preview-wrap {
+  padding: 10px 18px 0;
+  display: none;
+}
+.img-preview-inner {
+  position: relative;
+  display: inline-block;
+}
+#img-preview {
+  max-height: 110px;
+  max-width: 200px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  display: block;
+}
+.img-preview-remove {
+  position: absolute; top: -8px; right: -8px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--forest); border: 2px solid var(--white);
+  color: #fff; cursor: pointer; font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  line-height: 1; font-weight: 700;
+  transition: background .15s;
+}
+.img-preview-remove:hover { background: var(--red); }
+
+/* ── Image bubble in chat ──────────────────── */
+.img-bubble-wrap {
+  max-width: 300px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1.5px solid rgba(255,255,255,.15);
+  box-shadow: 0 4px 16px rgba(26,51,40,.18);
+  margin-bottom: 4px;
+  cursor: zoom-in;
+}
+.img-bubble-wrap img { width: 100%; display: block; }
+
+/* ── Image lightbox ─────────────────────────── */
+#img-lightbox {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.85);
+  z-index: 700;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+  backdrop-filter: blur(4px);
+}
+#img-lightbox img {
+  max-width: 92vw; max-height: 88vh;
+  border-radius: 14px;
+  box-shadow: 0 24px 80px rgba(0,0,0,.5);
+  animation: fadeUp .25s cubic-bezier(.16,1,.3,1) both;
+}
+
+/* Mic button in chat */
+.btn-voice {
+  width: 38px; height: 38px;
+  background: transparent;
+  border: 1.5px solid var(--border2);
+  border-radius: 11px;
+  cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s; color: var(--ink3);
+}
+.btn-voice:hover { border-color: var(--forest); color: var(--forest); }
+.btn-voice.active { background: var(--forest); border-color: var(--forest); color: #fff; }
+
+.toast.err { background: var(--red); }
+.toast.ok { background: var(--forest); }
+
+/* ══════════════════════════════════════════════
+   LOGIN SCREEN
+══════════════════════════════════════════════ */
+#login-screen {
+  position: fixed; inset: 0;
+  background: var(--cream);
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background-image:
+    radial-gradient(ellipse at 15% 55%, rgba(26,51,40,.07) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 15%, rgba(184,130,42,.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 90%, rgba(26,51,40,.04) 0%, transparent 45%);
+}
+
+.login-container { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 24px; }
+
+.login-type-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  animation: fadeUp .6s .08s cubic-bezier(.16,1,.3,1) both;
+}
+
+.login-type-card {
+  background: var(--white);
+  border: 2px solid var(--border);
+  border-radius: 20px;
+  padding: 28px 20px;
+  cursor: pointer;
+  transition: all .25s cubic-bezier(.16,1,.3,1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(28,28,28,.06);
+}
+
+.login-type-card:hover {
+  border-color: var(--forest);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(26,51,40,.12);
+}
+
+.login-type-icon {
+  font-size: 34px;
+  width: 64px; height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cream);
+  border-radius: 18px;
+  border: 1px solid var(--border);
+}
+
+.login-type-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--forest);
+}
+
+.login-type-desc {
+  font-size: 12.5px;
+  color: var(--ink3);
+  line-height: 1.55;
+}
+
+/* ── School screen ─────────────────────────── */
+#school-screen {
+  position: fixed; inset: 0;
+  background: var(--cream);
+  z-index: 400;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow-y: auto;
+  background-image:
+    radial-gradient(ellipse at 15% 55%, rgba(26,51,40,.07) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 15%, rgba(184,130,42,.08) 0%, transparent 50%);
+}
+
+/* ── Admin dashboard ───────────────────────── */
+#admin-screen {
+  position: fixed; inset: 0;
+  background: var(--cream);
+  z-index: 400;
+  display: none;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 32px 24px;
+  background-image: radial-gradient(ellipse at 85% 15%, rgba(184,130,42,.08) 0%, transparent 50%);
+}
+
+.admin-wrap { max-width: 640px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+
+.admin-header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+
+.student-list { display: flex; flex-direction: column; gap: 10px; }
+
+.student-row {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: all .15s;
+  box-shadow: var(--shadow-sm);
+}
+
+.student-row:hover { border-color: var(--forest); }
+
+.student-av {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--forest);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 16px; font-weight: 700;
+  flex-shrink: 0;
+}
+
+.student-info { flex: 1; min-width: 0; }
+.student-name { font-size: 14.5px; font-weight: 700; color: var(--ink); }
+.student-meta { font-size: 12px; color: var(--ink3); margin-top: 2px; }
+.student-pin {
+  font-size: 11px; background: var(--cream2); border-radius: 6px;
+  padding: 2px 8px; color: var(--ink3); font-weight: 600;
+  display: inline-block; margin-top: 4px; font-family: monospace;
+}
+
+.btn-del {
+  background: var(--red-dim); border: 1px solid rgba(192,57,43,.2);
+  color: var(--red); border-radius: 8px; padding: 6px 12px;
+  font-size: 12px; font-weight: 600; font-family: 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer; transition: all .15s;
+}
+.btn-del:hover { background: rgba(192,57,43,.2); }
+
+.btn-launch-student {
+  background: rgba(26,51,40,.07); border: 1px solid rgba(26,51,40,.15);
+  color: var(--forest); border-radius: 8px; padding: 6px 12px;
+  font-size: 12px; font-weight: 600; font-family: 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer; transition: all .15s;
+}
+.btn-launch-student:hover { background: rgba(26,51,40,.12); }
+
+.code-badge {
+  background: var(--forest); color: #fff; border-radius: 10px;
+  padding: 8px 16px; font-size: 13px; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.code-val { font-family: monospace; font-size: 16px; letter-spacing: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║            LOGIN SCREEN                 ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<div id="login-screen">
+  <div class="login-container">
+    <div class="ob-brand" style="animation:fadeUp .6s cubic-bezier(.16,1,.3,1) both">
+      <div class="ob-brand-mark">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </div>
+      <span class="ob-wordmark">Guided</span>
+      <span class="ob-tagline">How would you like to use Guided?</span>
+    </div>
+
+    <div class="login-type-grid">
+      <div class="login-type-card" onclick="chooseFamily()">
+        <div class="login-type-icon">🏠</div>
+        <div class="login-type-name">Family</div>
+        <div class="login-type-desc">Parents set up Guided for their child — personalised by age, school and learning goal</div>
+      </div>
+      <div class="login-type-card" onclick="chooseSchule()">
+        <div class="login-type-icon">🏫</div>
+        <div class="login-type-name">School</div>
+        <div class="login-type-desc">Schools manage student accounts and give each child their own access</div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║           SCHOOL LOGIN SCREEN           ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<div id="school-screen">
+  <div class="ob-container">
+    <div class="ob-brand">
+      <div class="ob-brand-mark">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </div>
+      <span class="ob-wordmark">Guided — School</span>
+      <span class="ob-tagline">Sign in</span>
+    </div>
+
+    <div class="ob-card">
+      <!-- Tab toggle -->
+      <div style="display:flex;border-bottom:1px solid var(--border)">
+        <div id="sch-tab-student" onclick="schTab('student')"
+          style="flex:1;padding:14px;text-align:center;font-size:13.5px;font-weight:700;cursor:pointer;color:var(--forest);border-bottom:2.5px solid var(--forest);transition:.15s">
+          I'm a student
+        </div>
+        <div id="sch-tab-admin" onclick="schTab('admin')"
+          style="flex:1;padding:14px;text-align:center;font-size:13.5px;font-weight:700;cursor:pointer;color:var(--ink4);border-bottom:2.5px solid transparent;transition:.15s">
+          Admin / Teacher
+        </div>
+      </div>
+
+      <!-- Student login panel -->
+      <div id="sch-student-panel" class="ob-step active" style="display:flex">
+        <div class="ob-step-eyebrow">Student Login</div>
+        <div class="ob-step-title">Welcome back!</div>
+        <div class="ob-step-desc">Sign in with your school code, name and PIN.</div>
+        <div class="fgroup">
+          <label>School Code</label>
+          <input class="fi" id="sch-code" placeholder="e.g. SCH001" style="text-transform:uppercase;letter-spacing:2px"/>
+        </div>
+        <div class="fgroup">
+          <label>Dein Name</label>
+          <input class="fi" id="sch-student-name" placeholder="First and last name"/>
+        </div>
+        <div class="fgroup">
+          <label>PIN</label>
+          <input class="fi" id="sch-student-pin" type="password" placeholder="4-digit PIN"/>
+        </div>
+        <button class="btn-next" onclick="studentLogin()">Sign in →</button>
+        <div style="text-align:center;font-size:12px;color:var(--ink4);margin-top:-8px">
+          Don't have an account yet? Ask your teacher.
+        </div>
+      </div>
+
+      <!-- Admin login panel -->
+      <div id="sch-admin-panel" class="ob-step" style="display:none">
+        <div class="ob-step-eyebrow">Admin Login</div>
+        <div class="ob-step-title">School Management</div>
+        <div class="ob-step-desc">Melde dich mit deinem School Code und Admin Password an — oder erstelle eine neue Schule.</div>
+        <div style="background:var(--hint-bg);border:1px solid var(--hint-bdr);border-radius:12px;padding:14px 16px;font-size:13px;color:var(--ink2);line-height:1.6">
+          <strong style="color:var(--gold)">Neu hier?</strong> Klicke unten auf „Neue Schule anlegen" um einen Admin-Account zu erstellen und einen School Code zu erhalten.
+        </div>
+        <div class="fgroup">
+          <label>School Code</label>
+          <input class="fi" id="admin-code" placeholder="e.g. SCH001" style="text-transform:uppercase;letter-spacing:2px"/>
+        </div>
+        <div class="fgroup">
+          <label>Admin Password</label>
+          <input class="fi" id="admin-pw" type="password" placeholder="Password"/>
+        </div>
+        <button class="btn-next" onclick="adminLogin()">Als Admin einloggen →</button>
+        <button class="btn-back" style="width:100%;text-align:center;margin-top:-4px" onclick="showNewSchoolForm()">+ Create new school</button>
+
+        <div id="admin-new-school-form" style="display:none;background:var(--cream);border:1px solid var(--border);border-radius:14px;padding:18px;flex-direction:column;gap:14px">
+          <div class="ob-step-eyebrow" style="margin-bottom:0">Create new school</div>
+          <div class="fgroup">
+            <label>School name</label>
+            <input class="fi" id="new-school-name" placeholder="e.g. Springfield High, St Mary's London"/>
+          </div>
+          <div class="fgroup">
+            <label>Choose admin password</label>
+            <input class="fi" id="new-admin-pw" type="password" placeholder="Sicheres Password (min. 4 Zeichen)"/>
+          </div>
+          <button class="btn-next" onclick="createSchool()">Create school →</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:16px">
+      <button onclick="showLoginScreen()" style="background:none;border:none;color:var(--ink4);font-size:13px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">
+        ← Zurück zur Auswahl
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║           ADMIN DASHBOARD               ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<div id="admin-screen">
+  <div class="admin-wrap">
+    <div class="admin-header">
+      <div>
+        <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--forest);letter-spacing:-.3px" id="admin-school-name">School Dashboard</div>
+        <div style="font-size:13px;color:var(--ink3);margin-top:4px">Manage your school's student accounts</div>
+      </div>
+      <div class="code-badge">School Code: <span class="code-val" id="admin-school-code">—</span></div>
+    </div>
+
+    <!-- Add student form -->
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:18px;padding:24px;box-shadow:var(--shadow-sm)">
+      <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);margin-bottom:16px">Add new student</div>
+      <div class="frow" style="margin-bottom:14px">
+        <div class="fgroup">
+          <label>Name</label>
+          <input class="fi" id="new-s-name" placeholder="First and last name"/>
+        </div>
+        <div class="fgroup">
+          <label>Alter</label>
+          <input class="fi" id="new-s-age" type="number" min="6" max="18" value="12"/>
+        </div>
+      </div>
+      <div class="frow" style="margin-bottom:14px">
+        <div class="fgroup">
+          <label>Learning Style</label>
+          <select class="fs" id="new-s-style">
+            <option value="socratic">Socratic</option>
+            <option value="stepbystep">Step by Step</option>
+            <option value="friendly">Warm &amp; Patient</option>
+            <option value="challenge">Challenge Mode</option>
+          </select>
+        </div>
+        <div class="fgroup">
+          <label>Learning Goal</label>
+          <select class="fs" id="new-s-goal">
+            <option value="critical">Critical Thinking</option>
+            <option value="homework">Homework Help</option>
+            <option value="curiosity">Curiosity &amp; Fun</option>
+          </select>
+        </div>
+      </div>
+      <div class="fgroup" style="margin-bottom:14px">
+        <label>Notes for the tutor (optional)</label>
+        <textarea class="fta" id="new-s-notes" placeholder="e.g. English as second language, needs more time, loves sports examples..."></textarea>
+      </div>
+      <button class="btn-next" onclick="addStudent()" style="width:100%">Add student →</button>
+    </div>
+
+    <!-- Student list -->
+    <div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);margin-bottom:12px">
+        Schüler <span id="student-count" style="background:var(--cream2);padding:2px 8px;border-radius:20px;font-size:10px;margin-left:4px">0</span>
+      </div>
+      <div class="student-list" id="student-list">
+        <div style="text-align:center;padding:32px;color:var(--ink4);font-size:13.5px;background:var(--white);border:1px dashed var(--border);border-radius:14px">
+          No students yet. Add the first one above.
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center">
+      <button onclick="adminLogout()" style="background:none;border:none;color:var(--ink4);font-size:13px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">← Sign out</button>
+    </div>
+  </div>
+</div>
+<div id="app">
+
+  <div class="topnav">
+    <div class="nav-logo">
+      <div class="nav-logo-dot"></div>
+      Guided
+    </div>
+    <div class="nav-tab active" id="tab-s" onclick="switchView('student')">Student</div>
+    <div class="nav-right">
+      <div class="profile-chip" id="profile-chip" onclick="if(confirm('Reset and start a new session?'))location.reload()">
+        <div class="chip-av" id="chip-av">?</div>
+        <span id="chip-name">Student</span>
+      </div>
+      <button class="nav-pill on" id="img-pill" onclick="toggleImgs()">🖼 Images</button>
+      <button class="nav-pill on" id="dev-pill" onclick="toggleDev()">⌥ Dev</button>
+    </div>
+  </div>
+
+  <!-- STUDENT VIEW -->
+  <div class="view active" id="v-student">
+
+    <div id="chat-col">
+
+
+      <div id="msgs">
+        <div class="empty-chat" id="empty-chat">
+          <div class="empty-icon-ring">🌱</div>
+          <div class="empty-title" id="empty-title">Ready to learn!</div>
+          <div class="empty-sub" id="empty-sub">Ask anything. I won't just give you the answer — I'll help you think it through.</div>
+          <div class="starter-grid" id="starters"></div>
+        </div>
+      </div>
+
+
+      <div class="action-bar">
+        <button class="btn-hint" id="btn-hint" onclick="reqHint()">
+          💡 Need a hint
+          <span class="hint-count" id="hcount">3</span>
+        </button>
+        <button class="btn-gotit" onclick="gotIt()">✓ I figured it out!</button>
+      </div>
+
+      <div class="input-area" style="position:relative">
+        <!-- Image preview strip -->
+        <div id="img-preview-wrap">
+          <div class="img-preview-inner">
+            <img id="img-preview" src="" alt="preview"/>
+            <button class="img-preview-remove" onclick="clearImgPreview()">×</button>
+          </div>
+        </div>
+
+        <!-- Attach menu (positioned above button) -->
+        <div id="attach-menu">
+          <div class="attach-opt" onclick="openCamera()">
+            <div class="attach-opt-icon">📷</div>Take photo
+          </div>
+          <div class="attach-opt" onclick="openGallery()">
+            <div class="attach-opt-icon">🖼</div>From gallery
+          </div>
+          <div class="attach-opt" onclick="openFilePicker()">
+            <div class="attach-opt-icon">📎</div>Choose file
+          </div>
+        </div>
+
+        <div class="input-wrap">
+          <!-- Hidden file inputs -->
+          <input type="file" id="img-cam-input" accept="image/*" capture="environment" style="display:none" onchange="handleImgPick(this)">
+          <input type="file" id="img-file-input" accept="image/*,application/pdf,.doc,.docx,.txt" style="display:none" onchange="handleImgPick(this)">
+
+          <button class="btn-attach" id="btn-attach" onclick="toggleAttachMenu(event)" title="Add image / file">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+            </svg>
+          </button>
+
+          <textarea id="minput" placeholder="Ask a question or describe what you're stuck on..."
+            rows="1" oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
+          <button class="btn-voice" id="btn-voice" onclick="openVoiceMode()" title="Voice Mode">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
+          </button>
+          <button id="sbtn" onclick="sendMsg()" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DEV PANEL -->
+    <div id="dev-col">
+      <div class="dev-hdr">
+        <h3>Dev Panel</h3>
+        <div class="dev-close" onclick="toggleDev()">✕</div>
+      </div>
+      <div class="dev-body">
+
+        <div class="ds">
+          <div class="ds-title">Student Profile</div>
+          <div class="dr"><div class="k">Name</div><div class="v g" id="d-name">—</div></div>
+          <div class="dr"><div class="k">Age</div><div class="v" id="d-age">—</div></div>
+          <div class="dr"><div class="k">School</div><div class="v sm" id="d-school">—</div></div>
+          <div class="dr"><div class="k">Subject</div><div class="v" id="d-subj">—</div></div>
+          <div class="dr"><div class="k">Goal</div><div class="v sm" id="d-goal">—</div></div>
+          <div class="dr"><div class="k">Style</div><div class="v" id="d-style">—</div></div>
+          <div class="dr"><div class="k">Parent updates</div><div class="v" id="d-updates">—</div></div>
+          <div class="dr"><div class="k">Notes</div><div class="v sm" id="d-notes">—</div></div>
+        </div>
+
+        <div class="ds">
+          <div class="ds-title">Model Config</div>
+          <div class="dr"><div class="k">Model</div><div class="v g" id="d-model">—</div></div>
+          <div class="dr"><div class="k">Temp / Max tokens</div><div class="v" id="d-conf">—</div></div>
+          <div class="cbar-wrap">
+            <div class="cbar-labels"><span>Context window</span><span id="d-cpct">0%</span></div>
+            <div class="cbar"><div class="cbar-fill" id="d-cbar" style="width:0%"></div></div>
+          </div>
+        </div>
+
+        <div class="ds">
+          <div class="ds-title">Session Stats</div>
+          <div class="dr"><div class="k">Total tokens</div><div class="v a" id="d-tot">0</div></div>
+          <div class="dr"><div class="k">Prompt / Completion</div><div class="v" id="d-split">0 / 0</div></div>
+          <div class="dr"><div class="k">API calls</div><div class="v" id="d-calls">0</div></div>
+          <div class="dr"><div class="k">Last latency</div><div class="v" id="d-lat">—</div></div>
+          <div class="dr"><div class="k">Hints used</div><div class="v" id="d-hints">0</div></div>
+          <div class="dr"><div class="k">Aha moments</div><div class="v g" id="d-ahas">0</div></div>
+          <div class="dr"><div class="k">Images generated</div><div class="v" id="d-imgs">0</div></div>
+          <div class="dr"><div class="k">Needle searches</div><div class="v" id="d-nds">0</div></div>
+        </div>
+
+        <div class="ds">
+          <div class="ds-title">Needle — Load Document</div>
+          <div class="nd-wrap">
+            <input class="nd-in" id="nd-url" placeholder="Paste URL or topic..."/>
+            <button class="nd-btn" id="nd-btn" onclick="loadNeedle()">Load into Needle →</button>
+            <div class="nd-status" id="nd-st"></div>
+          </div>
+          <div class="dr"><div class="k">Collection ID</div><div class="v sm" id="d-coll">—</div></div>
+          <div class="dr"><div class="k">Last context pulled</div><div class="v sm" id="d-lctx">—</div></div>
+        </div>
+
+        <div class="ds">
+          <div class="ds-title">
+            Message History
+            <button onclick="clearChat()" style="background:none;border:none;color:var(--red);font-size:9px;cursor:pointer;font-family:inherit;font-weight:700;text-transform:uppercase;letter-spacing:1px">Clear</button>
+          </div>
+          <div id="d-hist"><div style="padding:10px 12px;font-size:11px;color:var(--ink4)">No messages yet</div></div>
+        </div>
+
+        <div class="ds">
+          <div class="ds-title">Last API Response</div>
+          <pre class="raw-pre" id="d-raw">—</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║            IMAGE LIGHTBOX              ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<div id="img-lightbox" onclick="closeLightbox()">
+  <img id="img-lightbox-img" src="" alt=""/>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║            VOICE OVERLAY               ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<div id="voice-overlay">
+  <button class="voice-close" onclick="closeVoiceMode()">×</button>
+
+  <div class="voice-orb-scene" id="voice-orb-scene" onclick="toggleVoiceListen()">
+    <div class="voice-orb-ring"></div>
+    <div class="voice-orb-ring"></div>
+    <div class="voice-orb-ring"></div>
+    <div class="voice-orb" id="voice-orb">
+      <!-- mic icon (default) -->
+      <svg class="voice-orb-icon" id="voice-orb-icon" width="52" height="52" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+        <line x1="12" y1="19" x2="12" y2="23"/>
+        <line x1="8" y1="23" x2="16" y2="23"/>
+      </svg>
+      <!-- wave bars (shown while speaking) -->
+      <div class="voice-wave">
+        <div class="vbar"></div><div class="vbar"></div><div class="vbar"></div>
+        <div class="vbar"></div><div class="vbar"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="voice-status" id="voice-status">Tap to speak</div>
+  <div class="voice-transcript" id="voice-transcript"></div>
+  <div class="voice-tap-hint">Tap the circle to start · × to stop</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  HARDCODED API KEYS
+// ══════════════════════════════════════════════
+const FL_KEY = 'rc_de034f3571a2964c24c7a61cf45a3516e3f1f9124c986230d7bbd420e5263e8c';
+const EL_KEY = 'bb012f02ea7501ab0c48a16c39e4a9df5cdda0b5a5c75cdc5e6ec2f36bd07879';
+const ND_KEY = 'apk_01KKNVHMHMHTN3YHVYJ77G6WS9';
+
+// ══════════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════════
+const MODEL    = 'meta-llama/Meta-Llama-3.1-8B-Instruct';
+const MAX_TOK  = 400;
+const TEMP     = 0.75;
+const CTX_WIN  = 8000;
+const VOICE_ID = '21m00Tcm4TlvDq8ikWAM';
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+const S = {
+  name:'', age:'12', subj:'', goal:'', notes:'', style:'socratic',
+  school:'', schoolCurriculum:'', learningGoal:'critical', parentUpdates:'monthly',
+  history: [],
+  events: [],         // {who, text, type, bloom, ts}
+  totTok:0, pTok:0, cTok:0,
+  calls:0, imgs:0, ndSearches:0,
+  hintsLeft:3, hintsUsed:0, exchanges:0, ahas:0,
+  sessionStart: null,
+  ndCollId: null, ndReady: false,
+  voiceOn: false, imgsOn: true,
+  audio: null, loading: false,
+  // Bloom's taxonomy tracking
+  bloom: { remember:0, understand:0, apply:0, analyze:0, evaluate:0, create:0 },
+  bloomTotal: 0,
+};
+
+// ══════════════════════════════════════════════
+//  NEEDLE SUBJECT AUTO-LOADING
+// ══════════════════════════════════════════════
+const SUBJECT_URLS = {
+  Mathematics:       'https://en.wikipedia.org/wiki/Mathematics',
+  Physics:           'https://en.wikipedia.org/wiki/Physics',
+  Chemistry:         'https://en.wikipedia.org/wiki/Chemistry',
+  Biology:           'https://en.wikipedia.org/wiki/Biology',
+  History:           'https://en.wikipedia.org/wiki/History',
+  Literature:        'https://en.wikipedia.org/wiki/Literature',
+  Geography:         'https://en.wikipedia.org/wiki/Geography',
+  'Computer Science':'https://en.wikipedia.org/wiki/Computer_science',
+  Economics:         'https://en.wikipedia.org/wiki/Economics',
+};
+
+// ══════════════════════════════════════════════
+//  SYSTEM PROMPT
+// ══════════════════════════════════════════════
+function buildPrompt(ndCtx) {
+  const styleInstructions = {
+    socratic: `
+TEACHING METHOD — SOCRATIC:
+Your pattern for every response:
+① Explain the core concept in 2 sentences — clear, no jargon, age-appropriate
+② Give ONE killer analogy or example from everyday life that a ${S.age}-year-old would actually relate to
+③ Ask ONE probing question that forces the student to apply the concept themselves
+④ NEVER complete the thought for them — leave the question open
+
+Example of wrong response: "Density is mass divided by volume. Ice is less dense than water because water expands when it freezes, so it floats."
+Example of right response: "Density is basically how much stuff is packed into a space. Imagine squishing the same amount of clay into different sizes of box — same mass, different volume. Now here's what's interesting: when most things cool down, they shrink and get denser. But water does the opposite. Why do you think that might be?"`,
+
+    stepbystep: `
+TEACHING METHOD — STEP BY STEP:
+① Break the concept into the smallest possible numbered steps
+② After each step, ask: "Does that part make sense?" before continuing
+③ Only move forward when the student signals understanding
+④ After completing all steps, ask the student to explain it back in their own words
+⑤ If they explain it wrong, don't correct directly — ask "What do you mean by X?"`,
+
+    friendly: `
+TEACHING METHOD — WARM & PATIENT:
+① Start by validating that the topic IS genuinely confusing — normalize the struggle
+② Use only analogies from a ${S.age}-year-old's world: games, sports, food, TikTok, whatever fits
+③ Be enthusiastically encouraging but SPECIFIC — "you just identified the most important part" not "great job"
+④ Go slow, use short sentences, check in constantly
+⑤ Celebrate every small step like it actually matters — because it does`,
+
+    challenge: `
+TEACHING METHOD — CHALLENGE MODE:
+① Give only the minimal hint that points toward the concept — don't explain
+② Ask a hard question that requires real analysis
+③ When they struggle, ask a slightly simpler version — don't rescue
+④ Push back if their answer is vague: "What exactly do you mean by that?"
+⑤ Reserve genuine praise for when they truly earn it`,
+  };
+
+  return `You are Guided, a world-class personal AI tutor for ${S.name}, aged ${S.age}, studying ${S.subj}.
+${S.school ? `School: ${S.school}` : ''}
+${S.goal ? `Session goal: ${S.goal}` : ''}
+${S.notes ? `IMPORTANT about this student: ${S.notes}` : ''}
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+CRITICAL RULE — NEVER GIVE A DIRECT ANSWER
+━━━━━━━━━━━━━━━━━━━━━━━━
+This is non-negotiable. You must NEVER give the student the complete answer to their question.
+
+WRONG (never do this):
+Student: "Why does ice float?"
+You: "Ice floats because water expands when it freezes, making it less dense than liquid water."
+
+RIGHT (always do this):
+Student: "Why does ice float?"
+You: "Most things shrink when they cool down and get denser — think about how metal contracts in cold. So water should sink when it freezes, right? But here's the weird thing about water... what do you already know about how water molecules are arranged?"
+
+This rule applies even if the student:
+• Says "just tell me the answer" → respond: "I know that's frustrating — let me try a different angle that'll make this click."
+• Says "I give up" → acknowledge the struggle, give the gentlest nudge as a question
+• Says "my teacher told me X" → redirect: "Interesting — so what does that actually mean to you?"
+• Says "I don't know anything" → start with the simplest possible question to find what they DO know
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+CRITICAL RULE — BUILD THINKING, NOT MEMORY
+━━━━━━━━━━━━━━━━━━━━━━━━
+After every response, ask yourself: "Will ${S.name} be better at thinking through similar problems after this?" If not, rewrite it.
+
+You are working through Bloom's Taxonomy — constantly push one level higher:
+• Remember → Understand → Apply → Analyze → Evaluate → Create
+• Label your question's thinking level at the end with exactly: [BLOOM:level] (e.g., [BLOOM:analyze])
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+HINT SYSTEM
+━━━━━━━━━━━━━━━━━━━━━━━━
+When triggered with "(hint request)": give the minimum possible nudge — one sentence pointing toward a concept, never the answer. Still end with a question. Add [BLOOM:remember] since we're going back to basics.
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+AHA MOMENT DETECTION
+━━━━━━━━━━━━━━━━━━━━━━━━
+When the student genuinely arrives at the correct answer themselves, start your response with [AHA] then:
+• Name exactly what insight they just had ("You just discovered that...")
+• Explain why that insight matters in the real world
+• Immediately challenge them one level higher ("Now here's the harder question...")
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+PERSONALIZATION RULES
+━━━━━━━━━━━━━━━━━━━━━━━━
+• All vocabulary MUST be appropriate for a ${S.age}-year-old — no jargon without immediate plain-English definition
+• All analogies must reference things a ${S.age}-year-old actually encounters
+• If notes say the student gets frustrated: back off, praise more, make steps smaller
+• If notes say the student loves a topic/sport/interest: use it in every analogy you can
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+${styleInstructions[S.style] || styleInstructions.socratic}
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+VISUAL LEARNING
+━━━━━━━━━━━━━━━━━━━━━━━━
+When a diagram would genuinely help (geometry, processes, anatomy, timelines), write on its own line: [IMAGE: specific description]
+Use sparingly — maximum one per response, only when truly useful.
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+FORMAT
+━━━━━━━━━━━━━━━━━━━━━━━━
+• Max 3 short paragraphs. Never overwhelm.
+• End EVERY response with a question or challenge.
+• Always include [BLOOM:level] tag at the very end.
+
+${ndCtx ? `\n━━━━━━━━━━━━━━━━━━━━━━━━\nSTUDY MATERIAL (use this to ask specific, grounded questions):\n${ndCtx}\n━━━━━━━━━━━━━━━━━━━━━━━━` : ''}`;
+}
+
+// ══════════════════════════════════════════════
+//  SEND MESSAGE
+// ══════════════════════════════════════════════
+async function sendMsg(isHint = false, isGotIt = false) {
+  if (S.loading) return;
+  const ta = document.getElementById('minput');
+  let text = isHint ? '(hint request)' : isGotIt ? '(student says they figured it out — check if correct, celebrate specifically if so)' : ta.value.trim();
+
+  // Handle pending image
+  const imgSnap = pendingImg;
+  if (imgSnap) clearImgPreview();
+
+  if (!text && !isHint && !isGotIt && !imgSnap) return;
+
+  const empty = document.getElementById('empty-chat');
+  if (empty) empty.remove();
+
+  if (!isHint && !isGotIt) {
+    if (imgSnap) addImgBubble(imgSnap.dataUrl, text);
+    else addBubble('user', text);
+    S.events.push({ who: 'student', text: text || '[Bild]', type: 'message', ts: Date.now() });
+    ta.value = ''; ta.style.height = 'auto';
+  }
+
+  // Build content for AI: if image, prepend a note
+  let aiContent = isHint
+    ? 'I need a hint — please give me the gentlest possible nudge without telling me the answer.'
+    : isGotIt
+    ? 'I think I got it! Please confirm if I understood correctly and challenge me further.'
+    : text;
+
+  if (imgSnap && !isHint && !isGotIt) {
+    const imgNote = `[The student shared an image${text ? ': ' + text : '. Ask what they're trying to learn or understand with it'}]`;
+    aiContent = text ? `${text}\n\n${imgNote}` : imgNote;
+  }
+
+  S.history.push({ role: 'user', content: aiContent });
+
+  S.loading = true;
+  document.getElementById('sbtn').disabled = true;
+  const tid = showTyping();
+
+  // Get Needle context
+  let ndCtx = '';
+  if (S.ndReady) ndCtx = await srchNeedle(isHint ? 'hint nudge' : text);
+
+  const t0 = Date.now();
+  try {
+    const { reply, usage } = await callFL(ndCtx);
+    const lat = Date.now() - t0;
+    removeTyping(tid);
+
+    S.totTok += usage.total_tokens || 0;
+    S.pTok   += usage.prompt_tokens || 0;
+    S.cTok   += usage.completion_tokens || 0;
+    S.calls++;
+    S.exchanges++;
+
+    // Parse response
+    const isAha   = reply.startsWith('[AHA]');
+    const clean   = reply.replace(/^\[AHA\]\s*/, '').replace(/\[BLOOM:\w+\]/gi, '').trim();
+    const bloomM  = reply.match(/\[BLOOM:(\w+)\]/i);
+    const bloomLvl = bloomM ? bloomM[1].toLowerCase() : 'understand';
+    const { txt, imgP } = parseImg(clean);
+
+    addBubble('ai', txt, usage, isHint, isAha, bloomLvl);
+    S.history.push({ role: 'assistant', content: clean });
+    S.events.push({ who: 'tutor', text: txt, type: isAha ? 'aha' : isHint ? 'hint' : 'message', bloom: bloomLvl, ts: Date.now() });
+
+    if (isAha) { S.ahas++; document.getElementById('d-ahas').textContent = S.ahas; }
+
+    // Track Bloom
+    if (bloomLvl && S.bloom.hasOwnProperty(bloomLvl)) {
+      S.bloom[bloomLvl]++;
+      S.bloomTotal++;
+    }
+
+    if (imgP && S.imgsOn) genImg(imgP);
+
+    updateDev(usage, lat);
+    updateDashBadge();
+
+  } catch(e) {
+    removeTyping(tid);
+    addBubble('ai', '⚠️ Error: ' + e.message);
+    S.history.pop();
+  }
+
+  S.loading = false;
+  document.getElementById('sbtn').disabled = false;
+  document.getElementById('minput').focus();
+}
+
+function reqHint() {
+  if (S.hintsLeft <= 0) { toast('No hints left!', 'err'); return; }
+  S.hintsLeft--;
+  S.hintsUsed++;
+  document.getElementById('hcount').textContent = S.hintsLeft;
+  document.getElementById('d-hints').textContent = S.hintsUsed;
+  if (S.hintsLeft === 0) document.getElementById('btn-hint').disabled = true;
+  S.events.push({ who: 'student', text: '(requested a hint)', type: 'hint', ts: Date.now() });
+  sendMsg(true, false);
+}
+
+function gotIt() { sendMsg(false, true); }
+
+// ══════════════════════════════════════════════
+//  FEATHERLESS
+// ══════════════════════════════════════════════
+async function callFL(ndCtx) {
+  const res = await fetch('https://api.featherless.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${FL_KEY}` },
+    body: JSON.stringify({
+      model: MODEL,
+      messages: [{ role: 'system', content: buildPrompt(ndCtx) }, ...S.history],
+      max_tokens: MAX_TOK,
+      temperature: TEMP
+    })
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(e.error?.message || `API error ${res.status}`);
+  }
+  const data = await res.json();
+  document.getElementById('d-raw').textContent = JSON.stringify(data, null, 2);
+  return { reply: data.choices[0].message.content.trim(), usage: data.usage || {} };
+}
+
+// ══════════════════════════════════════════════
+//  IMAGE GENERATION (free — Pollinations)
+// ══════════════════════════════════════════════
+function parseImg(t) {
+  const m = t.match(/\[IMAGE:\s*([^\]]+)\]/i);
+  if (!m) return { txt: t, imgP: null };
+  return { txt: t.replace(m[0], '').trim(), imgP: m[1].trim() };
+}
+
+function genImg(p) {
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent('clean educational diagram: ' + p + ', white background, textbook illustration, labeled clearly, professional')}?width=640&height=380&nologo=true&seed=${Date.now()}`;
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ai';
+  wrap.innerHTML = `
+    <div class="msg-av" style="font-size:16px">🖼</div>
+    <div class="msg-body">
+      <div class="gen-img-card">
+        <img src="${url}" alt="${p}" onload="document.getElementById('msgs').scrollTop=99999"/>
+        <div class="gen-img-cap">📐 ${p}</div>
+      </div>
+    </div>`;
+  document.getElementById('msgs').appendChild(wrap);
+  document.getElementById('msgs').scrollTop = 99999;
+  S.imgs++;
+  document.getElementById('d-imgs').textContent = S.imgs;
+}
+
+// ══════════════════════════════════════════════
+//  NEEDLE — AUTO-LOAD ON SESSION START
+// ══════════════════════════════════════════════
+async function autoLoadNeedle(url) {
+  try {
+    const cr = await fetch('https://needle-ai.com/api/v1/collections', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-needle-api-key': ND_KEY },
+      body: JSON.stringify({ name: `guided_${S.name}_${Date.now()}` })
+    });
+    if (!cr.ok) throw new Error(`Collection ${cr.status}`);
+    const cd = await cr.json();
+    S.ndCollId = cd.id;
+    document.getElementById('d-coll').textContent = cd.id;
+
+    await fetch(`https://needle-ai.com/api/v1/collections/${S.ndCollId}/files`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-needle-api-key': ND_KEY },
+      body: JSON.stringify({ url })
+    });
+
+    S.ndReady = true;
+    toast('Needle loaded — questions grounded in study material', 'ok');
+  } catch(e) {
+    console.error('Needle auto-load:', e);
+  }
+}
+
+async function loadNeedle() {
+  const url = document.getElementById('nd-url').value.trim();
+  if (!url) { toast('Enter a URL or topic first', 'err'); return; }
+  const btn = document.getElementById('nd-btn');
+  btn.disabled = true; btn.textContent = 'Loading...';
+  showNdSt('ld', '⏳ Indexing document...');
+  try {
+    const cr = await fetch('https://needle-ai.com/api/v1/collections', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-needle-api-key': ND_KEY },
+      body: JSON.stringify({ name: `guided_${Date.now()}` })
+    });
+    if (!cr.ok) throw new Error(`Collection ${cr.status}`);
+    const cd = await cr.json();
+    S.ndCollId = cd.id;
+    document.getElementById('d-coll').textContent = cd.id;
+
+    const isUrl = url.startsWith('http');
+    const fr = await fetch(`https://needle-ai.com/api/v1/collections/${S.ndCollId}/files`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-needle-api-key': ND_KEY },
+      body: JSON.stringify(isUrl ? { url } : { content: url, name: 'material.txt' })
+    });
+    if (!fr.ok) throw new Error(`File ${fr.status}`);
+    S.ndReady = true;
+    showNdSt('ok', '✓ Loaded. Every question now uses this as context.');
+    toast('Needle loaded', 'ok');
+  } catch(e) {
+    showNdSt('er', '✕ ' + e.message);
+    toast('Needle error', 'err');
+  }
+  btn.disabled = false; btn.textContent = 'Load into Needle →';
+}
+
+async function srchNeedle(q) {
+  if (!S.ndCollId || !q) return '';
+  try {
+    const r = await fetch(`https://needle-ai.com/api/v1/collections/${S.ndCollId}/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-needle-api-key': ND_KEY },
+      body: JSON.stringify({ query: q, top_k: 3 })
+    });
+    const d = await r.json();
+    S.ndSearches++;
+    document.getElementById('d-nds').textContent = S.ndSearches;
+    if (d.results?.length) {
+      const ctx = d.results.map(r => r.content).join('\n\n');
+      document.getElementById('d-lctx').textContent = ctx.slice(0, 80) + '...';
+      return ctx;
+    }
+  } catch(e) { console.error('Needle search:', e); }
+  return '';
+}
+
+function showNdSt(t, m) { const el = document.getElementById('nd-st'); el.className = `nd-status ${t}`; el.textContent = m; }
+
+function stopAudio() {
+  if (S.audio) { S.audio.pause(); S.audio = null; }
+}
+
+// ══════════════════════════════════════════════
+//  PARENT DASHBOARD
+// ══════════════════════════════════════════════
+function updateDashBadge() {
+  if (S.exchanges >= 4) {
+    document.getElementById('tab-p').classList.add('has-data');
+  }
+}
+
+function buildDashboard() {
+  if (S.exchanges < 4) return;
+
+  const duration = Math.max(1, Math.round((Date.now() - S.sessionStart) / 60000));
+
+  // Independence score
+  const hintPenalty = (S.hintsUsed / 3) * 30;
+  const exchBonus   = Math.min(25, S.exchanges * 3);
+  const ahaBon      = S.ahas * 12;
+  const score       = Math.round(Math.max(5, Math.min(100, 68 - hintPenalty + exchBonus + ahaBon)));
+  const scoreClass  = score >= 70 ? 'hi' : score >= 45 ? 'mid' : 'lo';
+  const scoreWord   = score >= 70 ? 'Strong Independence' : score >= 45 ? 'Growing Independence' : 'Building Foundations';
+
+  // Bloom %s
+  const bloomColors = { remember:'#3B82F6',understand:'#22C55E',apply:'#EAB308',analyze:'#F97316',evaluate:'#A855F7',create:'#EF4444' };
+  const bloomBarsHTML = Object.entries(S.bloom).map(([level, count]) => {
+    const pct = S.bloomTotal > 0 ? Math.round((count / S.bloomTotal) * 100) : 0;
+    return `<div class="bloom-row">
+      <div class="bloom-label">${level.charAt(0).toUpperCase() + level.slice(1)}</div>
+      <div class="bloom-track"><div class="bloom-fill" style="width:${pct}%;background:${bloomColors[level]}"></div></div>
+      <div class="bloom-pct">${pct}%</div>
+    </div>`;
+  }).join('');
+
+  // Headlines
+  const headlines = {
+    hi:  `${S.name} showed strong independent thinking this session`,
+    mid: `${S.name} made solid progress with guided support`,
+    lo:  `${S.name} is building foundations — consistent practice will accelerate this`,
+  };
+
+  const thinkingInsight = {
+    hi:  'Worked through problems with minimal support. Reached conclusions through own reasoning.',
+    mid: 'Used hints strategically and kept trying when stuck — a key learning habit.',
+    lo:  'Needed significant scaffolding. Concepts are new and that\'s completely normal at this stage.',
+  };
+
+  const nextStep = {
+    hi:  `Challenge ${S.name} with harder problems. Try reducing hints to 1 per session.`,
+    mid: `Daily sessions of 20 minutes will compound quickly. Encourage independent attempts before hints.`,
+    lo:  `Short, frequent sessions (15 min daily) beat long occasional ones. Focus on one concept at a time.`,
+  };
+
+  // Struggle points
+  const hintEvents = S.events.filter(e => e.type === 'hint');
+  const ahaEvents  = S.events.filter(e => e.type === 'aha');
+
+  const dw = document.getElementById('dash-wrap');
+  dw.innerHTML = `
+    <div class="dash-top">
+      <div>
+        <div class="dash-heading">Parent Dashboard</div>
+        <div class="dash-sub-head">${S.name} · ${S.subj} · ${S.goal || 'General session'}</div>
+      </div>
+      <div class="dash-date">${new Date().toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' })}</div>
+    </div>
+
+    <!-- Score Hero -->
+    <div class="score-hero">
+      <div class="score-ring-outer">
+        <div class="score-ring ${scoreClass}">
+          <div class="score-num">${score}</div>
+          <div class="score-sublabel">/ 100</div>
+        </div>
+        <div class="score-label">Independence Score</div>
+      </div>
+      <div class="score-right">
+        <div class="score-headline">${headlines[scoreClass]}</div>
+        <div class="score-stats">
+          <div class="ss"><div class="ss-val">${S.exchanges}</div><div class="ss-key">Exchanges</div></div>
+          <div class="ss"><div class="ss-val">${S.hintsUsed}</div><div class="ss-key">Hints used</div></div>
+          <div class="ss"><div class="ss-val">${S.ahas}</div><div class="ss-key">Aha moments</div></div>
+          <div class="ss"><div class="ss-val">${duration}m</div><div class="ss-key">Duration</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bloom's Taxonomy -->
+    <div class="bloom-section">
+      <div class="section-eyebrow">Cognitive Development</div>
+      <div class="section-title">What thinking levels did ${S.name} exercise?</div>
+      <div class="bloom-bars">${bloomBarsHTML}</div>
+      <div style="margin-top:14px;font-size:13px;color:var(--ink3);line-height:1.6">
+        <strong style="color:var(--ink2)">What this means:</strong> Higher levels (Analyze, Evaluate, Create) indicate deeper thinking. 
+        Remember/Understand is foundational. The goal over multiple sessions is to see the bars shift upward.
+      </div>
+    </div>
+
+    <!-- Insights -->
+    <div class="insight-grid">
+      <div class="insight-card">
+        <div class="insight-icon">🧠</div>
+        <div class="insight-label">Thinking Style</div>
+        <div class="insight-val">${thinkingInsight[scoreClass]}</div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-icon">${ahaEvents.length > 0 ? '✨' : '📈'}</div>
+        <div class="insight-label">${ahaEvents.length > 0 ? 'Breakthrough Moments' : 'Progress'}</div>
+        <div class="insight-val">${ahaEvents.length > 0 ? `${S.name} had ${ahaEvents.length} genuine "aha" moment${ahaEvents.length > 1 ? 's' : ''} — concepts clicked through their own thinking, not just being told.` : 'No aha moments this session yet. Keep going — they\'re coming. Every exchange builds the foundation.'}</div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-icon">💪</div>
+        <div class="insight-label">Strength Shown</div>
+        <div class="insight-val">${score >= 70 ? `${S.name} persisted through difficulty and didn't give up when the answer wasn't obvious. That's the most important skill to build.` : score >= 45 ? `${S.name} kept engaging even when stuck. Asking for a hint is smarter than giving up — it shows metacognition.` : `${S.name} showed up and tried. At this stage, that's everything.`}</div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-icon">🎯</div>
+        <div class="insight-label">Next Session</div>
+        <div class="insight-val">${nextStep[scoreClass]}</div>
+      </div>
+    </div>
+
+    <!-- Struggles -->
+    ${hintEvents.length > 0 ? `
+    <div class="struggle-card">
+      <div class="sc-header">
+        <div class="section-eyebrow">Support Points</div>
+        <div class="section-title">Where ${S.name} needed a nudge</div>
+      </div>
+      <div class="sc-body">
+        ${hintEvents.map((e, i) => `
+          <div class="struggle-item">
+            <div class="si-icon">❓</div>
+            <div class="si-text"><strong>Hint ${i+1}</strong> — ${S.name} requested support at this point in the session. This is a normal part of learning and not a failure — it shows self-awareness about being stuck.</div>
+          </div>`).join('')}
+      </div>
+    </div>` : ''}
+
+    <!-- Transcript -->
+    <div class="transcript-card">
+      <div class="tc-header">
+        <div class="section-eyebrow">Full Record</div>
+        <div class="section-title">Session Transcript</div>
+      </div>
+      <div class="tc-body">
+        ${S.events.map(e => `
+          <div class="tr-entry">
+            <div class="tr-role ${e.who === 'student' ? 'student' : e.type === 'hint' ? 'hint' : e.type === 'aha' ? 'aha' : 'tutor'}">${e.who === 'student' ? S.name : e.type === 'aha' ? 'aha ✨' : e.type === 'hint' ? 'hint' : 'tutor'}</div>
+            <div class="tr-text">${escH(e.text)}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════
+//  DEV PANEL
+// ══════════════════════════════════════════════
+function updateDev(usage, lat) {
+  document.getElementById('d-tot').textContent   = S.totTok.toLocaleString();
+  document.getElementById('d-split').textContent = `${S.pTok.toLocaleString()} / ${S.cTok.toLocaleString()}`;
+  document.getElementById('d-calls').textContent = S.calls;
+  document.getElementById('d-lat').textContent   = lat + 'ms';
+
+  const pct = Math.min(100, Math.round((S.totTok / CTX_WIN) * 100));
+  document.getElementById('d-cpct').textContent = pct + '%';
+  const bar = document.getElementById('d-cbar');
+  bar.style.width = pct + '%';
+  bar.style.background = pct > 80 ? 'var(--red)' : pct > 60 ? 'var(--gold)' : 'var(--forest)';
+
+  const hl = document.getElementById('d-hist');
+  hl.innerHTML = '';
+  [{ role: 'system', content: buildPrompt('') }, ...S.history].forEach(m => {
+    const d = document.createElement('div');
+    d.className = 'hist-entry';
+    d.innerHTML = `<div class="hrole ${m.role}">${m.role}</div><div class="htext">${escH(m.content)}</div>`;
+    hl.appendChild(d);
+  });
+}
+
+// ══════════════════════════════════════════════
+//  UI HELPERS
+// ══════════════════════════════════════════════
+const BLOOM_COLORS = { remember:'remember',understand:'understand',apply:'apply',analyze:'analyze',evaluate:'evaluate',create:'create' };
+
+function addBubble(role, text, usage, isHint, isAha, bloomLvl) {
+  const msgs = document.getElementById('msgs');
+  const empty = document.getElementById('empty-chat');
+  if (empty) empty.remove();
+
+  const d = document.createElement('div');
+  d.className = `msg ${role}`;
+
+  let bubClass = 'bubble';
+  if (isHint) bubClass += ' hint';
+  if (isAha)  bubClass += ' aha';
+
+  const tokTag = (role === 'ai' && usage?.completion_tokens)
+    ? `<span class="tok-tag">${usage.completion_tokens} tok</span>` : '';
+
+  const bloomTag = (role === 'ai' && bloomLvl && BLOOM_COLORS[bloomLvl])
+    ? `<span class="thinking-badge ${BLOOM_COLORS[bloomLvl]}">${bloomLvl}</span>` : '';
+
+  const initials = role === 'user' ? S.name.slice(0, 2).toUpperCase() : '🌱';
+
+  d.innerHTML = `
+    <div class="msg-av">${initials}</div>
+    <div class="msg-body">
+      <div class="${bubClass}">${escH(text)}</div>
+      <div class="msg-meta">
+        ${new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}
+        ${tokTag}
+        ${bloomTag}
+      </div>
+    </div>`;
+
+  msgs.appendChild(d);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showTyping() {
+  const msgs = document.getElementById('msgs');
+  const id = 'tp' + Date.now();
+  const d = document.createElement('div');
+  d.className = 'msg ai'; d.id = id;
+  d.innerHTML = `<div class="msg-av">🌱</div><div class="msg-body"><div class="typing-ring"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+  msgs.appendChild(d);
+  msgs.scrollTop = msgs.scrollHeight;
+  return id;
+}
+
+function removeTyping(id) { const e = document.getElementById(id); if (e) e.remove(); }
+
+function buildStarters() {
+  const map = {
+    Mathematics: ['Why does x²-4=0 have two solutions?','What is a derivative actually measuring?','Why is dividing by zero impossible?'],
+    Physics: ['Why does ice float?','What is the difference between speed and velocity?','How does gravity actually work?'],
+    Chemistry: ['How do atoms bond to each other?','What actually happens in a chemical reaction?','Why is water so unusual?'],
+    Biology: ['How does photosynthesis actually work?','What does DNA actually do?','How do vaccines work?'],
+    History: ['Why did WW1 actually start?','What caused the fall of Rome?','Why did the Cold War happen?'],
+    Literature: ['How do I analyse a poem?','What makes a character memorable?','How do I write a strong thesis?'],
+    Geography: ['Why do tectonic plates move?','What causes climate zones?','Why do rivers flood?'],
+    'Computer Science': ['What is recursion?','How does the internet work?','What is an algorithm?'],
+    Economics: ['What causes inflation?','How does supply and demand work?','What is GDP?'],
+    'General / Mixed': ['Explain something I find confusing','How do I think more critically?','What is the scientific method?'],
+  };
+  const s = map[S.subj] || map['General / Mixed'];
+  const el = document.getElementById('starters'); el.innerHTML = '';
+  s.forEach(t => {
+    const c = document.createElement('div'); c.className = 'starter'; c.textContent = t;
+    c.onclick = () => fillInput(t); el.appendChild(c);
+  });
+  document.getElementById('empty-title').textContent = `Hi ${S.name}! 👋`;
+  document.getElementById('empty-sub').textContent = `Ask me anything — I'll explain it properly, not just give you the answer.`;
+}
+
+function clearChat() {
+  S.history = []; S.events = [];
+  S.totTok = 0; S.pTok = 0; S.cTok = 0; S.calls = 0;
+  S.imgs = 0; S.ndSearches = 0;
+  S.hintsLeft = 3; S.hintsUsed = 0; S.exchanges = 0; S.ahas = 0;
+  S.bloom = { remember:0, understand:0, apply:0, analyze:0, evaluate:0, create:0 };
+  S.bloomTotal = 0; S.sessionStart = Date.now();
+  document.getElementById('msgs').innerHTML = '<div class="empty-chat" id="empty-chat"><div class="empty-icon-ring">🌱</div><div class="empty-title">Cleared</div><div class="empty-sub">Start fresh.</div></div>';
+  document.getElementById('btn-hint').disabled = false;
+  document.getElementById('hcount').textContent = '3';
+  updateDev({}, 0);
+  toast('Session cleared', 'ok');
+}
+
+function switchView(v) {
+  document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(x => x.classList.remove('active'));
+  document.getElementById(`v-${v}`).classList.add('active');
+  document.getElementById(`tab-${v.charAt(0)}`).classList.add('active');
+  if (v === 'parent') buildDashboard();
+}
+
+function toggleImgs()  { S.imgsOn = !S.imgsOn; document.getElementById('img-pill').classList.toggle('on', S.imgsOn); toast(S.imgsOn ? 'Images ON' : 'Images OFF'); }
+function toggleDev()   { document.getElementById('dev-col').classList.toggle('hide'); document.getElementById('dev-pill').classList.toggle('on'); }
+
+
+// ══════════════════════════════════════════════
+//  LOGIN SYSTEM — SCHOOL
+// ══════════════════════════════════════════════
+function showLoginScreen() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('school-screen').style.display = 'none';
+  document.getElementById('admin-screen').style.display = 'none';
+}
+
+function chooseFamily() {
+  window.location.href = 'family.html';
+}
+
+function chooseSchule() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('school-screen').style.display = 'flex';
+}
+
+function schTab(tab) {
+  const isStudent = tab === 'student';
+  document.getElementById('sch-tab-student').style.color = isStudent ? 'var(--forest)' : 'var(--ink4)';
+  document.getElementById('sch-tab-student').style.borderBottomColor = isStudent ? 'var(--forest)' : 'transparent';
+  document.getElementById('sch-tab-admin').style.color = !isStudent ? 'var(--forest)' : 'var(--ink4)';
+  document.getElementById('sch-tab-admin').style.borderBottomColor = !isStudent ? 'var(--forest)' : 'transparent';
+  document.getElementById('sch-student-panel').style.display = isStudent ? 'flex' : 'none';
+  document.getElementById('sch-admin-panel').style.display = !isStudent ? 'flex' : 'none';
+}
+
+// ── LocalStorage helpers ─────────────────────────────────
+function getSchools() { return JSON.parse(localStorage.getItem('guided_schools') || '[]'); }
+function saveSchools(s) { localStorage.setItem('guided_schools', JSON.stringify(s)); }
+
+function genCode() {
+  const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let r = '';
+  for (let i = 0; i < 6; i++) r += c[Math.floor(Math.random() * c.length)];
+  return r;
+}
+function genPin() { return String(Math.floor(1000 + Math.random() * 9000)); }
+
+// ── Create new school ────────────────────────────────────
+function showNewSchoolForm() {
+  const f = document.getElementById('admin-new-school-form');
+  f.style.display = (f.style.display === 'none' || f.style.display === '') ? 'flex' : 'none';
+}
+
+function createSchool() {
+  const name = document.getElementById('new-school-name').value.trim();
+  const pw   = document.getElementById('new-admin-pw').value;
+  if (!name) { toast('Enter school name', 'err'); return; }
+  if (pw.length < 4) { toast('Password muss min. 4 Zeichen haben', 'err'); return; }
+  const schools = getSchools();
+  // Check for duplicate names
+  if (schools.find(s => s.name.toLowerCase() === name.toLowerCase())) {
+    toast('A school with this name already exists', 'err'); return;
+  }
+  const code = genCode();
+  schools.push({ id: code, name, adminPw: pw, students: [] });
+  saveSchools(schools);
+  document.getElementById('admin-code').value = code;
+  document.getElementById('admin-pw').value = pw;
+  document.getElementById('admin-new-school-form').style.display = 'none';
+  toast(`School created! Code: ${code}`, 'ok');
+}
+
+// ── Admin login ──────────────────────────────────────────
+let currentSchoolId = null;
+
+function adminLogin() {
+  const code = document.getElementById('admin-code').value.trim().toUpperCase();
+  const pw   = document.getElementById('admin-pw').value;
+  const schools = getSchools();
+  const school = schools.find(s => s.id === code);
+  if (!school) { toast('School Code nicht gefunden', 'err'); return; }
+  if (school.adminPw !== pw) { toast('Falsches Password', 'err'); return; }
+  currentSchoolId = code;
+  document.getElementById('school-screen').style.display = 'none';
+  openAdminDash(school);
+}
+
+function openAdminDash(school) {
+  document.getElementById('admin-screen').style.display = 'flex';
+  document.getElementById('admin-school-name').textContent = school.name;
+  document.getElementById('admin-school-code').textContent = school.id;
+  renderStudentList(school);
+}
+
+function renderStudentList(school) {
+  const list = document.getElementById('student-list');
+  document.getElementById('student-count').textContent = school.students.length;
+  if (!school.students.length) {
+    list.innerHTML = `<div style="text-align:center;padding:32px;color:var(--ink4);font-size:13.5px;background:var(--white);border:1px dashed var(--border);border-radius:14px">No students yet. Add the first one above.</div>`;
+    return;
+  }
+  list.innerHTML = school.students.map(st => `
+    <div class="student-row">
+      <div class="student-av">${st.name.slice(0,2).toUpperCase()}</div>
+      <div class="student-info">
+        <div class="student-name">${escH(st.name)}</div>
+        <div class="student-meta">${st.age} Jahre · ${styleLabel(st.style)} · ${goalLabel(st.goal)}</div>
+        <div class="student-pin">PIN: ${st.pin}</div>
+      </div>
+      <button class="btn-launch-student" onclick='launchAsSchoolStudent(${JSON.stringify(st).replace(/'/g,"&#39;")})'>▶ Starten</button>
+      <button class="btn-del" onclick="deleteStudent('${st.id}')">×</button>
+    </div>
+  `).join('');
+}
+
+function styleLabel(s) {
+  return {socratic:'Socratic',stepbystep:'Step by Step',friendly:'Warm',challenge:'Challenge'}[s] || s;
+}
+function goalLabel(g) {
+  return {critical:'Crit. Thinking',homework:'Homework',curiosity:'Curiosity'}[g] || g;
+}
+
+function addStudent() {
+  const name  = document.getElementById('new-s-name').value.trim();
+  const age   = document.getElementById('new-s-age').value || '12';
+  const style = document.getElementById('new-s-style').value;
+  const goal  = document.getElementById('new-s-goal').value;
+  const notes = document.getElementById('new-s-notes').value.trim();
+  if (!name) { toast('Enter name', 'err'); return; }
+  const schools = getSchools();
+  const school = schools.find(s => s.id === currentSchoolId);
+  if (!school) return;
+  const student = { id: Date.now().toString(), name, age, style, goal, notes, pin: genPin() };
+  school.students.push(student);
+  saveSchools(schools);
+  document.getElementById('new-s-name').value = '';
+  document.getElementById('new-s-notes').value = '';
+  renderStudentList(school);
+  toast(`${name} added — PIN: ${student.pin}`, 'ok');
+}
+
+function deleteStudent(id) {
+  if (!confirm('Really delete this student?')) return;
+  const schools = getSchools();
+  const school = schools.find(s => s.id === currentSchoolId);
+  school.students = school.students.filter(s => s.id !== id);
+  saveSchools(schools);
+  renderStudentList(school);
+  toast('Student deleted');
+}
+
+function adminLogout() {
+  currentSchoolId = null;
+  document.getElementById('admin-screen').style.display = 'none';
+  showLoginScreen();
+}
+
+// ── Student login ────────────────────────────────────────
+function studentLogin() {
+  const code = document.getElementById('sch-code').value.trim().toUpperCase();
+  const name = document.getElementById('sch-student-name').value.trim();
+  const pin  = document.getElementById('sch-student-pin').value.trim();
+  if (!code || !name || !pin) { toast('Please fill in all fields', 'err'); return; }
+  const schools = getSchools();
+  const school = schools.find(s => s.id === code);
+  if (!school) { toast('School Code nicht gefunden', 'err'); return; }
+  const student = school.students.find(s =>
+    s.name.toLowerCase() === name.toLowerCase() && s.pin === pin
+  );
+  if (!student) { toast('Name or PIN incorrect', 'err'); return; }
+  document.getElementById('school-screen').style.display = 'none';
+  launchAsSchoolStudent({ ...student, schoolName: school.name });
+}
+
+// ── Launch app with school student profile ───────────────
+function launchAsSchoolStudent(student) {
+  document.getElementById('admin-screen').style.display = 'none';
+  document.getElementById('school-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('ob').style.display = 'none';
+
+  S.name   = student.name;
+  S.age    = student.age || '12';
+  S.subj   = 'General / Mixed';
+  S.notes  = student.notes || '';
+  S.school = student.schoolName || student.school || '';
+  S.style  = student.style || 'socratic';
+  S.learningGoal  = student.goal || 'critical';
+  S.parentUpdates = 'monthly';
+  S.sessionStart  = Date.now();
+  const goalMap = {
+    critical: 'Build strong critical thinking and reasoning skills',
+    homework: 'Homework support — understand the material well enough to work independently',
+    curiosity: 'Spark genuine curiosity and love of learning',
+  };
+  S.goal = goalMap[S.learningGoal] || '';
+
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('app').classList.add('show');
+
+  document.getElementById('chip-av').textContent   = S.name.slice(0,1).toUpperCase();
+  document.getElementById('chip-name').textContent = `${S.name}, ${S.age}`;
+  document.getElementById('d-name').textContent    = S.name;
+  document.getElementById('d-age').textContent     = S.age;
+  document.getElementById('d-school').textContent  = S.school || '—';
+  document.getElementById('d-subj').textContent    = S.subj;
+  document.getElementById('d-goal').textContent    = S.goal || '—';
+  document.getElementById('d-notes').textContent   = S.notes || '—';
+  document.getElementById('d-conf').textContent    = `${TEMP} / ${MAX_TOK}`;
+  document.getElementById('d-model').textContent   = MODEL;
+  document.getElementById('d-updates').textContent = S.parentUpdates;
+
+  const styleLabels = {socratic:'Socratic Guide',stepbystep:'Step by Step',friendly:'Warm & Patient',challenge:'Challenge Mode'};
+  document.getElementById('d-style').textContent = styleLabels[S.style] || S.style;
+
+  buildStarters();
+  document.getElementById('sbtn').disabled = false;
+
+  // Auto-load curriculum if school is known
+  if (S.school) lookupSchool(S.school);
+
+  setTimeout(() => {
+    const goalLine = S.goal ? ` Dein Ziel heute: ${goalMap[S.learningGoal]}.` : '';
+    addBubble('ai', `Hi ${S.name}! 👋 I'm your personal tutor.${goalLine} Ask me anything — I won't just give you answers, I'll help you actually think them through. What are we working on today?`);
+  }, 500);
+
+  document.getElementById('minput').focus();
+}
+
+// ══════════════════════════════════════════════
+//  IMAGE ATTACH
+// ══════════════════════════════════════════════
+let pendingImg = null;
+
+function toggleAttachMenu(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('attach-menu');
+  const isOpen = menu.style.display === 'block';
+  menu.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) {
+    // Close when clicking anywhere else
+    setTimeout(() => document.addEventListener('click', closeAttachMenu, { once: true }), 0);
+  }
+}
+function closeAttachMenu() {
+  document.getElementById('attach-menu').style.display = 'none';
+}
+
+function openCamera() {
+  closeAttachMenu();
+  document.getElementById('img-cam-input').click();
+}
+function openGallery() {
+  closeAttachMenu();
+  // Gallery: images only, no capture
+  const inp = document.getElementById('img-file-input');
+  inp.accept = 'image/*';
+  inp.click();
+}
+function openFilePicker() {
+  closeAttachMenu();
+  const inp = document.getElementById('img-file-input');
+  inp.accept = 'image/*,application/pdf,.doc,.docx,.txt,.csv';
+  inp.click();
+}
+
+function handleImgPick(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = ''; // allow re-selecting same file
+
+  if (file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      pendingImg = { dataUrl: e.target.result, name: file.name, type: 'image' };
+      document.getElementById('img-preview').src = e.target.result;
+      document.getElementById('img-preview-wrap').style.display = 'block';
+      document.getElementById('btn-attach').classList.add('has-img');
+      document.getElementById('sbtn').disabled = false;
+    };
+    reader.readAsDataURL(file);
+  } else {
+    // Non-image file: just reference by name in the message
+    pendingImg = { dataUrl: null, name: file.name, type: 'file' };
+    document.getElementById('img-preview').src = '';
+    document.getElementById('img-preview-wrap').style.display = 'block';
+    document.getElementById('img-preview').style.display = 'none';
+    // Show filename instead
+    document.getElementById('img-preview-wrap').innerHTML = `
+      <div class="img-preview-inner">
+        <div style="background:var(--cream2);border:1.5px solid var(--border);border-radius:12px;padding:10px 16px;font-size:13px;font-weight:600;color:var(--ink2);display:flex;align-items:center;gap:8px">
+          <span style="font-size:20px">📎</span> ${escH(file.name)}
+          <button class="img-preview-remove" onclick="clearImgPreview()" style="position:relative;top:0;right:0;margin-left:8px">×</button>
+        </div>
+      </div>`;
+    document.getElementById('btn-attach').classList.add('has-img');
+    document.getElementById('sbtn').disabled = false;
+  }
+}
+
+function clearImgPreview() {
+  pendingImg = null;
+  // Restore default preview HTML
+  document.getElementById('img-preview-wrap').innerHTML = `
+    <div class="img-preview-inner">
+      <img id="img-preview" src="" alt="preview"/>
+      <button class="img-preview-remove" onclick="clearImgPreview()">×</button>
+    </div>`;
+  document.getElementById('img-preview-wrap').style.display = 'none';
+  document.getElementById('btn-attach').classList.remove('has-img');
+  if (!document.getElementById('minput').value.trim()) {
+    document.getElementById('sbtn').disabled = true;
+  }
+}
+
+function addImgBubble(dataUrl, caption) {
+  const msgs = document.getElementById('msgs');
+  const empty = document.getElementById('empty-chat');
+  if (empty) empty.remove();
+
+  const initials = S.name ? S.name.slice(0,2).toUpperCase() : '?';
+  const time = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+
+  const d = document.createElement('div');
+  d.className = 'msg user';
+  d.innerHTML = `
+    <div class="msg-av" style="background:var(--forest);color:#fff;font-weight:700;font-family:'Playfair Display',serif">${initials}</div>
+    <div class="msg-body">
+      <div class="img-bubble-wrap" onclick="openLightbox('${dataUrl}')">
+        <img src="${dataUrl}" alt="Bild"/>
+      </div>
+      ${caption ? `<div class="bubble" style="background:linear-gradient(145deg,var(--forest2),var(--forest));color:rgba(255,255,255,.94);border-bottom-right-radius:5px;box-shadow:0 4px 18px rgba(26,51,40,.22)">${escH(caption)}</div>` : ''}
+      <div class="msg-meta" style="justify-content:flex-end">${time}</div>
+    </div>`;
+  msgs.appendChild(d);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function openLightbox(src) {
+  document.getElementById('img-lightbox-img').src = src;
+  document.getElementById('img-lightbox').style.display = 'flex';
+}
+function closeLightbox() {
+  document.getElementById('img-lightbox').style.display = 'none';
+  document.getElementById('img-lightbox-img').src = '';
+}
+
+// ══════════════════════════════════════════════
+//  VOICE MODE
+// ══════════════════════════════════════════════
+let voiceRecog     = null;
+let voiceState     = 'idle'; // idle | listening | thinking | speaking
+let voiceActive    = false;
+
+function openVoiceMode() {
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRec) {
+    toast('Spracherkennung wird von diesem Browser nicht unterstützt (Chrome empfohlen)', 'err');
+    return;
+  }
+  voiceActive = true;
+  document.getElementById('voice-overlay').style.display = 'flex';
+  document.getElementById('btn-voice').classList.add('active');
+  setVoiceState('idle');
+}
+
+function closeVoiceMode() {
+  voiceActive = false;
+  stopVoiceListening();
+  stopAudio();
+  document.getElementById('voice-overlay').style.display = 'none';
+  document.getElementById('btn-voice').classList.remove('active');
+  setVoiceState('idle');
+}
+
+function setVoiceState(state) {
+  voiceState = state;
+  const scene = document.getElementById('voice-orb-scene');
+  scene.className = 'voice-orb-scene' + (state !== 'idle' ? ' ' + state : '');
+  const statusMap = {
+    idle:      'Tap to speak',
+    listening: 'Höre zu…',
+    thinking:  'Denke nach…',
+    speaking:  'Guided spricht…',
+  };
+  document.getElementById('voice-status').textContent = statusMap[state] || '';
+}
+
+function toggleVoiceListen() {
+  if (voiceState === 'listening') {
+    stopVoiceListening();
+    setVoiceState('idle');
+  } else if (voiceState === 'idle') {
+    startVoiceListening();
+  }
+  // While thinking / speaking, tapping the orb does nothing — let it finish
+}
+
+function startVoiceListening() {
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  voiceRecog = new SpeechRec();
+  voiceRecog.lang = navigator.language || 'de-DE';
+  voiceRecog.interimResults = true;
+  voiceRecog.continuous = false;
+  voiceRecog.maxAlternatives = 1;
+
+  setVoiceState('listening');
+  document.getElementById('voice-transcript').textContent = '';
+
+  voiceRecog.onresult = (e) => {
+    const interim = Array.from(e.results).map(r => r[0].transcript).join('');
+    document.getElementById('voice-transcript').textContent = interim;
+    if (e.results[e.results.length - 1].isFinal) {
+      voiceRecog.stop();
+      handleVoiceInput(interim);
+    }
+  };
+
+  voiceRecog.onerror = (e) => {
+    console.error('Speech recognition error:', e.error);
+    setVoiceState('idle');
+    if (e.error !== 'no-speech') toast('Mikrofon-Fehler: ' + e.error, 'err');
+  };
+
+  voiceRecog.onend = () => {
+    if (voiceState === 'listening') setVoiceState('idle');
+  };
+
+  voiceRecog.start();
+}
+
+function stopVoiceListening() {
+  if (voiceRecog) { try { voiceRecog.stop(); } catch(e) {} voiceRecog = null; }
+}
+
+async function handleVoiceInput(text) {
+  if (!text.trim() || !voiceActive) return;
+
+  setVoiceState('thinking');
+  document.getElementById('voice-transcript').textContent = text;
+
+  // Show in chat
+  const empty = document.getElementById('empty-chat');
+  if (empty) empty.remove();
+  addBubble('user', text);
+  S.events.push({ who:'student', text, type:'message', ts:Date.now() });
+  S.history.push({ role:'user', content: text });
+  S.loading = true;
+
+  let ndCtx = '';
+  if (S.ndReady) ndCtx = await srchNeedle(text);
+
+  try {
+    const { reply, usage } = await callFL(ndCtx);
+    S.loading = false;
+
+    S.totTok += usage.total_tokens || 0;
+    S.pTok   += usage.prompt_tokens || 0;
+    S.cTok   += usage.completion_tokens || 0;
+    S.calls++;
+    S.exchanges++;
+
+    const isAha   = reply.startsWith('[AHA]');
+    const clean   = reply.replace(/^\[AHA\]\s*/, '').replace(/\[BLOOM:\w+\]/gi, '').trim();
+    const bloomM  = reply.match(/\[BLOOM:(\w+)\]/i);
+    const bloomLvl = bloomM ? bloomM[1].toLowerCase() : 'understand';
+    const { txt }  = parseImg(clean);
+
+    addBubble('ai', txt, usage, false, isAha, bloomLvl);
+    S.history.push({ role:'assistant', content: clean });
+    S.events.push({ who:'tutor', text:txt, type: isAha?'aha':'message', bloom:bloomLvl, ts:Date.now() });
+
+    if (isAha) { S.ahas++; document.getElementById('d-ahas').textContent = S.ahas; }
+    if (bloomLvl && S.bloom[bloomLvl] !== undefined) { S.bloom[bloomLvl]++; S.bloomTotal++; }
+
+    updateDev(usage, Date.now());
+    updateDashBadge();
+
+    if (voiceActive) {
+      setVoiceState('speaking');
+      const preview = txt.length > 120 ? txt.slice(0, 120) + '…' : txt;
+      document.getElementById('voice-transcript').textContent = preview;
+      await speakTextEL(txt);
+      if (voiceActive) {
+        setVoiceState('idle');
+        document.getElementById('voice-transcript').textContent = '';
+        // Auto-listen again after short pause
+        setTimeout(() => {
+          if (voiceActive && voiceState === 'idle') startVoiceListening();
+        }, 700);
+      }
+    }
+  } catch(e) {
+    S.loading = false;
+    console.error('Voice AI error:', e);
+    setVoiceState('idle');
+    toast('Fehler beim Laden der Antwort', 'err');
+  }
+}
+
+async function speakTextEL(text) {
+  // Strip markdown for cleaner speech
+  const clean = text
+    .replace(/\*\*/g, '').replace(/\*/g, '')
+    .replace(/#+\s/g, '').replace(/\[.*?\]/g, '')
+    .replace(/<br>/gi, ' ').trim();
+  const speakText = clean.length > 600 ? clean.slice(0, 600) + '.' : clean;
+
+  try {
+    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}/stream`, {
+      method: 'POST',
+      headers: { 'xi-api-key': EL_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: speakText,
+        model_id: 'eleven_turbo_v2',
+        voice_settings: { stability: 0.5, similarity_boost: 0.75, speed: 1.0 }
+      })
+    });
+    if (!res.ok) { console.error('ElevenLabs:', res.status, await res.text()); return; }
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    stopAudio();
+    S.audio = new Audio(url);
+    return new Promise(resolve => {
+      S.audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
+      S.audio.onerror = resolve;
+      S.audio.play().catch(resolve);
+    });
+  } catch(e) { console.error('TTS error:', e); }
+}
+
+
+// ── On page load ───────────────────────────────────────
+(function() {
+  // school.html starts at login screen — nothing extra to hide
+})();
+
+function fillInput(t) { const el = document.getElementById('minput'); el.value = t; el.focus(); autoResize(el); }
+function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } }
+function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
+function escH(t) { return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
+
+let toastTimer;
+function toast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'toast show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>
