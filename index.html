@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Guided — AI Tutor</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
 <style>
 /* ══════════════════════════════════════════════
    TOKENS & RESET
@@ -1878,9 +1880,19 @@ input[type=range]::-webkit-slider-thumb:hover {
         <label style="font-size:10.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink4)">ElevenLabs API Key <span style="color:var(--ink5);font-weight:400;text-transform:none;letter-spacing:0">(optional — for voice)</span></label>
         <input class="fi" id="setup-el-key" type="password" placeholder="bb0..." autocomplete="off" spellcheck="false"/>
       </div>
-      <div class="fgroup" style="margin-bottom:24px">
+      <div class="fgroup" style="margin-bottom:18px">
         <label style="font-size:10.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink4)">Needle API Key <span style="color:var(--ink5);font-weight:400;text-transform:none;letter-spacing:0">(optional — for curriculum)</span></label>
         <input class="fi" id="setup-nd-key" type="password" placeholder="apk_..." autocomplete="off" spellcheck="false"/>
+      </div>
+      <div style="height:1px;background:var(--border);margin:4px 0 18px"></div>
+      <div style="font-size:10.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:14px">Database (Supabase)</div>
+      <div class="fgroup" style="margin-bottom:18px">
+        <label style="font-size:10.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink4)">Supabase Project URL <span style="color:var(--ink5);font-weight:400;text-transform:none;letter-spacing:0">(optional — for multi-device)</span></label>
+        <input class="fi" id="setup-sb-url" type="text" placeholder="https://xxxx.supabase.co" autocomplete="off" spellcheck="false"/>
+      </div>
+      <div class="fgroup" style="margin-bottom:24px">
+        <label style="font-size:10.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink4)">Supabase Anon Key <span style="color:var(--ink5);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+        <input class="fi" id="setup-sb-key" type="password" placeholder="eyJ..." autocomplete="off" spellcheck="false"/>
       </div>
       <button class="btn-next" style="width:100%" onclick="saveSetup()">Save & Continue →</button>
     </div>
@@ -2902,7 +2914,7 @@ input[type=range]::-webkit-slider-thumb:hover {
     <div style="font-size:13.5px;color:var(--ink3);line-height:1.6;margin-bottom:24px">This will clear the current conversation and all session data.</div>
     <div style="display:flex;gap:10px">
       <button onclick="document.getElementById('reset-modal').style.display='none'" style="flex:1;padding:12px;border:1.5px solid var(--border2);border-radius:11px;background:transparent;font-size:14px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;color:var(--ink3);cursor:pointer">Cancel</button>
-      <button onclick="location.reload()" style="flex:1;padding:12px;border:none;border-radius:11px;background:linear-gradient(145deg,var(--forest2),var(--forest));color:#fff;font-size:14px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(26,51,40,.25)">Reset</button>
+      <button onclick="saveSession().finally(()=>location.reload())" style="flex:1;padding:12px;border:none;border-radius:11px;background:linear-gradient(145deg,var(--forest2),var(--forest));color:#fff;font-size:14px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(26,51,40,.25)">End & Save</button>
     </div>
   </div>
 </div>
@@ -2911,9 +2923,22 @@ input[type=range]::-webkit-slider-thumb:hover {
 // ══════════════════════════════════════════════
 //  API KEYS (loaded from localStorage — never hardcoded)
 // ══════════════════════════════════════════════
-let FL_KEY = localStorage.getItem('guided_featherless_key') || '';
-let EL_KEY = localStorage.getItem('guided_elevenlabs_key') || '';
-let ND_KEY = localStorage.getItem('guided_needle_key') || '';
+let FL_KEY        = localStorage.getItem('guided_featherless_key') || '';
+let EL_KEY        = localStorage.getItem('guided_elevenlabs_key')  || '';
+let ND_KEY        = localStorage.getItem('guided_needle_key')       || '';
+let SUPABASE_URL  = localStorage.getItem('guided_supabase_url')    || '';
+let SUPABASE_KEY  = localStorage.getItem('guided_supabase_key')    || '';
+
+// ══════════════════════════════════════════════
+//  SUPABASE CLIENT
+// ══════════════════════════════════════════════
+let SB = null;
+function initSupabase() {
+  if (SUPABASE_URL && SUPABASE_KEY) {
+    SB = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  }
+}
+initSupabase();
 
 // ══════════════════════════════════════════════
 //  CONFIG
@@ -2930,6 +2955,7 @@ const VOICE_ID = '21m00Tcm4TlvDq8ikWAM';
 const S = {
   name:'', age:'12', subj:'', goal:'', notes:'', style:'socratic',
   school:'', schoolCurriculum:'', learningGoal:'critical', parentUpdates:'monthly',
+  studentId: null,
   history: [],
   events: [],         // {who, text, type, bloom, ts}
   totTok:0, pTok:0, cTok:0,
@@ -3998,10 +4024,7 @@ function schTab(tab) {
   document.getElementById('sch-admin-panel').style.display = !isStudent ? 'flex' : 'none';
 }
 
-// ── LocalStorage helpers ─────────────────────────────────
-function getSchools() { return JSON.parse(localStorage.getItem('guided_schools') || '[]'); }
-function saveSchools(s) { localStorage.setItem('guided_schools', JSON.stringify(s)); }
-
+// ── Helpers ──────────────────────────────────────────────
 function genCode() {
   const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let r = '';
@@ -4016,19 +4039,16 @@ function showNewSchoolForm() {
   f.style.display = (f.style.display === 'none' || f.style.display === '') ? 'flex' : 'none';
 }
 
-function createSchool() {
+async function createSchool() {
   const name = document.getElementById('new-school-name').value.trim();
   const pw   = document.getElementById('new-admin-pw').value;
   if (!name) { toast('Enter school name', 'err'); return; }
   if (pw.length < 4) { toast('Password must be at least 4 characters', 'err'); return; }
-  const schools = getSchools();
-  // Check for duplicate names
-  if (schools.find(s => s.name.toLowerCase() === name.toLowerCase())) {
-    toast('A school with this name already exists', 'err'); return;
-  }
+  if (!SB) { toast('Supabase not connected — add keys in setup', 'err'); return; }
   const code = genCode();
-  schools.push({ id: code, name, adminPw: pw, students: [] });
-  saveSchools(schools);
+  const hash = await bcrypt.hash(pw, 10);
+  const { error } = await SB.from('schools').insert({ code, name, admin_password_hash: hash });
+  if (error) { toast('Error creating school: ' + error.message, 'err'); return; }
   document.getElementById('admin-code').value = code;
   document.getElementById('admin-pw').value = pw;
   document.getElementById('admin-new-school-form').style.display = 'none';
@@ -4036,41 +4056,47 @@ function createSchool() {
 }
 
 // ── Admin login ──────────────────────────────────────────
-let currentSchoolId = null;
+let currentSchoolId   = null;
+let currentSchoolCode = null;
 
-function adminLogin() {
+async function adminLogin() {
   const code = document.getElementById('admin-code').value.trim().toUpperCase();
   const pw   = document.getElementById('admin-pw').value;
-  const schools = getSchools();
-  const school = schools.find(s => s.id === code);
-  if (!school) { toast('School code not found', 'err'); return; }
-  if (school.adminPw !== pw) { toast('Incorrect password', 'err'); return; }
-  currentSchoolId = code;
+  if (!SB) { toast('Supabase not connected — add keys in setup', 'err'); return; }
+  toast('Checking…');
+  const { data: school, error } = await SB.from('schools').select('*').eq('code', code).single();
+  if (error || !school) { toast('School code not found', 'err'); return; }
+  const ok = await bcrypt.compare(pw, school.admin_password_hash);
+  if (!ok) { toast('Incorrect password', 'err'); return; }
+  currentSchoolId   = school.id;
+  currentSchoolCode = school.code;
   document.getElementById('school-screen').style.display = 'none';
   openAdminDash(school);
 }
 
-function openAdminDash(school) {
+async function openAdminDash(school) {
   document.getElementById('admin-screen').style.display = 'flex';
   document.getElementById('admin-school-name').textContent = school.name;
-  document.getElementById('admin-school-code').textContent = school.id;
-  renderStudentList(school);
+  document.getElementById('admin-school-code').textContent = school.code;
+  await renderStudentList();
 }
 
-function renderStudentList(school) {
+async function renderStudentList() {
   const list = document.getElementById('student-list');
-  document.getElementById('student-count').textContent = school.students.length;
-  if (!school.students.length) {
+  if (!SB) return;
+  const { data: students } = await SB.from('students').select('*').eq('school_id', currentSchoolId).order('created_at', { ascending: true });
+  document.getElementById('student-count').textContent = students?.length || 0;
+  if (!students || !students.length) {
     list.innerHTML = `<div style="text-align:center;padding:32px;color:var(--ink4);font-size:13.5px;background:var(--white);border:1px dashed var(--border);border-radius:14px">No students yet. Add the first one above.</div>`;
     return;
   }
-  list.innerHTML = school.students.map(st => `
+  list.innerHTML = students.map(st => `
     <div class="student-row">
       <div class="student-av">${st.name.slice(0,2).toUpperCase()}</div>
       <div class="student-info">
         <div class="student-name">${escH(st.name)}</div>
         <div class="student-meta">${st.age} yr · ${styleLabel(st.style)} · ${goalLabel(st.goal)}</div>
-        <div class="student-pin">PIN: ${st.pin}</div>
+        <div class="student-pin">PIN: ${st.pin_hash}</div>
       </div>
       <button class="btn-launch-student" onclick='launchAsSchoolStudent(${JSON.stringify(st).replace(/'/g,"&#39;")})'>▶ Launch</button>
       <button class="btn-del" onclick="deleteStudent('${st.id}')">×</button>
@@ -4085,32 +4111,31 @@ function goalLabel(g) {
   return {critical:'Crit. Thinking',homework:'Homework',curiosity:'Curiosity'}[g] || g;
 }
 
-function addStudent() {
+async function addStudent() {
   const name  = document.getElementById('new-s-name').value.trim();
-  const age   = document.getElementById('new-s-age').value || '12';
+  const age   = parseInt(document.getElementById('new-s-age').value) || 12;
   const style = document.getElementById('new-s-style').value;
   const goal  = document.getElementById('new-s-goal').value;
   const notes = document.getElementById('new-s-notes').value.trim();
   if (!name) { toast('Enter a name', 'err'); return; }
-  const schools = getSchools();
-  const school = schools.find(s => s.id === currentSchoolId);
-  if (!school) return;
-  const student = { id: Date.now().toString(), name, age, style, goal, notes, pin: genPin() };
-  school.students.push(student);
-  saveSchools(schools);
+  if (!SB) { toast('Supabase not connected', 'err'); return; }
+  const pin = genPin();
+  const { error } = await SB.from('students').insert({
+    school_id: currentSchoolId, name, age, style, goal, notes,
+    pin_hash: pin   // 4-digit PIN stored for admin display & student login
+  });
+  if (error) { toast('Error: ' + error.message, 'err'); return; }
   document.getElementById('new-s-name').value = '';
   document.getElementById('new-s-notes').value = '';
-  renderStudentList(school);
-  toast(`${name} added — PIN: ${student.pin}`, 'ok');
+  await renderStudentList();
+  toast(`${name} added — PIN: ${pin}`, 'ok');
 }
 
-function deleteStudent(id) {
+async function deleteStudent(id) {
   if (!confirm('Really delete this student?')) return;
-  const schools = getSchools();
-  const school = schools.find(s => s.id === currentSchoolId);
-  school.students = school.students.filter(s => s.id !== id);
-  saveSchools(schools);
-  renderStudentList(school);
+  if (!SB) return;
+  await SB.from('students').delete().eq('id', id);
+  await renderStudentList();
   toast('Student deleted');
 }
 
@@ -4121,16 +4146,18 @@ function adminLogout() {
 }
 
 // ── Student login ────────────────────────────────────────
-function studentLogin() {
+async function studentLogin() {
   const code = document.getElementById('sch-code').value.trim().toUpperCase();
   const name = document.getElementById('sch-student-name').value.trim();
   const pin  = document.getElementById('sch-student-pin').value.trim();
   if (!code || !name || !pin) { toast('Please fill in all fields', 'err'); return; }
-  const schools = getSchools();
-  const school = schools.find(s => s.id === code);
+  if (!SB) { toast('Supabase not connected — add keys in setup', 'err'); return; }
+  toast('Signing in…');
+  const { data: school } = await SB.from('schools').select('id, name').eq('code', code).single();
   if (!school) { toast('School code not found', 'err'); return; }
-  const student = school.students.find(s =>
-    s.name.toLowerCase() === name.toLowerCase() && s.pin === pin
+  const { data: students } = await SB.from('students').select('*').eq('school_id', school.id);
+  const student = students?.find(s =>
+    s.name.toLowerCase() === name.toLowerCase() && s.pin_hash === pin
   );
   if (!student) { toast('Incorrect name or PIN', 'err'); return; }
   document.getElementById('school-screen').style.display = 'none';
@@ -4144,6 +4171,7 @@ function launchAsSchoolStudent(student) {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('ob').style.display = 'none';
 
+  S.studentId = student.id || null;
   S.name   = student.name;
   S.age    = student.age || '12';
   S.subj   = 'General / Mixed';
@@ -4500,12 +4528,16 @@ async function speakTextEL(text) {
 function saveSetup() {
   const fl = document.getElementById('setup-fl-key').value.trim();
   if (!fl) { toast('Featherless API key is required', 'err'); return; }
-  localStorage.setItem('guided_featherless_key', fl);
-  FL_KEY = fl;
+  localStorage.setItem('guided_featherless_key', fl); FL_KEY = fl;
   const el = document.getElementById('setup-el-key').value.trim();
   if (el) { localStorage.setItem('guided_elevenlabs_key', el); EL_KEY = el; }
   const nd = document.getElementById('setup-nd-key').value.trim();
   if (nd) { localStorage.setItem('guided_needle_key', nd); ND_KEY = nd; }
+  const su = document.getElementById('setup-sb-url').value.trim();
+  if (su) { localStorage.setItem('guided_supabase_url', su); SUPABASE_URL = su; }
+  const sk = document.getElementById('setup-sb-key').value.trim();
+  if (sk) { localStorage.setItem('guided_supabase_key', sk); SUPABASE_KEY = sk; }
+  initSupabase();
   document.getElementById('setup-screen').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   toast('Keys saved', 'ok');
@@ -4515,6 +4547,8 @@ function showSetupScreen() {
   document.getElementById('setup-fl-key').value = FL_KEY;
   document.getElementById('setup-el-key').value = EL_KEY;
   document.getElementById('setup-nd-key').value = ND_KEY;
+  document.getElementById('setup-sb-url').value = SUPABASE_URL;
+  document.getElementById('setup-sb-key').value = SUPABASE_KEY;
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('school-screen').style.display = 'none';
   document.getElementById('setup-screen').style.display = 'flex';
@@ -4540,6 +4574,51 @@ function toast(msg, type = '') {
   el.textContent = msg; el.className = 'toast show ' + type;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ══════════════════════════════════════════════
+//  SESSION SAVING
+// ══════════════════════════════════════════════
+function computeScore() {
+  const hintPenalty = (S.hintsUsed / 3) * 30;
+  const exchBonus   = Math.min(25, S.exchanges * 3);
+  const ahaBon      = S.ahas * 12;
+  return Math.round(Math.max(5, Math.min(100, 68 - hintPenalty + exchBonus + ahaBon)));
+}
+
+async function saveSession() {
+  if (!SB || S.exchanges < 1) return;
+  try {
+    const { data: session, error } = await SB.from('sessions').insert({
+      student_id:        S.studentId || null,
+      student_name:      S.name,
+      age:               parseInt(S.age) || null,
+      school_name:       S.school || null,
+      subject:           S.subj || null,
+      goal_label:        S.goal || null,
+      style:             S.style,
+      started_at:        new Date(S.sessionStart).toISOString(),
+      ended_at:          new Date().toISOString(),
+      exchanges:         S.exchanges,
+      hints_used:        S.hintsUsed,
+      aha_count:         S.ahas,
+      independence_score: computeScore(),
+      bloom_data:        S.bloom,
+      total_tokens:      S.totTok,
+      is_school_session: !!S.studentId
+    }).select().single();
+    if (error || !session) return;
+    if (S.events.length) {
+      await SB.from('events').insert(S.events.map(e => ({
+        session_id:  session.id,
+        who:         e.who,
+        text:        e.text,
+        type:        e.type,
+        bloom_level: e.bloom || null,
+        ts:          new Date(e.ts).toISOString()
+      })));
+    }
+  } catch(e) { console.error('Session save failed:', e); }
 }
 
 // Alt+D opens the dev panel (hidden from UI)
