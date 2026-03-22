@@ -1782,19 +1782,19 @@ input[type=range]::-webkit-slider-thumb:hover {
         </svg>
       </div>
       <span class="ob-wordmark">Guided</span>
-      <span class="ob-tagline">Wie möchtest du Guided nutzen?</span>
+      <span class="ob-tagline">How would you like to use Guided?</span>
     </div>
 
     <div class="login-type-grid">
       <div class="login-type-card" onclick="chooseFamilie()">
         <div class="login-type-icon">🏠</div>
-        <div class="login-type-name">Familie</div>
-        <div class="login-type-desc">Eltern richten Guided für ihr Kind ein — personalisiert nach Alter, Schule und Lernziel</div>
+        <div class="login-type-name">Family</div>
+        <div class="login-type-desc">Parents set up Guided for their child — personalized by age, school, and learning goal</div>
       </div>
       <div class="login-type-card" onclick="chooseSchule()">
         <div class="login-type-icon">🏫</div>
-        <div class="login-type-name">Schule</div>
-        <div class="login-type-desc">Schulen verwalten Schüler-Accounts und geben jedem Kind seinen eigenen Zugang</div>
+        <div class="login-type-name">School</div>
+        <div class="login-type-desc">Schools manage student accounts and give each child their own access</div>
       </div>
     </div>
   </div>
@@ -1812,8 +1812,8 @@ input[type=range]::-webkit-slider-thumb:hover {
           <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
         </svg>
       </div>
-      <span class="ob-wordmark">Guided — Schule</span>
-      <span class="ob-tagline">Melde dich an</span>
+      <span class="ob-wordmark">Guided — School</span>
+      <span class="ob-tagline">Sign in</span>
     </div>
 
     <div class="ob-card">
@@ -1821,74 +1821,74 @@ input[type=range]::-webkit-slider-thumb:hover {
       <div style="display:flex;border-bottom:1px solid var(--border)">
         <div id="sch-tab-student" onclick="schTab('student')"
           style="flex:1;padding:14px;text-align:center;font-size:13.5px;font-weight:700;cursor:pointer;color:var(--forest);border-bottom:2.5px solid var(--forest);transition:.15s">
-          Ich bin Schüler
+          I'm a Student
         </div>
         <div id="sch-tab-admin" onclick="schTab('admin')"
           style="flex:1;padding:14px;text-align:center;font-size:13.5px;font-weight:700;cursor:pointer;color:var(--ink4);border-bottom:2.5px solid transparent;transition:.15s">
-          Admin / Lehrer
+          Admin / Teacher
         </div>
       </div>
 
       <!-- Student login panel -->
       <div id="sch-student-panel" class="ob-step active" style="display:flex">
-        <div class="ob-step-eyebrow">Schüler-Login</div>
-        <div class="ob-step-title">Willkommen zurück!</div>
-        <div class="ob-step-desc">Melde dich mit dem Schulcode deiner Schule, deinem Namen und deinem PIN an.</div>
+        <div class="ob-step-eyebrow">Student Login</div>
+        <div class="ob-step-title">Welcome back!</div>
+        <div class="ob-step-desc">Sign in with your school code, your name, and your PIN.</div>
         <div class="fgroup">
-          <label>Schulcode</label>
-          <input class="fi" id="sch-code" placeholder="z.B. BERLIN01" style="text-transform:uppercase;letter-spacing:2px"/>
+          <label>School Code</label>
+          <input class="fi" id="sch-code" placeholder="e.g. SCHOOL01" style="text-transform:uppercase;letter-spacing:2px"/>
         </div>
         <div class="fgroup">
-          <label>Dein Name</label>
-          <input class="fi" id="sch-student-name" placeholder="Vor- und Nachname"/>
+          <label>Your Name</label>
+          <input class="fi" id="sch-student-name" placeholder="First and Last Name"/>
         </div>
         <div class="fgroup">
           <label>PIN</label>
-          <input class="fi" id="sch-student-pin" type="password" placeholder="4-stelliger PIN"/>
+          <input class="fi" id="sch-student-pin" type="password" placeholder="4-digit PIN"/>
         </div>
-        <button class="btn-next" onclick="studentLogin()">Anmelden →</button>
+        <button class="btn-next" onclick="studentLogin()">Sign In →</button>
         <div style="text-align:center;font-size:12px;color:var(--ink4);margin-top:-8px">
-          Du hast noch keinen Account? Bitte frag deine Lehrerin oder deinen Lehrer.
+          Don't have an account yet? Please ask your teacher.
         </div>
       </div>
 
       <!-- Admin login panel -->
       <div id="sch-admin-panel" class="ob-step" style="display:none">
-        <div class="ob-step-eyebrow">Admin-Login</div>
-        <div class="ob-step-title">Schulverwaltung</div>
-        <div class="ob-step-desc">Melde dich mit deinem Schulcode und Admin-Passwort an — oder erstelle eine neue Schule.</div>
+        <div class="ob-step-eyebrow">Admin Login</div>
+        <div class="ob-step-title">School Management</div>
+        <div class="ob-step-desc">Sign in with your school code and admin password — or create a new school.</div>
         <div style="background:var(--hint-bg);border:1px solid var(--hint-bdr);border-radius:12px;padding:14px 16px;font-size:13px;color:var(--ink2);line-height:1.6">
-          <strong style="color:var(--gold)">Neu hier?</strong> Klicke unten auf „Neue Schule anlegen" um einen Admin-Account zu erstellen und einen Schulcode zu erhalten.
+          <strong style="color:var(--gold)">New here?</strong> Click "Create New School" below to create an admin account and receive a school code.
         </div>
         <div class="fgroup">
-          <label>Schulcode</label>
-          <input class="fi" id="admin-code" placeholder="z.B. BERLIN01" style="text-transform:uppercase;letter-spacing:2px"/>
+          <label>School Code</label>
+          <input class="fi" id="admin-code" placeholder="e.g. SCHOOL01" style="text-transform:uppercase;letter-spacing:2px"/>
         </div>
         <div class="fgroup">
-          <label>Admin-Passwort</label>
-          <input class="fi" id="admin-pw" type="password" placeholder="Passwort"/>
+          <label>Admin Password</label>
+          <input class="fi" id="admin-pw" type="password" placeholder="Password"/>
         </div>
-        <button class="btn-next" onclick="adminLogin()">Als Admin einloggen →</button>
-        <button class="btn-back" style="width:100%;text-align:center;margin-top:-4px" onclick="showNewSchoolForm()">+ Neue Schule anlegen</button>
+        <button class="btn-next" onclick="adminLogin()">Sign in as Admin →</button>
+        <button class="btn-back" style="width:100%;text-align:center;margin-top:-4px" onclick="showNewSchoolForm()">+ Create New School</button>
 
         <div id="admin-new-school-form" style="display:none;background:var(--cream);border:1px solid var(--border);border-radius:14px;padding:18px;flex-direction:column;gap:14px">
-          <div class="ob-step-eyebrow" style="margin-bottom:0">Neue Schule erstellen</div>
+          <div class="ob-step-eyebrow" style="margin-bottom:0">Create New School</div>
           <div class="fgroup">
-            <label>Name der Schule</label>
-            <input class="fi" id="new-school-name" placeholder="z.B. Goethe-Gymnasium Berlin"/>
+            <label>School Name</label>
+            <input class="fi" id="new-school-name" placeholder="e.g. Lincoln High School"/>
           </div>
           <div class="fgroup">
-            <label>Admin-Passwort wählen</label>
-            <input class="fi" id="new-admin-pw" type="password" placeholder="Sicheres Passwort (min. 4 Zeichen)"/>
+            <label>Choose Admin Password</label>
+            <input class="fi" id="new-admin-pw" type="password" placeholder="Secure password (min. 4 characters)"/>
           </div>
-          <button class="btn-next" onclick="createSchool()">Schule erstellen →</button>
+          <button class="btn-next" onclick="createSchool()">Create School →</button>
         </div>
       </div>
     </div>
 
     <div style="text-align:center;margin-top:16px">
       <button onclick="showLoginScreen()" style="background:none;border:none;color:var(--ink4);font-size:13px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">
-        ← Zurück zur Auswahl
+        ← Back to selection
       </button>
     </div>
   </div>
@@ -1901,65 +1901,65 @@ input[type=range]::-webkit-slider-thumb:hover {
   <div class="admin-wrap">
     <div class="admin-header">
       <div>
-        <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--forest);letter-spacing:-.3px" id="admin-school-name">Schul-Dashboard</div>
-        <div style="font-size:13px;color:var(--ink3);margin-top:4px">Verwalte die Schüler-Accounts deiner Schule</div>
+        <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--forest);letter-spacing:-.3px" id="admin-school-name">School Dashboard</div>
+        <div style="font-size:13px;color:var(--ink3);margin-top:4px">Manage your school's student accounts</div>
       </div>
-      <div class="code-badge">Schulcode: <span class="code-val" id="admin-school-code">—</span></div>
+      <div class="code-badge">School Code: <span class="code-val" id="admin-school-code">—</span></div>
     </div>
 
     <!-- Add student form -->
     <div style="background:var(--white);border:1px solid var(--border);border-radius:18px;padding:24px;box-shadow:var(--shadow-sm)">
-      <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);margin-bottom:16px">Neuen Schüler hinzufügen</div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);margin-bottom:16px">Add New Student</div>
       <div class="frow" style="margin-bottom:14px">
         <div class="fgroup">
           <label>Name</label>
-          <input class="fi" id="new-s-name" placeholder="Vor- und Nachname"/>
+          <input class="fi" id="new-s-name" placeholder="First and Last Name"/>
         </div>
         <div class="fgroup">
-          <label>Alter</label>
+          <label>Age</label>
           <input class="fi" id="new-s-age" type="number" min="6" max="18" value="12"/>
         </div>
       </div>
       <div class="frow" style="margin-bottom:14px">
         <div class="fgroup">
-          <label>Lernstil</label>
+          <label>Learning Style</label>
           <select class="fs" id="new-s-style">
-            <option value="socratic">Sokratisch</option>
-            <option value="stepbystep">Schritt für Schritt</option>
-            <option value="friendly">Warm &amp; Geduldig</option>
+            <option value="socratic">Socratic</option>
+            <option value="stepbystep">Step by Step</option>
+            <option value="friendly">Warm &amp; Patient</option>
             <option value="challenge">Challenge Mode</option>
           </select>
         </div>
         <div class="fgroup">
-          <label>Lernziel</label>
+          <label>Learning Goal</label>
           <select class="fs" id="new-s-goal">
-            <option value="critical">Kritisches Denken</option>
-            <option value="homework">Hausaufgaben-Hilfe</option>
-            <option value="curiosity">Neugier &amp; Spaß</option>
+            <option value="critical">Critical Thinking</option>
+            <option value="homework">Homework Help</option>
+            <option value="curiosity">Curiosity &amp; Fun</option>
           </select>
         </div>
       </div>
       <div class="fgroup" style="margin-bottom:14px">
-        <label>Notizen für den Tutor (optional)</label>
-        <textarea class="fta" id="new-s-notes" placeholder="z.B. Deutsch als Zweitsprache, braucht mehr Zeit, liebt Sportbeispiele..."></textarea>
+        <label>Notes for the tutor (optional)</label>
+        <textarea class="fta" id="new-s-notes" placeholder="e.g. English as second language, needs more time, loves sports examples..."></textarea>
       </div>
-      <button class="btn-next" onclick="addStudent()" style="width:100%">Schüler hinzufügen →</button>
+      <button class="btn-next" onclick="addStudent()" style="width:100%">Add Student →</button>
     </div>
 
     <!-- Student list -->
     <div>
       <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);margin-bottom:12px">
-        Schüler <span id="student-count" style="background:var(--cream2);padding:2px 8px;border-radius:20px;font-size:10px;margin-left:4px">0</span>
+        Students <span id="student-count" style="background:var(--cream2);padding:2px 8px;border-radius:20px;font-size:10px;margin-left:4px">0</span>
       </div>
       <div class="student-list" id="student-list">
         <div style="text-align:center;padding:32px;color:var(--ink4);font-size:13.5px;background:var(--white);border:1px dashed var(--border);border-radius:14px">
-          Noch keine Schüler. Füge oben den ersten hinzu.
+          No students yet. Add the first one above.
         </div>
       </div>
     </div>
 
     <div style="text-align:center">
-      <button onclick="adminLogout()" style="background:none;border:none;color:var(--ink4);font-size:13px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">← Ausloggen</button>
+      <button onclick="adminLogout()" style="background:none;border:none;color:var(--ink4);font-size:13px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">← Log out</button>
     </div>
   </div>
 </div>
@@ -2201,13 +2201,13 @@ input[type=range]::-webkit-slider-thumb:hover {
         <!-- Attach menu (positioned above button) -->
         <div id="attach-menu">
           <div class="attach-opt" onclick="openCamera()">
-            <div class="attach-opt-icon">📷</div>Foto aufnehmen
+            <div class="attach-opt-icon">📷</div>Take Photo
           </div>
           <div class="attach-opt" onclick="openGallery()">
-            <div class="attach-opt-icon">🖼</div>Aus Mediathek
+            <div class="attach-opt-icon">🖼</div>From Gallery
           </div>
           <div class="attach-opt" onclick="openFilePicker()">
-            <div class="attach-opt-icon">📎</div>Datei auswählen
+            <div class="attach-opt-icon">📎</div>Choose File
           </div>
         </div>
 
@@ -2216,7 +2216,7 @@ input[type=range]::-webkit-slider-thumb:hover {
           <input type="file" id="img-cam-input" accept="image/*" capture="environment" style="display:none" onchange="handleImgPick(this)">
           <input type="file" id="img-file-input" accept="image/*,application/pdf,.doc,.docx,.txt" style="display:none" onchange="handleImgPick(this)">
 
-          <button class="btn-attach" id="btn-attach" onclick="toggleAttachMenu(event)" title="Bild / Datei hinzufügen">
+          <button class="btn-attach" id="btn-attach" onclick="toggleAttachMenu(event)" title="Add image / file">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
             </svg>
@@ -2748,7 +2748,7 @@ async function sendMsg(isHint = false, isGotIt = false) {
     : text;
 
   if (imgSnap && !isHint && !isGotIt) {
-    const imgNote = `[Der Schüler hat ein Bild geteilt${text ? ': ' + text : '. Frage neugierig nach, was er damit lernen oder verstehen möchte'}]`;
+    const imgNote = `[The student shared an image${text ? ': ' + text : '. Ask curiously what they want to learn or understand from it'}]`;
     aiContent = text ? `${text}\n\n${imgNote}` : imgNote;
   }
 
@@ -3292,12 +3292,12 @@ function showNewSchoolForm() {
 function createSchool() {
   const name = document.getElementById('new-school-name').value.trim();
   const pw   = document.getElementById('new-admin-pw').value;
-  if (!name) { toast('Schulname eingeben', 'err'); return; }
-  if (pw.length < 4) { toast('Passwort muss min. 4 Zeichen haben', 'err'); return; }
+  if (!name) { toast('Enter school name', 'err'); return; }
+  if (pw.length < 4) { toast('Password must be at least 4 characters', 'err'); return; }
   const schools = getSchools();
   // Check for duplicate names
   if (schools.find(s => s.name.toLowerCase() === name.toLowerCase())) {
-    toast('Schule mit diesem Namen existiert bereits', 'err'); return;
+    toast('A school with this name already exists', 'err'); return;
   }
   const code = genCode();
   schools.push({ id: code, name, adminPw: pw, students: [] });
@@ -3305,7 +3305,7 @@ function createSchool() {
   document.getElementById('admin-code').value = code;
   document.getElementById('admin-pw').value = pw;
   document.getElementById('admin-new-school-form').style.display = 'none';
-  toast(`Schule erstellt! Code: ${code}`, 'ok');
+  toast(`School created! Code: ${code}`, 'ok');
 }
 
 // ── Admin login ──────────────────────────────────────────
@@ -3316,8 +3316,8 @@ function adminLogin() {
   const pw   = document.getElementById('admin-pw').value;
   const schools = getSchools();
   const school = schools.find(s => s.id === code);
-  if (!school) { toast('Schulcode nicht gefunden', 'err'); return; }
-  if (school.adminPw !== pw) { toast('Falsches Passwort', 'err'); return; }
+  if (!school) { toast('School code not found', 'err'); return; }
+  if (school.adminPw !== pw) { toast('Incorrect password', 'err'); return; }
   currentSchoolId = code;
   document.getElementById('school-screen').style.display = 'none';
   openAdminDash(school);
@@ -3334,7 +3334,7 @@ function renderStudentList(school) {
   const list = document.getElementById('student-list');
   document.getElementById('student-count').textContent = school.students.length;
   if (!school.students.length) {
-    list.innerHTML = `<div style="text-align:center;padding:32px;color:var(--ink4);font-size:13.5px;background:var(--white);border:1px dashed var(--border);border-radius:14px">Noch keine Schüler. Füge oben den ersten hinzu.</div>`;
+    list.innerHTML = `<div style="text-align:center;padding:32px;color:var(--ink4);font-size:13.5px;background:var(--white);border:1px dashed var(--border);border-radius:14px">No students yet. Add the first one above.</div>`;
     return;
   }
   list.innerHTML = school.students.map(st => `
@@ -3342,20 +3342,20 @@ function renderStudentList(school) {
       <div class="student-av">${st.name.slice(0,2).toUpperCase()}</div>
       <div class="student-info">
         <div class="student-name">${escH(st.name)}</div>
-        <div class="student-meta">${st.age} Jahre · ${styleLabel(st.style)} · ${goalLabel(st.goal)}</div>
+        <div class="student-meta">${st.age} yr · ${styleLabel(st.style)} · ${goalLabel(st.goal)}</div>
         <div class="student-pin">PIN: ${st.pin}</div>
       </div>
-      <button class="btn-launch-student" onclick='launchAsSchoolStudent(${JSON.stringify(st).replace(/'/g,"&#39;")})'>▶ Starten</button>
+      <button class="btn-launch-student" onclick='launchAsSchoolStudent(${JSON.stringify(st).replace(/'/g,"&#39;")})'>▶ Launch</button>
       <button class="btn-del" onclick="deleteStudent('${st.id}')">×</button>
     </div>
   `).join('');
 }
 
 function styleLabel(s) {
-  return {socratic:'Sokratisch',stepbystep:'Schritt f. Schritt',friendly:'Warm',challenge:'Challenge'}[s] || s;
+  return {socratic:'Socratic',stepbystep:'Step by Step',friendly:'Warm',challenge:'Challenge'}[s] || s;
 }
 function goalLabel(g) {
-  return {critical:'Krit. Denken',homework:'Hausaufgaben',curiosity:'Neugier'}[g] || g;
+  return {critical:'Crit. Thinking',homework:'Homework',curiosity:'Curiosity'}[g] || g;
 }
 
 function addStudent() {
@@ -3364,7 +3364,7 @@ function addStudent() {
   const style = document.getElementById('new-s-style').value;
   const goal  = document.getElementById('new-s-goal').value;
   const notes = document.getElementById('new-s-notes').value.trim();
-  if (!name) { toast('Name eingeben', 'err'); return; }
+  if (!name) { toast('Enter a name', 'err'); return; }
   const schools = getSchools();
   const school = schools.find(s => s.id === currentSchoolId);
   if (!school) return;
@@ -3374,17 +3374,17 @@ function addStudent() {
   document.getElementById('new-s-name').value = '';
   document.getElementById('new-s-notes').value = '';
   renderStudentList(school);
-  toast(`${name} hinzugefügt — PIN: ${student.pin}`, 'ok');
+  toast(`${name} added — PIN: ${student.pin}`, 'ok');
 }
 
 function deleteStudent(id) {
-  if (!confirm('Schüler wirklich löschen?')) return;
+  if (!confirm('Really delete this student?')) return;
   const schools = getSchools();
   const school = schools.find(s => s.id === currentSchoolId);
   school.students = school.students.filter(s => s.id !== id);
   saveSchools(schools);
   renderStudentList(school);
-  toast('Schüler gelöscht');
+  toast('Student deleted');
 }
 
 function adminLogout() {
@@ -3398,14 +3398,14 @@ function studentLogin() {
   const code = document.getElementById('sch-code').value.trim().toUpperCase();
   const name = document.getElementById('sch-student-name').value.trim();
   const pin  = document.getElementById('sch-student-pin').value.trim();
-  if (!code || !name || !pin) { toast('Alle Felder ausfüllen', 'err'); return; }
+  if (!code || !name || !pin) { toast('Please fill in all fields', 'err'); return; }
   const schools = getSchools();
   const school = schools.find(s => s.id === code);
-  if (!school) { toast('Schulcode nicht gefunden', 'err'); return; }
+  if (!school) { toast('School code not found', 'err'); return; }
   const student = school.students.find(s =>
     s.name.toLowerCase() === name.toLowerCase() && s.pin === pin
   );
-  if (!student) { toast('Name oder PIN falsch', 'err'); return; }
+  if (!student) { toast('Incorrect name or PIN', 'err'); return; }
   document.getElementById('school-screen').style.display = 'none';
   launchAsSchoolStudent({ ...student, schoolName: school.name });
 }
@@ -3458,8 +3458,8 @@ function launchAsSchoolStudent(student) {
   if (S.school) lookupSchool(S.school);
 
   setTimeout(() => {
-    const goalLine = S.goal ? ` Dein Ziel heute: ${goalMap[S.learningGoal]}.` : '';
-    addBubble('ai', `Hi ${S.name}! 👋 Ich bin dein persönlicher Tutor.${goalLine} Stell mir alles, was dich beschäftigt — ich gebe dir keine fertigen Antworten, sondern helfe dir, wirklich zu verstehen. Was haben wir heute vor?`);
+    const goalLine = S.goal ? ` Your goal today: ${goalMap[S.learningGoal]}.` : '';
+    addBubble('ai', `Hi ${S.name}! 👋 I'm your personal tutor.${goalLine} Ask me anything on your mind — I won't just give you answers, but help you truly understand. What are we working on today?`);
   }, 500);
 
   document.getElementById('minput').focus();
@@ -3593,7 +3593,7 @@ let voiceActive    = false;
 function openVoiceMode() {
   const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRec) {
-    toast('Spracherkennung wird von diesem Browser nicht unterstützt (Chrome empfohlen)', 'err');
+    toast('Speech recognition is not supported by this browser (Chrome recommended)', 'err');
     return;
   }
   voiceActive = true;
