@@ -2440,6 +2440,35 @@ body { background: #FFFFFF; }
   background: radial-gradient(ellipse at 50% 35%, #0E2218 0%, #070F0A 55%, #040805 100%);
 }
 
+/* ── ADMIN TABS ── */
+.admin-tabs {
+  display: flex;
+  flex-direction: row;
+  border-bottom: 1.5px solid var(--border);
+  gap: 0;
+  flex-wrap: wrap;
+}
+.admin-tab {
+  background: none;
+  border: none;
+  border-bottom: 2.5px solid transparent;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  color: var(--ink4);
+  cursor: pointer;
+  margin-bottom: -1.5px;
+  transition: color .15s, border-color .15s;
+}
+.admin-tab.active {
+  color: var(--forest);
+  border-bottom-color: var(--forest);
+}
+.admin-tab:hover:not(.active) {
+  color: var(--ink2);
+}
+
 /* ── ADMIN STUDENT ROWS ── */
 .student-row {
   border-radius: 16px;
@@ -3010,9 +3039,13 @@ body { background: #FFFFFF; }
           style="flex:1;padding:14px;text-align:center;font-size:13.5px;font-weight:700;cursor:pointer;color:var(--forest);border-bottom:2.5px solid var(--forest);transition:.15s">
           I'm a Student
         </div>
+        <div id="sch-tab-teacher" onclick="schTab('teacher')"
+          style="flex:1;padding:14px;text-align:center;font-size:13.5px;font-weight:700;cursor:pointer;color:var(--ink4);border-bottom:2.5px solid transparent;transition:.15s">
+          Teacher
+        </div>
         <div id="sch-tab-admin" onclick="schTab('admin')"
           style="flex:1;padding:14px;text-align:center;font-size:13.5px;font-weight:700;cursor:pointer;color:var(--ink4);border-bottom:2.5px solid transparent;transition:.15s">
-          Admin / Teacher
+          Admin
         </div>
       </div>
 
@@ -3036,6 +3069,29 @@ body { background: #FFFFFF; }
         <button class="btn-next" onclick="studentLogin()">Sign In →</button>
         <div style="text-align:center;font-size:12px;color:var(--ink4);margin-top:-8px">
           Don't have an account yet? Please ask your teacher.
+        </div>
+      </div>
+
+      <!-- Teacher login panel -->
+      <div id="sch-teacher-panel" class="ob-step" style="display:none">
+        <div class="ob-step-eyebrow">Teacher Login</div>
+        <div class="ob-step-title">Welcome back!</div>
+        <div class="ob-step-desc">Sign in with your school code, name, and PIN provided by your admin.</div>
+        <div class="fgroup">
+          <label>School Code</label>
+          <input class="fi" id="sch-teacher-code" placeholder="e.g. SCHOOL01" style="text-transform:uppercase;letter-spacing:2px"/>
+        </div>
+        <div class="fgroup">
+          <label>Your Name</label>
+          <input class="fi" id="sch-teacher-name" placeholder="Full name"/>
+        </div>
+        <div class="fgroup">
+          <label>PIN</label>
+          <input class="fi" id="sch-teacher-pin" type="password" placeholder="4-digit PIN"/>
+        </div>
+        <button class="btn-next" onclick="teacherLogin()">Sign In →</button>
+        <div style="text-align:center;font-size:12px;color:var(--ink4);margin-top:-8px">
+          Don't have an account? Please ask your school admin.
         </div>
       </div>
 
@@ -3094,6 +3150,19 @@ body { background: #FFFFFF; }
       <div class="code-badge">School Code: <span class="code-val" id="admin-school-code">—</span></div>
     </div>
 
+    <!-- Admin tab bar -->
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="adminTab('students')">Students</button>
+      <button class="admin-tab" onclick="adminTab('classes')">Classes</button>
+      <button class="admin-tab" onclick="adminTab('teachers')">Teachers</button>
+      <button class="admin-tab" onclick="adminTab('lessons')">Lesson Log</button>
+      <button class="admin-tab" onclick="adminTab('yearplan')">Year Plan</button>
+      <button class="admin-tab" onclick="adminTab('analytics')">Analytics</button>
+    </div>
+
+    <!-- Students panel -->
+    <div id="admin-panel-students">
+
     <!-- Add student form -->
     <div style="background:var(--white);border:1px solid var(--border);border-radius:18px;padding:24px;box-shadow:var(--shadow-sm)">
       <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);margin-bottom:16px">Add New Student</div>
@@ -3145,9 +3214,164 @@ body { background: #FFFFFF; }
       </div>
     </div>
 
+    </div><!-- /admin-panel-students -->
+
+    <!-- Classes panel -->
+    <div id="admin-panel-classes" style="display:none">
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:18px;padding:24px;box-shadow:var(--shadow-sm);margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);margin-bottom:16px">Add New Class</div>
+        <div class="frow" style="margin-bottom:14px">
+          <div class="fgroup">
+            <label>Class Name</label>
+            <input class="fi" id="new-cls-name" placeholder="e.g. 10a, Year 9, Grade 7"/>
+          </div>
+          <div class="fgroup">
+            <label>Grade Level</label>
+            <input class="fi" id="new-cls-grade" type="number" min="1" max="13" placeholder="e.g. 10"/>
+          </div>
+        </div>
+        <button class="btn-next" onclick="createClass()">Add Class →</button>
+      </div>
+      <div id="class-list"></div>
+    </div><!-- /admin-panel-classes -->
+
+    <!-- Teachers panel -->
+    <div id="admin-panel-teachers" style="display:none">
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:18px;padding:24px;box-shadow:var(--shadow-sm);margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);margin-bottom:16px">Add New Teacher</div>
+        <div class="frow" style="margin-bottom:14px">
+          <div class="fgroup"><label>Name</label><input class="fi" id="new-t-name" placeholder="Full name"/></div>
+          <div class="fgroup"><label>Email <span style="color:var(--ink4);font-weight:400">(optional)</span></label><input class="fi" id="new-t-email" type="email" placeholder="teacher@school.com"/></div>
+        </div>
+        <div class="fgroup" style="margin-bottom:14px"><label>Subjects <span style="color:var(--ink4);font-weight:400">(comma-separated)</span></label><input class="fi" id="new-t-subjects" placeholder="e.g. Maths, Physics"/></div>
+        <button class="btn-next" onclick="addTeacher()">Add Teacher →</button>
+      </div>
+      <div id="teacher-list"></div>
+    </div><!-- /admin-panel-teachers -->
+
+    <!-- Lesson Log panel -->
+    <div id="admin-panel-lessons" style="display:none">
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:18px;padding:32px;box-shadow:var(--shadow-sm);text-align:center;color:var(--ink4)">
+        <div style="font-size:32px;margin-bottom:12px">📋</div>
+        <div style="font-weight:700;font-size:15px;color:var(--ink);margin-bottom:8px">Lesson Log</div>
+        <div style="font-size:13.5px">Teachers log lessons from their own dashboard. Entries will appear here.</div>
+      </div>
+    </div><!-- /admin-panel-lessons -->
+
+    <!-- Year Plan panel -->
+    <div id="admin-panel-yearplan" style="display:none">
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:18px;padding:32px;box-shadow:var(--shadow-sm);text-align:center;color:var(--ink4)">
+        <div style="font-size:32px;margin-bottom:12px">📅</div>
+        <div style="font-weight:700;font-size:15px;color:var(--ink);margin-bottom:8px">Year Plans</div>
+        <div style="font-size:13.5px">Teachers upload year plans from their own dashboard. Plans will appear here.</div>
+      </div>
+    </div><!-- /admin-panel-yearplan -->
+
+    <!-- Analytics panel -->
+    <div id="admin-panel-analytics" style="display:none">
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:18px;padding:24px;box-shadow:var(--shadow-sm);margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);margin-bottom:16px">Class Analytics</div>
+        <div class="frow" style="margin-bottom:16px">
+          <div class="fgroup">
+            <label>Select Class</label>
+            <select class="fi" id="analytics-class-sel" onchange="loadClassAnalytics(this.value)">
+              <option value="">Select a class...</option>
+            </select>
+          </div>
+        </div>
+        <div id="analytics-content"><div style="color:var(--ink4);font-size:13px">Select a class to see analytics.</div></div>
+      </div>
+    </div><!-- /admin-panel-analytics -->
+
     <div style="text-align:center">
       <button onclick="adminLogout()" style="background:none;border:none;color:var(--ink4);font-size:13px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">← Log out</button>
     </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║         TEACHER DASHBOARD               ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<div id="teacher-screen" style="display:none;flex-direction:column;min-height:100vh;background:#F8F9FB;padding:0">
+  <div class="admin-wrap" style="padding:32px 20px">
+    <div class="admin-header">
+      <div>
+        <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--forest);letter-spacing:-.3px" id="teacher-name-display">Teacher</div>
+        <div style="font-size:13px;color:var(--ink3);margin-top:4px" id="teacher-school-display">School</div>
+      </div>
+      <button onclick="goHome()" style="background:none;border:1px solid var(--border);border-radius:10px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--ink4);cursor:pointer;font-family:var(--font-body)">← Home</button>
+    </div>
+
+    <!-- Teacher tab bar -->
+    <div class="admin-tabs">
+      <button class="teacher-tab admin-tab active" onclick="teacherTab('log')">Log Lesson</button>
+      <button class="teacher-tab admin-tab" onclick="teacherTab('yearplan')">Year Plan</button>
+    </div>
+
+    <!-- Log Lesson panel -->
+    <div id="teacher-panel-log">
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:18px;padding:24px;box-shadow:var(--shadow-sm);margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);margin-bottom:16px">Log a Lesson</div>
+        <div class="frow" style="margin-bottom:14px">
+          <div class="fgroup">
+            <label>Class</label>
+            <select class="fi" id="lesson-class"><option value="">Select class...</option></select>
+          </div>
+          <div class="fgroup">
+            <label>Subject</label>
+            <select class="fi" id="lesson-subject"><option value="">Select subject...</option></select>
+          </div>
+        </div>
+        <div class="fgroup" style="margin-bottom:14px">
+          <label>Date</label>
+          <input class="fi" id="lesson-date" type="date"/>
+        </div>
+        <div class="fgroup" style="margin-bottom:14px">
+          <label>What was covered</label>
+          <textarea class="fta" id="lesson-content" placeholder="Describe what was taught in this lesson..." style="min-height:80px"></textarea>
+        </div>
+        <div class="fgroup" style="margin-bottom:14px">
+          <label>Homework <span style="color:var(--ink4);font-weight:400">(optional)</span></label>
+          <textarea class="fta" id="lesson-hw" placeholder="Describe any homework assigned..." style="min-height:60px"></textarea>
+        </div>
+        <div class="fgroup" style="margin-bottom:14px">
+          <label>Attach material <span style="color:var(--ink4);font-weight:400">(optional, max 2MB)</span></label>
+          <input class="fi" id="lesson-file" type="file" accept=".pdf,.doc,.docx,.txt,.jpg,.png"/>
+        </div>
+        <button class="btn-next" onclick="saveLesson()">Save Lesson →</button>
+      </div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);margin-bottom:12px">Recent Entries</div>
+      <div id="recent-lessons"></div>
+    </div><!-- /teacher-panel-log -->
+
+    <!-- Year Plan panel -->
+    <div id="teacher-panel-yearplan" style="display:none">
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:18px;padding:24px;box-shadow:var(--shadow-sm);margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);margin-bottom:16px">Upload Year Plan</div>
+        <div class="frow" style="margin-bottom:14px">
+          <div class="fgroup">
+            <label>Class</label>
+            <select class="fi" id="yp-class"><option value="">Select class...</option></select>
+          </div>
+          <div class="fgroup">
+            <label>Subject</label>
+            <select class="fi" id="yp-subject"><option value="">Select subject...</option></select>
+          </div>
+        </div>
+        <div class="fgroup" style="margin-bottom:14px">
+          <label>Plan text <span style="color:var(--ink4);font-weight:400">(optional)</span></label>
+          <textarea class="fta" id="yp-text" placeholder="Paste or type your year plan here..." style="min-height:100px"></textarea>
+        </div>
+        <div class="fgroup" style="margin-bottom:14px">
+          <label>Attach file <span style="color:var(--ink4);font-weight:400">(optional, max 2MB)</span></label>
+          <input class="fi" id="yp-file" type="file" accept=".pdf,.doc,.docx,.txt"/>
+        </div>
+        <button class="btn-next" onclick="saveYearPlan()">Save Year Plan →</button>
+      </div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);margin-bottom:12px">Existing Plans</div>
+      <div id="yearplan-list"></div>
+    </div><!-- /teacher-panel-yearplan -->
+
   </div>
 </div>
 
@@ -4422,7 +4646,7 @@ FORMAT
 • End EVERY response with a question or challenge.
 • Always include [BLOOM:level] tag at the very end.
 
-${ndCtx ? `\n━━━━━━━━━━━━━━━━━━━━━━━━\nSTUDY MATERIAL (use this to ask specific, grounded questions):\n${ndCtx}\n━━━━━━━━━━━━━━━━━━━━━━━━` : ''}`;
+${ndCtx ? `\n━━━━━━━━━━━━━━━━━━━━━━━━\nSTUDY MATERIAL (use this to ask specific, grounded questions):\n${ndCtx}\n━━━━━━━━━━━━━━━━━━━━━━━━` : ''}${S.lessonContext||''}`;
 }
 
 // ══════════════════════════════════════════════
@@ -5687,13 +5911,16 @@ function chooseStudent() {
 }
 
 function schTab(tab) {
-  const isStudent = tab === 'student';
-  document.getElementById('sch-tab-student').style.color = isStudent ? 'var(--forest)' : 'var(--ink4)';
-  document.getElementById('sch-tab-student').style.borderBottomColor = isStudent ? 'var(--forest)' : 'transparent';
-  document.getElementById('sch-tab-admin').style.color = !isStudent ? 'var(--forest)' : 'var(--ink4)';
-  document.getElementById('sch-tab-admin').style.borderBottomColor = !isStudent ? 'var(--forest)' : 'transparent';
-  document.getElementById('sch-student-panel').style.display = isStudent ? 'flex' : 'none';
-  document.getElementById('sch-admin-panel').style.display = !isStudent ? 'flex' : 'none';
+  ['student','teacher','admin'].forEach(t => {
+    const el = document.getElementById('sch-tab-'+t);
+    if (el) {
+      el.style.color = t===tab ? 'var(--forest)' : 'var(--ink4)';
+      el.style.borderBottomColor = t===tab ? 'var(--forest)' : 'transparent';
+    }
+  });
+  document.getElementById('sch-student-panel').style.display = tab==='student' ? 'flex' : 'none';
+  document.getElementById('sch-teacher-panel').style.display = tab==='teacher' ? 'flex' : 'none';
+  document.getElementById('sch-admin-panel').style.display = tab==='admin' ? 'flex' : 'none';
 }
 
 // ── Crypto helpers ───────────────────────────────────────
@@ -5756,7 +5983,9 @@ async function openAdminDash(school) {
   document.getElementById('admin-screen').style.display = 'flex';
   document.getElementById('admin-school-name').textContent = school.name;
   document.getElementById('admin-school-code').textContent = school.code;
+  adminTab('students');
   await renderStudentList();
+  loadAnalyticsClassOptions();
 }
 
 async function renderStudentList() {
@@ -5823,6 +6052,384 @@ function adminLogout() {
   showLoginScreen();
 }
 
+// ── Admin tab navigation ─────────────────────────────────
+function adminTab(tab) {
+  ['students','classes','teachers','lessons','yearplan','analytics'].forEach(t => {
+    document.getElementById('admin-panel-'+t).style.display = t===tab ? 'block' : 'none';
+    document.querySelectorAll('.admin-tab').forEach((btn) => {
+      btn.classList.toggle('active', btn.getAttribute('onclick').includes("'"+tab+"'"));
+    });
+  });
+}
+
+// ── Classes management ───────────────────────────────────
+async function createClass() {
+  const name = document.getElementById('new-cls-name').value.trim();
+  const grade = parseInt(document.getElementById('new-cls-grade').value) || null;
+  if (!name) { toast('Enter a class name', 'err'); return; }
+  if (!SB) { toast('Supabase not connected', 'err'); return; }
+  const { error } = await SB.from('classes').insert({ school_id: currentSchoolId, name, grade_level: grade });
+  if (error) { toast('Error: ' + error.message, 'err'); return; }
+  document.getElementById('new-cls-name').value = '';
+  document.getElementById('new-cls-grade').value = '';
+  await renderClassList();
+  toast('Class added', 'ok');
+}
+
+async function renderClassList() {
+  const list = document.getElementById('class-list');
+  if (!SB || !list) return;
+  const { data: classes } = await SB.from('classes').select('*').eq('school_id', currentSchoolId).order('grade_level');
+  const { data: students } = await SB.from('students').select('*').eq('school_id', currentSchoolId);
+  const { data: enrollments } = await SB.from('class_students').select('*');
+  if (!classes?.length) { list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--ink4);font-size:13.5px;background:var(--white);border:1px dashed var(--border);border-radius:14px">No classes yet.</div>'; return; }
+  list.innerHTML = classes.map(cls => {
+    const enrolled = enrollments?.filter(e => e.class_id === cls.id).map(e => e.student_id) || [];
+    const enrolledStudents = students?.filter(s => enrolled.includes(s.id)) || [];
+    const unenrolled = students?.filter(s => !enrolled.includes(s.id)) || [];
+    return `<div style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:12px;box-shadow:var(--shadow-sm)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div>
+          <div style="font-weight:700;font-size:15px;color:var(--ink)">${escH(cls.name)}</div>
+          <div style="font-size:12px;color:var(--ink4)">Grade ${cls.grade_level || '—'} · ${enrolledStudents.length} students</div>
+        </div>
+        <button onclick="deleteClass('${cls.id}')" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--ink4);cursor:pointer">Delete</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+        ${enrolledStudents.map(s => `<span style="background:var(--cream2);border-radius:20px;padding:4px 10px;font-size:12px;font-weight:600;color:var(--forest)">${escH(s.name)} <button onclick="removeStudentFromClass('${cls.id}','${s.id}')" style="background:none;border:none;cursor:pointer;color:var(--ink4);font-size:11px;margin-left:2px">×</button></span>`).join('')}
+        ${enrolledStudents.length === 0 ? '<span style="font-size:12px;color:var(--ink4)">No students yet</span>' : ''}
+      </div>
+      ${unenrolled.length ? `<select class="fi" id="add-to-cls-${cls.id}" style="font-size:13px;margin-bottom:8px"><option value="">Add student to class...</option>${unenrolled.map(s => `<option value="${s.id}">${escH(s.name)}</option>`).join('')}</select>
+      <button onclick="addStudentToClass('${cls.id}')" style="background:var(--forest);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer">Add →</button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+async function addStudentToClass(classId) {
+  const sel = document.getElementById('add-to-cls-'+classId);
+  const studentId = sel?.value;
+  if (!studentId) { toast('Select a student', 'err'); return; }
+  if (!SB) return;
+  const { error } = await SB.from('class_students').insert({ class_id: classId, student_id: studentId });
+  if (error && error.code !== '23505') { toast('Error: ' + error.message, 'err'); return; }
+  await renderClassList();
+  toast('Student added to class', 'ok');
+}
+
+async function removeStudentFromClass(classId, studentId) {
+  if (!SB) return;
+  await SB.from('class_students').delete().eq('class_id', classId).eq('student_id', studentId);
+  await renderClassList();
+  toast('Removed from class');
+}
+
+async function deleteClass(classId) {
+  if (!confirm('Delete this class? Students will not be deleted.')) return;
+  if (!SB) return;
+  await SB.from('classes').delete().eq('id', classId);
+  await renderClassList();
+  toast('Class deleted');
+}
+
+// ── Teacher management ───────────────────────────────────
+async function addTeacher() {
+  const name = document.getElementById('new-t-name').value.trim();
+  const email = document.getElementById('new-t-email').value.trim();
+  const subjectsRaw = document.getElementById('new-t-subjects').value.trim();
+  if (!name) { toast('Enter a name', 'err'); return; }
+  if (!SB) { toast('Supabase not connected', 'err'); return; }
+  const pin = genPin();
+  const subjects = subjectsRaw ? subjectsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+  const { error } = await SB.from('teachers').insert({ school_id: currentSchoolId, name, email: email || null, pin, subjects });
+  if (error) { toast('Error: ' + error.message, 'err'); return; }
+  document.getElementById('new-t-name').value = '';
+  document.getElementById('new-t-email').value = '';
+  document.getElementById('new-t-subjects').value = '';
+  await renderTeacherList();
+  toast(`${name} added — PIN: ${pin}`, 'ok');
+}
+
+async function renderTeacherList() {
+  const list = document.getElementById('teacher-list');
+  if (!SB || !list) return;
+  const { data: teachers } = await SB.from('teachers').select('*').eq('school_id', currentSchoolId).order('name');
+  if (!teachers?.length) { list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--ink4);font-size:13.5px;background:var(--white);border:1px dashed var(--border);border-radius:14px">No teachers yet.</div>'; return; }
+  list.innerHTML = teachers.map(t => `
+    <div style="display:flex;align-items:center;gap:16px;background:var(--white);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:10px;box-shadow:var(--shadow-sm)">
+      <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--forest2),var(--forest));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0">${t.name.slice(0,2).toUpperCase()}</div>
+      <div style="flex:1">
+        <div style="font-weight:700;color:var(--ink);font-size:14px">${escH(t.name)}</div>
+        <div style="font-size:12px;color:var(--ink4)">${t.email || ''} ${t.subjects?.length ? '· '+t.subjects.join(', ') : ''}</div>
+        <div style="font-size:12px;color:var(--ink4);margin-top:2px">PIN: ${t.pin}</div>
+      </div>
+      <button onclick="deleteTeacher('${t.id}')" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--ink4);cursor:pointer">Remove</button>
+    </div>`).join('');
+}
+
+async function deleteTeacher(id) {
+  if (!confirm('Remove this teacher?')) return;
+  if (!SB) return;
+  await SB.from('teachers').delete().eq('id', id);
+  await renderTeacherList();
+  toast('Teacher removed');
+}
+
+// ── Teacher login ────────────────────────────────────────
+async function teacherLogin() {
+  const code = document.getElementById('sch-teacher-code').value.trim().toUpperCase();
+  const name = document.getElementById('sch-teacher-name').value.trim();
+  const pin  = document.getElementById('sch-teacher-pin').value.trim();
+  if (!code || !name || !pin) { toast('Please fill in all fields', 'err'); return; }
+  if (!SB) { toast('Supabase not connected', 'err'); return; }
+  toast('Signing in…');
+  const { data: school } = await SB.from('schools').select('id,name').eq('code', code).single();
+  if (!school) { toast('School code not found', 'err'); return; }
+  const { data: teachers } = await SB.from('teachers').select('*').eq('school_id', school.id);
+  const teacher = teachers?.find(t => t.name.toLowerCase() === name.toLowerCase() && t.pin === pin);
+  if (!teacher) { toast('Incorrect name or PIN', 'err'); return; }
+  document.getElementById('school-screen').style.display = 'none';
+  openTeacherDash(teacher, school);
+}
+
+// ── Teacher dashboard ────────────────────────────────────
+let currentTeacher = null;
+let currentTeacherSchool = null;
+
+function openTeacherDash(teacher, school) {
+  currentTeacher = teacher;
+  currentTeacherSchool = school;
+  document.getElementById('teacher-screen').style.display = 'flex';
+  document.getElementById('teacher-name-display').textContent = teacher.name;
+  document.getElementById('teacher-school-display').textContent = school.name;
+  populateTeacherDropdowns();
+  renderRecentLessons();
+}
+
+async function populateTeacherDropdowns() {
+  if (!SB || !currentTeacher) return;
+  const { data: classes } = await SB.from('classes').select('*').eq('school_id', currentTeacherSchool.id).order('name');
+  window._teacherClasses = classes || [];
+  const subjects = currentTeacher.subjects || [];
+  ['lesson-class','yp-class'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '<option value="">Select class...</option>' + (classes||[]).map(c => `<option value="${c.id}">${escH(c.name)}</option>`).join('');
+  });
+  ['lesson-subject','yp-subject'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '<option value="">Select subject...</option>' + subjects.map(s => `<option value="${s}">${escH(s)}</option>`).join('');
+  });
+}
+
+async function saveLesson() {
+  const classId  = document.getElementById('lesson-class').value;
+  const subject  = document.getElementById('lesson-subject').value;
+  const date     = document.getElementById('lesson-date').value;
+  const content  = document.getElementById('lesson-content').value.trim();
+  const homework = document.getElementById('lesson-hw').value.trim();
+  if (!classId || !subject || !content) { toast('Please fill in class, subject and content', 'err'); return; }
+  if (!SB) { toast('Supabase not connected', 'err'); return; }
+  let materials = null;
+  const file = document.getElementById('lesson-file').files[0];
+  if (file) {
+    if (file.size > 2*1024*1024) { toast('File too large — max 2MB', 'err'); return; }
+    const b64 = await fileToBase64(file);
+    materials = { filename: file.name, data: b64, type: file.type };
+  }
+  const { error } = await SB.from('lessons').insert({
+    school_id: currentTeacherSchool.id,
+    teacher_id: currentTeacher.id,
+    class_id: classId,
+    subject,
+    lesson_date: date || new Date().toISOString().split('T')[0],
+    content,
+    homework: homework || null,
+    materials
+  });
+  if (error) { toast('Error: ' + error.message, 'err'); return; }
+  document.getElementById('lesson-content').value = '';
+  document.getElementById('lesson-hw').value = '';
+  document.getElementById('lesson-file').value = '';
+  await renderRecentLessons();
+  toast('Lesson logged ✓', 'ok');
+}
+
+async function renderRecentLessons() {
+  const list = document.getElementById('recent-lessons');
+  if (!SB || !list) return;
+  const { data: lessons } = await SB.from('lessons').select('*, classes(name)').eq('teacher_id', currentTeacher?.id).order('lesson_date', { ascending: false }).limit(10);
+  if (!lessons?.length) { list.innerHTML = '<div style="color:var(--ink4);font-size:13px;padding:12px 0">No lessons logged yet.</div>'; return; }
+  list.innerHTML = lessons.map(l => `
+    <div style="border-left:3px solid var(--forest);padding:10px 14px;margin-bottom:10px;background:var(--cream);border-radius:0 10px 10px 0">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="font-size:12px;font-weight:700;color:var(--forest)">📅 ${l.lesson_date} · ${escH(l.classes?.name||'')} · ${escH(l.subject)}</div>
+        <button onclick="deleteLesson('${l.id}')" style="background:none;border:none;cursor:pointer;color:var(--ink4);font-size:11px">×</button>
+      </div>
+      <div style="font-size:13px;color:var(--ink2);margin-top:4px">${escH(l.content)}</div>
+      ${l.homework ? `<div style="font-size:12px;color:var(--ink3);margin-top:4px">HW: ${escH(l.homework)}</div>` : ''}
+      ${l.materials ? `<div style="font-size:11px;color:var(--ink4);margin-top:4px">📎 ${escH(l.materials.filename)}</div>` : ''}
+    </div>`).join('');
+}
+
+async function deleteLesson(id) {
+  if (!confirm('Delete this lesson entry?')) return;
+  if (!SB) return;
+  await SB.from('lessons').delete().eq('id', id);
+  await renderRecentLessons();
+  toast('Lesson deleted');
+}
+
+async function saveYearPlan() {
+  const classId  = document.getElementById('yp-class').value;
+  const subject  = document.getElementById('yp-subject').value;
+  const planText = document.getElementById('yp-text').value.trim();
+  if (!classId || !subject) { toast('Select class and subject', 'err'); return; }
+  if (!SB) { toast('Supabase not connected', 'err'); return; }
+  let planFile = null;
+  const file = document.getElementById('yp-file').files[0];
+  if (file) {
+    if (file.size > 2*1024*1024) { toast('File too large — max 2MB', 'err'); return; }
+    const b64 = await fileToBase64(file);
+    planFile = { filename: file.name, data: b64, type: file.type };
+  }
+  const { error } = await SB.from('year_plans').upsert({
+    school_id: currentTeacherSchool.id,
+    teacher_id: currentTeacher.id,
+    class_id: classId,
+    subject,
+    plan_text: planText || null,
+    plan_file: planFile,
+    updated_at: new Date().toISOString()
+  }, { onConflict: 'class_id,subject' });
+  if (error) { toast('Error: ' + error.message, 'err'); return; }
+  document.getElementById('yp-text').value = '';
+  document.getElementById('yp-file').value = '';
+  await renderYearPlans();
+  toast('Year plan saved ✓', 'ok');
+}
+
+async function renderYearPlans() {
+  const list = document.getElementById('yearplan-list');
+  if (!SB || !list || !currentTeacher) return;
+  const { data: plans } = await SB.from('year_plans').select('*, classes(name)').eq('teacher_id', currentTeacher.id);
+  if (!plans?.length) { list.innerHTML = '<div style="color:var(--ink4);font-size:13px;padding:12px 0">No year plans yet.</div>'; return; }
+  list.innerHTML = plans.map(p => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--white);border:1px solid var(--border);border-radius:10px;margin-bottom:8px">
+      <div>
+        <div style="font-weight:700;font-size:14px;color:var(--ink)">${escH(p.classes?.name||'?')} — ${escH(p.subject)}</div>
+        <div style="font-size:12px;color:var(--ink4)">${p.plan_text ? '✓ Plan saved' : ''} ${p.plan_file ? '📎 File attached' : ''}</div>
+      </div>
+      <button onclick="deleteYearPlan('${p.id}')" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:11px;color:var(--ink4);cursor:pointer">Delete</button>
+    </div>`).join('');
+}
+
+async function deleteYearPlan(id) {
+  if (!confirm('Delete this year plan?')) return;
+  if (!SB) return;
+  await SB.from('year_plans').delete().eq('id', id);
+  await renderYearPlans();
+  toast('Year plan deleted');
+}
+
+function teacherTab(tab) {
+  ['log','yearplan'].forEach(t => {
+    document.getElementById('teacher-panel-'+t).style.display = t===tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.teacher-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('onclick').includes("'"+tab+"'"));
+  });
+  if (tab === 'yearplan') renderYearPlans();
+}
+
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+// ── Fetch lesson context for student AI prompt ───────────
+async function fetchTodaysLessonContext() {
+  if (!SB || !S.studentId) return '';
+  try {
+    const { data: enrollments } = await SB.from('class_students').select('class_id').eq('student_id', S.studentId);
+    if (!enrollments?.length) return '';
+    const classIds = enrollments.map(e => e.class_id);
+    const weekAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0];
+    const { data: lessons } = await SB.from('lessons').select('*, classes(name)').in('class_id', classIds).gte('lesson_date', weekAgo).order('lesson_date', { ascending: false });
+    if (!lessons?.length) return '';
+    const subjects = [...new Set(lessons.map(l => l.subject))];
+    const { data: plans } = await SB.from('year_plans').select('*').in('class_id', classIds).in('subject', subjects);
+    let ctx = '\n━━━━━━━━━━━━━━━━━━━━━━━━\nSCHOOL CONTEXT — WHAT WAS TAUGHT THIS WEEK\n━━━━━━━━━━━━━━━━━━━━━━━━\n';
+    lessons.forEach(l => {
+      ctx += `📅 ${l.lesson_date} — ${l.subject} (${l.classes?.name||'Class'}):\n   Covered: ${l.content}\n`;
+      if (l.homework) ctx += `   Homework: ${l.homework}\n`;
+      ctx += '\n';
+    });
+    if (plans?.length) {
+      ctx += 'YEAR PLAN — WHAT COMES NEXT:\n';
+      plans.forEach(p => { if (p.plan_text) ctx += `${p.subject}: ${p.plan_text.substring(0,500)}\n`; });
+    }
+    ctx += `\nIMPORTANT: Use this context to ask specific grounded questions about what ${S.name} actually learned this week. If they ask about homework, you know exactly what was assigned.\n`;
+    return ctx;
+  } catch(e) { console.warn('lessonContext:', e); return ''; }
+}
+
+// ── Analytics ────────────────────────────────────────────
+async function loadAnalyticsClassOptions() {
+  if (!SB) return;
+  const { data: classes } = await SB.from('classes').select('*').eq('school_id', currentSchoolId).order('name');
+  const sel = document.getElementById('analytics-class-sel');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Select a class...</option>' + (classes||[]).map(c => `<option value="${c.id}">${escH(c.name)}</option>`).join('');
+}
+
+async function loadClassAnalytics(classId) {
+  const container = document.getElementById('analytics-content');
+  if (!classId || !SB || !container) return;
+  container.innerHTML = '<div style="color:var(--ink4);font-size:13px">Loading...</div>';
+  const { data: enrollments } = await SB.from('class_students').select('student_id').eq('class_id', classId);
+  if (!enrollments?.length) { container.innerHTML = '<div style="color:var(--ink4);font-size:13px">No students in this class.</div>'; return; }
+  const studentIds = enrollments.map(e => e.student_id);
+  const { data: students } = await SB.from('students').select('id,name').in('id', studentIds);
+  const thirtyAgo = new Date(Date.now() - 30*24*60*60*1000).toISOString();
+  const { data: sessions } = await SB.from('sessions').select('*').in('student_id', studentIds).gte('started_at', thirtyAgo);
+  const bloomOrder = ['remember','understand','apply','analyze','evaluate','create'];
+  const rows = (students||[]).map(st => {
+    const sts = sessions?.filter(s => s.student_id === st.id) || [];
+    const ahas = sts.reduce((a,s) => a + (s.aha_count||0), 0);
+    const avgScore = sts.length ? Math.round(sts.reduce((a,s)=>a+(s.independence_score||0),0)/sts.length) : '—';
+    const bloomLevels = sts.map(s => { const b = s.bloom_data||{}; let best='remember',bv=0; bloomOrder.forEach(k=>{ if((b[k]||0)>bv){bv=b[k];best=k;} }); return best; });
+    const topBloom = bloomLevels.length ? bloomLevels[bloomLevels.sort((a,b)=>bloomOrder.indexOf(b)-bloomOrder.indexOf(a))[0]] || '—' : '—';
+    return `<tr>
+      <td style="padding:10px 12px;font-weight:600;color:var(--ink)">${escH(st.name)}</td>
+      <td style="padding:10px 12px;text-align:center;color:var(--ink2)">${sts.length}</td>
+      <td style="padding:10px 12px;text-align:center;color:var(--ink2);text-transform:capitalize">${topBloom}</td>
+      <td style="padding:10px 12px;text-align:center;color:var(--ink2)">${ahas}</td>
+      <td style="padding:10px 12px;text-align:center;font-weight:700;color:var(--forest)">${avgScore}</td>
+    </tr>`;
+  }).join('');
+  const classAhaAvg = sessions?.length ? (sessions.reduce((a,s)=>a+(s.aha_count||0),0)/students.length).toFixed(1) : '—';
+  const classScoreAvg = sessions?.length ? Math.round(sessions.reduce((a,s)=>a+(s.independence_score||0),0)/sessions.length) : '—';
+  container.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:13.5px">
+      <thead><tr style="border-bottom:1.5px solid var(--border)">
+        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink4)">Student</th>
+        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink4)">Sessions</th>
+        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink4)">Bloom Level</th>
+        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink4)">AHA Moments</th>
+        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink4)">Score</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+      <div style="background:var(--cream);border-radius:12px;padding:14px 20px;flex:1;min-width:120px"><div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink4)">Avg AHA / student</div><div style="font-size:24px;font-weight:800;color:var(--forest);margin-top:4px">${classAhaAvg}</div></div>
+      <div style="background:var(--cream);border-radius:12px;padding:14px 20px;flex:1;min-width:120px"><div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink4)">Avg Independence Score</div><div style="font-size:24px;font-weight:800;color:var(--forest);margin-top:4px">${classScoreAvg}</div></div>
+      <div style="background:var(--cream);border-radius:12px;padding:14px 20px;flex:1;min-width:120px"><div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink4)">Total Sessions (30d)</div><div style="font-size:24px;font-weight:800;color:var(--forest);margin-top:4px">${sessions?.length||0}</div></div>
+    </div>`;
+}
+
 // ── Student login ────────────────────────────────────────
 async function studentLogin() {
   const code = document.getElementById('sch-code').value.trim().toUpperCase();
@@ -5843,7 +6450,7 @@ async function studentLogin() {
 }
 
 // ── Launch app with school student profile ───────────────
-function launchAsSchoolStudent(student) {
+async function launchAsSchoolStudent(student) {
   document.getElementById('admin-screen').style.display = 'none';
   document.getElementById('school-screen').style.display = 'none';
   document.getElementById('login-screen').style.display = 'none';
@@ -5866,6 +6473,8 @@ function launchAsSchoolStudent(student) {
     curiosity: 'Spark genuine curiosity and love of learning',
   };
   S.goal = goalMap[S.learningGoal] || '';
+
+  try { S.lessonContext = await fetchTodaysLessonContext(); } catch(e) { S.lessonContext = ''; }
 
   document.getElementById('app').style.display = 'flex';
   document.getElementById('app').classList.add('show');
@@ -6309,7 +6918,7 @@ function closeHiw() {
 
 function goHome() {
   // Hide all screens, go back to landing
-  ['app','parent-dashboard','admin-screen','school-screen','signin-screen','login-screen','ob','ob-student','setup-screen'].forEach(id => {
+  ['app','parent-dashboard','admin-screen','school-screen','teacher-screen','signin-screen','login-screen','ob','ob-student','setup-screen'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.style.display = 'none'; el.classList.remove('show'); }
   });
