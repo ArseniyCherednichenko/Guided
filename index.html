@@ -6,6 +6,7 @@
 <title>Guided — AI Tutor</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
 <style>
 /* ══════════════════════════════════════════════
    TOKENS & RESET
@@ -837,29 +838,70 @@ input[type=range]::-webkit-slider-thumb:hover {
 .thinking-badge.evaluate { background: #FDF4FF; color: #9333EA; }
 .thinking-badge.create { background: #FFF1F2; color: #E11D48; }
 
-/* Typing indicator */
-.typing-ring {
+/* Thinking indicator — Guided branded pulse */
+.thinking-pulse {
   background: var(--white);
-  border: 1px solid rgba(226,218,208,.8);
+  border: 1px solid var(--border-soft);
   border-radius: 20px;
   border-bottom-left-radius: 6px;
-  padding: 16px 20px;
+  padding: 14px 20px;
   display: flex;
-  gap: 6px;
   align-items: center;
+  gap: 12px;
   box-shadow: var(--shadow-card);
 }
-
-.typing-ring .dot {
-  width: 7px; height: 7px;
-  background: var(--cream3);
-  border-radius: 50%;
-  animation: tdot 1.4s infinite;
+.thinking-logo {
+  width: 36px; height: 36px; border-radius: 12px;
+  background: var(--btn-gradient);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; flex-shrink: 0;
+  animation: guided-pulse 2s ease-in-out infinite;
+}
+.thinking-text {
+  font-size: 13.5px; color: var(--ink3); font-weight: 500;
+  animation: thinking-fade 2s ease-in-out infinite;
+}
+@keyframes guided-pulse {
+  0%, 100% { transform: scale(1);    box-shadow: 0 0 0 0   rgba(46,92,68,.35); }
+  50%       { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(46,92,68,.0);  }
+}
+@keyframes thinking-fade {
+  0%, 100% { opacity: .6; }
+  50%       { opacity: 1;  }
 }
 
-.typing-ring .dot:nth-child(2) { animation-delay: .2s; }
-.typing-ring .dot:nth-child(3) { animation-delay: .4s; }
-@keyframes tdot { 40% { background: var(--forest); transform: translateY(-5px); } }
+/* Image loading skeleton */
+.gen-img-loading {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 10px; padding: 24px; color: var(--ink4); font-size: 13px;
+}
+.gen-img-skeleton {
+  width: 100%; height: 180px; border-radius: 10px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+}
+@keyframes skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Markdown inside AI bubbles */
+.bubble p { margin: 0 0 8px; }
+.bubble p:last-child { margin-bottom: 0; }
+.bubble strong, .bubble b { font-weight: 700; }
+.bubble em, .bubble i { font-style: italic; }
+.bubble code {
+  background: rgba(0,0,0,.06); border-radius: 5px;
+  padding: 1px 6px; font-family: monospace; font-size: 13px;
+}
+.bubble pre {
+  background: rgba(0,0,0,.06); border-radius: 10px;
+  padding: 12px 16px; overflow-x: auto; margin: 8px 0;
+}
+.bubble pre code { background: none; padding: 0; }
+.bubble ul, .bubble ol { padding-left: 20px; margin: 6px 0; }
+.bubble li { margin-bottom: 3px; }
 
 /* Generated image */
 .gen-img-card {
@@ -2241,12 +2283,6 @@ body { background: #FFFFFF; }
   background: linear-gradient(150deg, #1A3328, #2E5C44);
   border: none;
   box-shadow: 0 3px 10px rgba(26,51,40,.28);
-}
-
-.typing-ring {
-  background: var(--surface);
-  border: 1px solid var(--border-soft);
-  border-radius: 6px 20px 20px 20px;
 }
 
 /* ── INPUT AREA ── */
@@ -3795,6 +3831,9 @@ body { background: #FFFFFF; }
 </div>
 
 <script>
+// ── Markdown renderer (AI bubbles only) ──
+marked.setOptions({ breaks: true, gfm: true });
+
 // ══════════════════════════════════════════════
 //  API KEYS (loaded from localStorage — never hardcoded)
 // ══════════════════════════════════════════════
@@ -4729,14 +4768,22 @@ function parseImg(t) {
 }
 
 function genImg(p) {
-  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent('clean educational diagram: ' + p + ', white background, textbook illustration, labeled clearly, professional')}?width=640&height=380&nologo=true&seed=${Date.now()}`;
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent('clean educational diagram: ' + p + ', white background, textbook style, labeled, professional')}?width=640&height=380&nologo=true&model=flux-schnell`;
   const wrap = document.createElement('div');
   wrap.className = 'msg ai';
+  const imgId = 'img-' + Date.now();
   wrap.innerHTML = `
     <div class="msg-av" style="font-size:16px">🖼</div>
     <div class="msg-body">
       <div class="gen-img-card">
-        <img src="${url}" alt="${p}" onload="document.getElementById('msgs').scrollTop=99999"/>
+        <div class="gen-img-loading" id="${imgId}-load">
+          <div class="gen-img-skeleton"></div>
+          <span>Generating diagram…</span>
+        </div>
+        <img id="${imgId}" src="${url}" alt="${p}" style="display:none"
+          onload="this.style.display='block';document.getElementById('${imgId}-load').style.display='none';document.getElementById('msgs').scrollTop=99999"
+          onerror="document.getElementById('${imgId}-load').innerHTML='<span style=&quot;color:#999;font-size:13px&quot;>⚠️ Could not generate image</span>'"
+        />
         <div class="gen-img-cap">📐 ${p}</div>
       </div>
     </div>`;
@@ -5148,7 +5195,7 @@ function addBubble(role, text, usage, isHint, isAha, bloomLvl) {
   d.innerHTML = `
     <div class="msg-av">${initials}</div>
     <div class="msg-body">
-      <div class="${bubClass}">${escH(text)}</div>
+      <div class="${bubClass}">${role === 'ai' ? marked.parse(text) : escH(text)}</div>
       <div class="msg-meta">
         ${new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}
         ${tokTag}
@@ -5165,7 +5212,20 @@ function showTyping() {
   const id = 'tp' + Date.now();
   const d = document.createElement('div');
   d.className = 'msg ai'; d.id = id;
-  d.innerHTML = `<div class="msg-av">🌱</div><div class="msg-body"><div class="typing-ring"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+  d.innerHTML = `
+    <div class="msg-av">🌱</div>
+    <div class="msg-body">
+      <div class="thinking-pulse">
+        <div class="thinking-logo">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <span class="thinking-text">Guided is thinking…</span>
+      </div>
+    </div>`;
   msgs.appendChild(d);
   msgs.scrollTop = msgs.scrollHeight;
   return id;
