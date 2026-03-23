@@ -884,6 +884,8 @@ input[type=range]::-webkit-slider-thumb:hover {
 .gs-p:nth-child(2) { transform-origin: 50% 50%; transform: rotate(45deg);  }
 .gs-p:nth-child(3) { transform-origin: 50% 50%; transform: rotate(90deg);  }
 .gs-p:nth-child(4) { transform-origin: 50% 50%; transform: rotate(135deg); }
+.gs-petals.xl { width: 46px; height: 46px; }
+.gs-petals.xl .gs-p { width: 21px; height: 38px; top: 4px; left: 12.5px; }
 @keyframes gs-spin    { to { transform: rotate(360deg); } }
 @keyframes gs-breathe { 0%,100% { transform: scale(.88); } 50% { transform: scale(1.08); } }
 
@@ -929,6 +931,7 @@ input[type=range]::-webkit-slider-thumb:hover {
   box-shadow: var(--shadow);
 }
 .gen-img-card img { width: 100%; display: block; }
+.svg-diagram-card svg { width: 100%; height: auto; display: block; border-radius: 10px; }
 .gen-img-cap {
   padding: 9px 14px;
   font-size: 12px;
@@ -2601,10 +2604,10 @@ body { background: #FFFFFF; }
   <nav class="lp-nav">
     <div class="lp-nav-logo">
       <div class="lp-nav-mark">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
-          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-        </svg>
+        <div class="gs-petals">
+          <div class="gs-p"></div><div class="gs-p"></div>
+          <div class="gs-p"></div><div class="gs-p"></div>
+        </div>
       </div>
       <span>Guided</span>
     </div>
@@ -2678,10 +2681,10 @@ body { background: #FFFFFF; }
   <div style="width:100%;max-width:460px">
     <div class="ob-brand" style="text-align:center;margin-bottom:24px">
       <div class="ob-brand-mark" style="display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;background:linear-gradient(145deg,var(--forest2),var(--forest));border-radius:15px;margin-bottom:14px">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
-          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-        </svg>
+        <div class="gs-petals xl">
+          <div class="gs-p"></div><div class="gs-p"></div>
+          <div class="gs-p"></div><div class="gs-p"></div>
+        </div>
       </div>
       <span class="ob-wordmark" style="display:block">Guided</span>
       <span class="ob-tagline" style="display:block">Enter your API keys to get started</span>
@@ -2787,10 +2790,10 @@ body { background: #FFFFFF; }
   <div class="login-container">
     <div class="ob-brand" style="animation:fadeUp .6s cubic-bezier(.16,1,.3,1) both">
       <div class="ob-brand-mark">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
-          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-        </svg>
+        <div class="gs-petals xl">
+          <div class="gs-p"></div><div class="gs-p"></div>
+          <div class="gs-p"></div><div class="gs-p"></div>
+        </div>
       </div>
       <span class="ob-wordmark">Guided</span>
       <span class="ob-tagline">How would you like to use Guided?</span>
@@ -2821,10 +2824,10 @@ body { background: #FFFFFF; }
   <div class="ob-container">
     <div class="ob-brand">
       <div class="ob-brand-mark">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
-          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-        </svg>
+        <div class="gs-petals xl">
+          <div class="gs-p"></div><div class="gs-p"></div>
+          <div class="gs-p"></div><div class="gs-p"></div>
+        </div>
       </div>
       <span class="ob-wordmark">Guided — School</span>
       <span class="ob-tagline">Sign in</span>
@@ -2986,10 +2989,10 @@ body { background: #FFFFFF; }
 
     <div class="ob-brand">
       <div class="ob-brand-mark">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
-          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-        </svg>
+        <div class="gs-petals xl">
+          <div class="gs-p"></div><div class="gs-p"></div>
+          <div class="gs-p"></div><div class="gs-p"></div>
+        </div>
       </div>
       <span class="ob-wordmark">Guided</span>
       <span class="ob-tagline">The AI tutor that builds real thinking skills</span>
@@ -3288,10 +3291,10 @@ body { background: #FFFFFF; }
 
     <div class="ob-brand">
       <div class="ob-brand-mark">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
-          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-        </svg>
+        <div class="gs-petals xl">
+          <div class="gs-p"></div><div class="gs-p"></div>
+          <div class="gs-p"></div><div class="gs-p"></div>
+        </div>
       </div>
       <span class="ob-wordmark">Guided</span>
       <span class="ob-tagline">Build your personal AI tutor</span>
@@ -4234,8 +4237,9 @@ ${styleInstructions[S.style] || styleInstructions.socratic}
 ━━━━━━━━━━━━━━━━━━━━━━━━
 VISUAL LEARNING
 ━━━━━━━━━━━━━━━━━━━━━━━━
-When a diagram would genuinely help (geometry, processes, anatomy, timelines), write on its own line: [IMAGE: specific description]
-Use sparingly — maximum one per response, only when truly useful.
+When a diagram would genuinely help (geometry, processes, anatomy, timelines), generate a simple inline SVG on its own line using this format:
+[SVG: <svg viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="280" fill="#f9f9f9"/>...your shapes, lines, text labels here...</svg>]
+Rules: use basic shapes only (rect, circle, path, line, text). Label key elements with <text> tags. stroke="#333" for lines. Use color sparingly. No scripts. Keep it simple and clean. Maximum one per response.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 FORMAT
@@ -4801,7 +4805,7 @@ async function sendMsg(isHint = false, isGotIt = false) {
     const clean   = reply.replace(/^\[AHA\]\s*/, '').replace(/\[BLOOM:\w+\]/gi, '').trim();
     const bloomM  = reply.match(/\[BLOOM:(\w+)\]/i);
     const bloomLvl = bloomM ? bloomM[1].toLowerCase() : 'understand';
-    const { txt, imgP } = parseImg(clean);
+    const { txt, imgP, svgCode } = parseImg(clean);
 
     addBubble('ai', txt, usage, isHint, isAha, bloomLvl);
     S.history.push({ role: 'assistant', content: clean });
@@ -4815,7 +4819,8 @@ async function sendMsg(isHint = false, isGotIt = false) {
       S.bloomTotal++;
     }
 
-    if (imgP && S.imgsOn) genImg(imgP);
+    if (svgCode) renderSvgDiagram(svgCode);
+    else if (imgP && S.imgsOn) genImg(imgP);
 
     updateDev(usage, lat);
     updateDashBadge();
@@ -4916,9 +4921,13 @@ async function callClaude(ndCtx) {
 //  IMAGE GENERATION (free — Pollinations)
 // ══════════════════════════════════════════════
 function parseImg(t) {
+  // SVG inline diagram
+  const svgM = t.match(/\[SVG:\s*(<svg[\s\S]*?<\/svg>)\s*\]/i);
+  if (svgM) return { txt: t.replace(svgM[0], '').trim(), imgP: null, svgCode: svgM[1] };
+  // Fallback IMAGE tag
   const m = t.match(/\[IMAGE:\s*([^\]]+)\]/i);
-  if (!m) return { txt: t, imgP: null };
-  return { txt: t.replace(m[0], '').trim(), imgP: m[1].trim() };
+  if (!m) return { txt: t, imgP: null, svgCode: null };
+  return { txt: t.replace(m[0], '').trim(), imgP: m[1].trim(), svgCode: null };
 }
 
 function retryImg(id, url) {
@@ -4929,6 +4938,26 @@ function retryImg(id, url) {
   load.style.display = 'flex';
   img.style.display = 'none';
   img.src = url + '&t=' + Date.now();
+}
+
+function renderSvgDiagram(svgCode) {
+  // Sanitize: strip scripts and event handlers
+  const safe = svgCode
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/\son\w+="[^"]*"/gi, '');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ai';
+  wrap.innerHTML = `
+    <div class="msg-av" style="font-size:16px">📐</div>
+    <div class="msg-body">
+      <div class="gen-img-card svg-diagram-card">
+        ${safe}
+      </div>
+    </div>`;
+  document.getElementById('msgs').appendChild(wrap);
+  document.getElementById('msgs').scrollTop = 99999;
+  S.imgs++;
+  document.getElementById('d-imgs').textContent = S.imgs;
 }
 
 function genImg(p) {
