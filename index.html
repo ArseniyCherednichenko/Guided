@@ -850,25 +850,42 @@ input[type=range]::-webkit-slider-thumb:hover {
   gap: 12px;
   box-shadow: var(--shadow-card);
 }
-.thinking-logo {
-  width: 36px; height: 36px; border-radius: 12px;
-  background: var(--btn-gradient);
-  display: flex; align-items: center; justify-content: center;
-  color: #fff; flex-shrink: 0;
-  animation: guided-pulse 2s ease-in-out infinite;
-}
 .thinking-text {
   font-size: 13.5px; color: var(--ink3); font-weight: 500;
-  animation: thinking-fade 2s ease-in-out infinite;
-}
-@keyframes guided-pulse {
-  0%, 100% { transform: scale(1);    box-shadow: 0 0 0 0   rgba(46,92,68,.35); }
-  50%       { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(46,92,68,.0);  }
+  animation: thinking-fade 2.8s ease-in-out infinite;
 }
 @keyframes thinking-fade {
-  0%, 100% { opacity: .6; }
+  0%, 100% { opacity: .5; }
   50%       { opacity: 1;  }
 }
+/* ── Guided spark mark ── */
+.gs-mark {
+  width: 38px; height: 38px; border-radius: 13px;
+  background: var(--btn-gradient);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; overflow: hidden;
+  animation: gs-breathe 2.8s ease-in-out infinite;
+  box-shadow: 0 4px 16px rgba(26,51,40,.28);
+}
+.gs-petals {
+  width: 22px; height: 22px;
+  position: relative;
+  animation: gs-spin 6s linear infinite;
+}
+.gs-p {
+  position: absolute;
+  width: 10px; height: 20px;
+  background: rgba(255,255,255,.80);
+  border-radius: 50%;
+  top: 1px; left: 6px;
+  mix-blend-mode: screen;
+}
+.gs-p:nth-child(1) { transform-origin: 50% 50%; transform: rotate(0deg);   }
+.gs-p:nth-child(2) { transform-origin: 50% 50%; transform: rotate(45deg);  }
+.gs-p:nth-child(3) { transform-origin: 50% 50%; transform: rotate(90deg);  }
+.gs-p:nth-child(4) { transform-origin: 50% 50%; transform: rotate(135deg); }
+@keyframes gs-spin    { to { transform: rotate(360deg); } }
+@keyframes gs-breathe { 0%,100% { transform: scale(.88); } 50% { transform: scale(1.08); } }
 
 /* Image loading skeleton */
 .gen-img-loading {
@@ -4762,8 +4779,18 @@ function parseImg(t) {
   return { txt: t.replace(m[0], '').trim(), imgP: m[1].trim() };
 }
 
+function retryImg(id, url) {
+  const img = document.getElementById(id);
+  const load = document.getElementById(id + '-load');
+  if (!img || !load) return;
+  load.innerHTML = '<div class="gen-img-skeleton"></div><span>Retrying…</span>';
+  load.style.display = 'flex';
+  img.style.display = 'none';
+  img.src = url + '&t=' + Date.now();
+}
+
 function genImg(p) {
-  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent('clean educational diagram: ' + p + ', white background, textbook style, labeled, professional')}?width=640&height=380&nologo=true&model=flux-schnell`;
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent('clean educational diagram: ' + p + ', white background, textbook style, labeled, professional')}?width=640&height=380&nologo=true&model=turbo`;
   const wrap = document.createElement('div');
   wrap.className = 'msg ai';
   const imgId = 'img-' + Date.now();
@@ -4777,7 +4804,7 @@ function genImg(p) {
         </div>
         <img id="${imgId}" src="${url}" alt="${p}" style="display:none"
           onload="this.style.display='block';document.getElementById('${imgId}-load').style.display='none';document.getElementById('msgs').scrollTop=99999"
-          onerror="document.getElementById('${imgId}-load').innerHTML='<span style=&quot;color:#999;font-size:13px&quot;>⚠️ Could not generate image</span>'"
+          onerror="document.getElementById('${imgId}-load').innerHTML='<span style=&quot;color:#999;font-size:12px;&quot;>⚠️ Could not load &nbsp;<button onclick=&quot;retryImg(\'${imgId}\',\'${url}\')&quot; style=&quot;background:none;border:none;color:var(--forest2);cursor:pointer;font-size:12px;font-weight:700&quot;>Retry ↻</button></span>'"
         />
         <div class="gen-img-cap">📐 ${p}</div>
       </div>
@@ -5211,12 +5238,13 @@ function showTyping() {
     <div class="msg-av">🌱</div>
     <div class="msg-body">
       <div class="thinking-pulse">
-        <div class="thinking-logo">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
-            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-            <line x1="12" y1="17" x2="12.01" y2="17"/>
-          </svg>
+        <div class="gs-mark">
+          <div class="gs-petals">
+            <div class="gs-p"></div>
+            <div class="gs-p"></div>
+            <div class="gs-p"></div>
+            <div class="gs-p"></div>
+          </div>
         </div>
         <span class="thinking-text">Guided is thinking…</span>
       </div>
