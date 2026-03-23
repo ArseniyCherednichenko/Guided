@@ -1,5 +1,8 @@
 # Guided — AI Tutor That Makes You Think
 
+<img width="1920" height="1080" alt="Guided banner" src="https://github.com/user-attachments/assets/767ff85f-49c4-4e1e-8b89-e92b6f1e6ef8" />
+
+
 **Guided** is an AI-powered tutoring app for students aged 6–18 that never gives direct answers. It uses the Socratic method to guide students through problems with questions, staged hints, and a Reveal Ladder — so they build real understanding instead of copying answers.
 
 > *The anti-ChatGPT for education.*
