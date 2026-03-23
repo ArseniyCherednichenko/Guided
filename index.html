@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Guided — AI Tutor</title>
+<title>Guided</title>
+<link rel="icon" type="image/svg+xml" href="logo.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
@@ -2354,6 +2355,10 @@ body { background: #FFFFFF; }
   background: linear-gradient(150deg, #1A3328, #2E5C44);
   border: none;
   box-shadow: 0 3px 10px rgba(26,51,40,.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
 /* ── INPUT AREA ── */
@@ -4948,7 +4953,7 @@ function renderSvgDiagram(svgCode) {
   const wrap = document.createElement('div');
   wrap.className = 'msg ai';
   wrap.innerHTML = `
-    <div class="msg-av" style="font-size:16px">📐</div>
+    <div class="msg-av"><div class="gs-petals"><div class="gs-p"></div><div class="gs-p"></div><div class="gs-p"></div><div class="gs-p"></div></div></div>
     <div class="msg-body">
       <div class="gen-img-card svg-diagram-card">
         ${safe}
@@ -4966,7 +4971,7 @@ function genImg(p) {
   wrap.className = 'msg ai';
   const imgId = 'img-' + Date.now();
   wrap.innerHTML = `
-    <div class="msg-av" style="font-size:16px">🖼</div>
+    <div class="msg-av"><div class="gs-petals"><div class="gs-p"></div><div class="gs-p"></div><div class="gs-p"></div><div class="gs-p"></div></div></div>
     <div class="msg-body">
       <div class="gen-img-card">
         <div class="gen-img-loading" id="${imgId}-load">
@@ -5383,10 +5388,13 @@ function addBubble(role, text, usage, isHint, isAha, bloomLvl) {
   const bloomTag = (role === 'ai' && bloomLvl && BLOOM_COLORS[bloomLvl])
     ? `<span class="thinking-badge ${BLOOM_COLORS[bloomLvl]}">${bloomLvl}</span>` : '';
 
-  const initials = role === 'user' ? S.name.slice(0, 2).toUpperCase() : '🌱';
+  const initials = role === 'user' ? S.name.slice(0, 2).toUpperCase() : '';
+  const avatarContent = role === 'user'
+    ? initials
+    : '<div class="gs-petals"><div class="gs-p"></div><div class="gs-p"></div><div class="gs-p"></div><div class="gs-p"></div></div>';
 
   d.innerHTML = `
-    <div class="msg-av">${initials}</div>
+    <div class="msg-av">${avatarContent}</div>
     <div class="msg-body">
       <div class="${bubClass}">${role === 'ai' ? marked.parse(text) : escH(text)}</div>
       <div class="msg-meta">
@@ -5406,7 +5414,7 @@ function showTyping() {
   const d = document.createElement('div');
   d.className = 'msg ai'; d.id = id;
   d.innerHTML = `
-    <div class="msg-av">🌱</div>
+    <div class="msg-av"><div class="gs-petals"><div class="gs-p"></div><div class="gs-p"></div><div class="gs-p"></div><div class="gs-p"></div></div></div>
     <div class="msg-body">
       <div class="thinking-pulse">
         <div class="gs-mark">
