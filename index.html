@@ -3111,20 +3111,7 @@ body { background: #FFFFFF; }
           <input class="fi" id="admin-pw" type="password" placeholder="Password"/>
         </div>
         <button class="btn-next" onclick="adminLogin()">Sign in as Admin →</button>
-        <button class="btn-back" style="width:100%;text-align:center;margin-top:-4px" onclick="showNewSchoolForm()">+ Create New School</button>
-
-        <div id="admin-new-school-form" style="display:none;background:var(--cream);border:1px solid var(--border);border-radius:14px;padding:18px;flex-direction:column;gap:14px">
-          <div class="ob-step-eyebrow" style="margin-bottom:0">Create New School</div>
-          <div class="fgroup">
-            <label>School Name</label>
-            <input class="fi" id="new-school-name" placeholder="e.g. Lincoln High School"/>
-          </div>
-          <div class="fgroup">
-            <label>Choose Admin Password</label>
-            <input class="fi" id="new-admin-pw" type="password" placeholder="Secure password (min. 4 characters)"/>
-          </div>
-          <button class="btn-next" onclick="createSchool()">Create School →</button>
-        </div>
+        <button class="btn-back" style="width:100%;text-align:center;margin-top:-4px" onclick="openNewSchoolModal()">+ Create New School</button>
       </div>
     </div>
 
@@ -3135,6 +3122,47 @@ body { background: #FFFFFF; }
     </div>
   </div>
 </div>
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║         NEW SCHOOL MODAL                ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<div id="new-school-modal" onclick="if(event.target===this)closeNewSchoolModal()" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:24px">
+  <div style="background:#fff;border-radius:24px;width:100%;max-width:440px;box-shadow:0 24px 80px rgba(0,0,0,.22);overflow:hidden;animation:nsm-in .28s cubic-bezier(.22,1,.36,1)">
+    <!-- Header -->
+    <div style="background:var(--forest);padding:28px 28px 22px;position:relative">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
+        <div class="gs-petals" style="width:32px;height:32px;opacity:.9">
+          <div class="gs-p"></div><div class="gs-p"></div><div class="gs-p"></div>
+          <div class="gs-p"></div><div class="gs-p"></div><div class="gs-p"></div>
+        </div>
+        <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:#fff;letter-spacing:-.2px">Register Your School</div>
+      </div>
+      <div style="font-size:13px;color:rgba(255,255,255,.7);margin-left:44px">Get a unique school code and admin account in seconds.</div>
+      <button onclick="closeNewSchoolModal()" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:#fff;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,.25)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
+    </div>
+    <!-- Body -->
+    <div style="padding:28px;display:flex;flex-direction:column;gap:18px">
+      <div class="fgroup">
+        <label>School Name</label>
+        <input class="fi" id="new-school-name" placeholder="e.g. Lincoln High School" style="font-size:15px"/>
+      </div>
+      <div class="fgroup">
+        <label>Admin Password</label>
+        <input class="fi" id="new-admin-pw" type="password" placeholder="Min. 4 characters" style="font-size:15px"/>
+      </div>
+      <div style="background:var(--cream);border:1px solid var(--border);border-radius:12px;padding:12px 14px;font-size:12.5px;color:var(--ink3);line-height:1.6">
+        A unique <strong>school code</strong> will be generated automatically — share it with students and teachers to join.
+      </div>
+      <button class="btn-next" onclick="createSchool()" style="margin-top:4px">Create School →</button>
+    </div>
+  </div>
+</div>
+<style>
+@keyframes nsm-in {
+  from { opacity:0; transform:translateY(20px) scale(.97); }
+  to   { opacity:1; transform:translateY(0)    scale(1); }
+}
+</style>
 
 <!-- ╔══════════════════════════════════════════╗ -->
 <!-- ║           ADMIN DASHBOARD               ║ -->
@@ -5938,9 +5966,16 @@ function genCode() {
 function genPin() { return String(Math.floor(1000 + Math.random() * 9000)); }
 
 // ── Create new school ────────────────────────────────────
-function showNewSchoolForm() {
-  const f = document.getElementById('admin-new-school-form');
-  f.style.display = (f.style.display === 'none' || f.style.display === '') ? 'flex' : 'none';
+function openNewSchoolModal() {
+  const m = document.getElementById('new-school-modal');
+  m.style.display = 'flex';
+  document.getElementById('new-school-name').value = '';
+  document.getElementById('new-admin-pw').value = '';
+  setTimeout(() => document.getElementById('new-school-name').focus(), 50);
+}
+
+function closeNewSchoolModal() {
+  document.getElementById('new-school-modal').style.display = 'none';
 }
 
 async function createSchool() {
@@ -5955,8 +5990,8 @@ async function createSchool() {
   if (error) { toast('Error creating school: ' + error.message, 'err'); return; }
   document.getElementById('admin-code').value = code;
   document.getElementById('admin-pw').value = pw;
-  document.getElementById('admin-new-school-form').style.display = 'none';
-  toast(`School created! Code: ${code}`, 'ok');
+  closeNewSchoolModal();
+  toast(`School created! Your code: ${code}`, 'ok');
 }
 
 // ── Admin login ──────────────────────────────────────────
