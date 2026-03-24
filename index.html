@@ -3010,14 +3010,9 @@ body { background: #FFFFFF; }
       <span class="ob-tagline" style="display:block">Enter your API keys to get started</span>
     </div>
     <div style="background:var(--white);border:1px solid var(--border);border-radius:24px;padding:32px 36px;box-shadow:var(--shadow-lg)">
-      <div style="font-size:10.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--forest);margin-bottom:12px">AI Model <span style="font-size:11px;color:var(--ink4);font-weight:400;text-transform:none;letter-spacing:0">— add at least one key</span></div>
       <div class="fgroup" style="margin-bottom:18px">
-        <label style="font-size:10.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink4)">Claude API Key <span style="color:var(--ink5);font-weight:400;text-transform:none;letter-spacing:0">(recommended — prompt caching)</span></label>
+        <label style="font-size:10.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink4)">Claude API Key <span style="color:var(--red)">*</span></label>
         <input class="fi" id="setup-claude-key" type="password" placeholder="sk-ant-..." autocomplete="off" spellcheck="false"/>
-      </div>
-      <div class="fgroup" style="margin-bottom:18px">
-        <label style="font-size:10.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink4)">Featherless API Key <span style="color:var(--ink5);font-weight:400;text-transform:none;letter-spacing:0">(fallback — open-source models)</span></label>
-        <input class="fi" id="setup-fl-key" type="password" placeholder="fl-..." autocomplete="off" spellcheck="false"/>
       </div>
       <div class="fgroup" style="margin-bottom:18px">
         <label style="font-size:10.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink4)">ElevenLabs API Key <span style="color:var(--ink5);font-weight:400;text-transform:none;letter-spacing:0">(optional — for voice)</span></label>
@@ -4545,7 +4540,6 @@ marked.setOptions({ breaks: true, gfm: true });
 //  API KEYS (loaded from localStorage — never hardcoded)
 // ══════════════════════════════════════════════
 let CLAUDE_KEY    = localStorage.getItem('guided_claude_key')      || '';
-let FL_KEY        = localStorage.getItem('guided_fl_key')          || '';
 let EL_KEY        = localStorage.getItem('guided_elevenlabs_key')  || '';
 let ND_KEY        = localStorage.getItem('guided_needle_key')       || '';
 let SUPABASE_URL  = localStorage.getItem('guided_supabase_url')    || '';
@@ -4566,7 +4560,6 @@ initSupabase();
 //  CONFIG
 // ══════════════════════════════════════════════
 const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
-const FL_MODEL     = 'meta-llama/Llama-3.3-70B-Instruct';
 const MAX_TOK  = 600;
 const TEMP     = 0.75;
 const CTX_WIN  = 8000;
@@ -5265,7 +5258,7 @@ function startAppSession() {
   document.getElementById('d-goal').textContent    = S.goal || '—';
   document.getElementById('d-notes').textContent   = S.notes || '—';
   document.getElementById('d-conf').textContent    = `${TEMP} / ${MAX_TOK}`;
-  document.getElementById('d-model').textContent   = CLAUDE_KEY ? `Claude · ${CLAUDE_MODEL}` : `Featherless · ${FL_MODEL}`;
+  document.getElementById('d-model').textContent   = `Claude · ${CLAUDE_MODEL}`;
   document.getElementById('d-updates').textContent = S.parentUpdates || '—';
   const styleLabels = { socratic:'Socratic Guide', stepbystep:'Step by Step', friendly:'Warm & Patient', challenge:'Challenge Mode' };
   document.getElementById('d-style').textContent = styleLabels[S.style] || S.style || '—';
@@ -5487,45 +5480,6 @@ async function callClaude(ndCtx) {
 }
 
 // ══════════════════════════════════════════════
-//  FEATHERLESS API (OpenAI-compatible)
-// ══════════════════════════════════════════════
-async function callFL(ndCtx) {
-  const messages = [
-    { role: 'system', content: buildPrompt(ndCtx) },
-    ...S.history
-  ];
-  const res = await fetch('https://api.featherless.ai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${FL_KEY}`
-    },
-    body: JSON.stringify({
-      model: FL_MODEL,
-      messages,
-      max_tokens: MAX_TOK,
-      temperature: TEMP
-    })
-  });
-  if (!res.ok) {
-    const e = await res.json().catch(() => ({}));
-    throw new Error(e.error?.message || `Featherless API error ${res.status}`);
-  }
-  const data = await res.json();
-  document.getElementById('d-raw').textContent = JSON.stringify(data, null, 2);
-  const reply = data.choices?.[0]?.message?.content?.trim() || '';
-  const u = data.usage || {};
-  const usage = {
-    total_tokens:      u.total_tokens      || 0,
-    prompt_tokens:     u.prompt_tokens     || 0,
-    completion_tokens: u.completion_tokens || 0,
-    cache_creation:    0,
-    cache_read:        0
-  };
-  return { reply, usage };
-}
-
-// ══════════════════════════════════════════════
 //  HISTORY COMPRESSION (≥30 messages → compress oldest 20)
 // ══════════════════════════════════════════════
 function maybeCompressHistory() {
@@ -5545,13 +5499,12 @@ function maybeCompressHistory() {
 }
 
 // ══════════════════════════════════════════════
-//  ROUTER — picks Claude or Featherless
+//  ROUTER
 // ══════════════════════════════════════════════
 async function callLLM(ndCtx) {
   maybeCompressHistory();
-  if (CLAUDE_KEY) return callClaude(ndCtx);
-  if (FL_KEY)     return callFL(ndCtx);
-  throw new Error('No API key set — open Settings and add a Claude or Featherless key.');
+  if (!CLAUDE_KEY) throw new Error('No Claude API key — open Settings to add one.');
+  return callClaude(ndCtx);
 }
 
 // ══════════════════════════════════════════════
@@ -6737,7 +6690,7 @@ async function launchAsSchoolStudent(student) {
   document.getElementById('d-goal').textContent    = S.goal || '—';
   document.getElementById('d-notes').textContent   = S.notes || '—';
   document.getElementById('d-conf').textContent    = `${TEMP} / ${MAX_TOK}`;
-  document.getElementById('d-model').textContent   = CLAUDE_KEY ? `Claude · ${CLAUDE_MODEL}` : `Featherless · ${FL_MODEL}`;
+  document.getElementById('d-model').textContent   = `Claude · ${CLAUDE_MODEL}`;
   document.getElementById('d-updates').textContent = S.parentUpdates;
 
   const styleLabels = {socratic:'Socratic Guide',stepbystep:'Step by Step',friendly:'Warm & Patient',challenge:'Challenge Mode'};
@@ -7079,12 +7032,8 @@ async function speakTextEL(text) {
 // ══════════════════════════════════════════════
 function saveSetup() {
   const ck = document.getElementById('setup-claude-key').value.trim();
-  const fk = document.getElementById('setup-fl-key').value.trim();
-  if (!ck && !fk) { toast('Add at least one API key (Claude or Featherless)', 'err'); return; }
-  if (ck) { localStorage.setItem('guided_claude_key', ck); CLAUDE_KEY = ck; }
-  else    { localStorage.removeItem('guided_claude_key'); CLAUDE_KEY = ''; }
-  if (fk) { localStorage.setItem('guided_fl_key', fk); FL_KEY = fk; }
-  else    { localStorage.removeItem('guided_fl_key'); FL_KEY = ''; }
+  if (!ck) { toast('Claude API key is required', 'err'); return; }
+  localStorage.setItem('guided_claude_key', ck); CLAUDE_KEY = ck;
   const el = document.getElementById('setup-el-key').value.trim();
   if (el) { localStorage.setItem('guided_elevenlabs_key', el); EL_KEY = el; }
   const nd = document.getElementById('setup-nd-key').value.trim();
@@ -7112,7 +7061,6 @@ function saveSetup() {
 
 function showSetupScreen() {
   document.getElementById('setup-claude-key').value = CLAUDE_KEY;
-  document.getElementById('setup-fl-key').value = FL_KEY;
   document.getElementById('setup-el-key').value = EL_KEY;
   document.getElementById('setup-nd-key').value = ND_KEY;
   document.getElementById('setup-sb-url').value = SUPABASE_URL;
@@ -7125,7 +7073,7 @@ function showSetupScreen() {
 // ── Show login/setup after dismissing landing page ───
 function showLoginFromLanding() {
   document.getElementById('landing').style.display = 'none';
-  if (!localStorage.getItem('guided_claude_key') && !localStorage.getItem('guided_fl_key')) {
+  if (!localStorage.getItem('guided_claude_key')) {
     document.getElementById('setup-screen').style.display = 'flex';
   } else {
     document.getElementById('login-screen').style.display = 'flex';
