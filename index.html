@@ -3010,9 +3010,14 @@ body { background: #FFFFFF; }
       <span class="ob-tagline" style="display:block">Enter your API keys to get started</span>
     </div>
     <div style="background:var(--white);border:1px solid var(--border);border-radius:24px;padding:32px 36px;box-shadow:var(--shadow-lg)">
+      <div style="font-size:10.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--forest);margin-bottom:12px">AI Model <span style="font-size:11px;color:var(--ink4);font-weight:400;text-transform:none;letter-spacing:0">— add at least one key</span></div>
       <div class="fgroup" style="margin-bottom:18px">
-        <label style="font-size:10.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink4)">Claude API Key <span style="color:var(--red)">*</span></label>
+        <label style="font-size:10.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink4)">Claude API Key <span style="color:var(--ink5);font-weight:400;text-transform:none;letter-spacing:0">(recommended — prompt caching)</span></label>
         <input class="fi" id="setup-claude-key" type="password" placeholder="sk-ant-..." autocomplete="off" spellcheck="false"/>
+      </div>
+      <div class="fgroup" style="margin-bottom:18px">
+        <label style="font-size:10.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink4)">Featherless API Key <span style="color:var(--ink5);font-weight:400;text-transform:none;letter-spacing:0">(fallback — open-source models)</span></label>
+        <input class="fi" id="setup-fl-key" type="password" placeholder="fl-..." autocomplete="off" spellcheck="false"/>
       </div>
       <div class="fgroup" style="margin-bottom:18px">
         <label style="font-size:10.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink4)">ElevenLabs API Key <span style="color:var(--ink5);font-weight:400;text-transform:none;letter-spacing:0">(optional — for voice)</span></label>
@@ -4415,7 +4420,7 @@ body { background: #FFFFFF; }
 
         <div class="ds">
           <div class="ds-title">Model Config</div>
-          <div class="dr"><div class="k">Model</div><div class="v g" id="d-model">—</div></div>
+          <div class="dr"><div class="k">Provider / Model</div><div class="v g" id="d-model">—</div></div>
           <div class="dr"><div class="k">Temp / Max tokens</div><div class="v" id="d-conf">—</div></div>
           <div class="cbar-wrap">
             <div class="cbar-labels"><span>Context window</span><span id="d-cpct">0%</span></div>
@@ -4427,6 +4432,8 @@ body { background: #FFFFFF; }
           <div class="ds-title">Session Stats</div>
           <div class="dr"><div class="k">Total tokens</div><div class="v a" id="d-tot">0</div></div>
           <div class="dr"><div class="k">Prompt / Completion</div><div class="v" id="d-split">0 / 0</div></div>
+          <div class="dr"><div class="k">Cache created / read</div><div class="v" id="d-cache">0 / 0</div></div>
+          <div class="dr"><div class="k">Cache hit rate</div><div class="v g" id="d-cache-pct">—</div></div>
           <div class="dr"><div class="k">API calls</div><div class="v" id="d-calls">0</div></div>
           <div class="dr"><div class="k">Last latency</div><div class="v" id="d-lat">—</div></div>
           <div class="dr"><div class="k">Hints used</div><div class="v" id="d-hints">0</div></div>
@@ -4538,6 +4545,7 @@ marked.setOptions({ breaks: true, gfm: true });
 //  API KEYS (loaded from localStorage — never hardcoded)
 // ══════════════════════════════════════════════
 let CLAUDE_KEY    = localStorage.getItem('guided_claude_key')      || '';
+let FL_KEY        = localStorage.getItem('guided_fl_key')          || '';
 let EL_KEY        = localStorage.getItem('guided_elevenlabs_key')  || '';
 let ND_KEY        = localStorage.getItem('guided_needle_key')       || '';
 let SUPABASE_URL  = localStorage.getItem('guided_supabase_url')    || '';
@@ -4557,7 +4565,8 @@ initSupabase();
 // ══════════════════════════════════════════════
 //  CONFIG
 // ══════════════════════════════════════════════
-const MODEL    = 'claude-sonnet-4-5';
+const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
+const FL_MODEL     = 'meta-llama/Llama-3.3-70B-Instruct';
 const MAX_TOK  = 600;
 const TEMP     = 0.75;
 const CTX_WIN  = 8000;
@@ -4572,7 +4581,7 @@ const S = {
   studentId: null,
   history: [],
   events: [],         // {who, text, type, bloom, ts}
-  totTok:0, pTok:0, cTok:0,
+  totTok:0, pTok:0, cTok:0, cacheCreate:0, cacheRead:0,
   calls:0, imgs:0, ndSearches:0,
   hintsLeft:3, hintsUsed:0, exchanges:0, ahas:0,
   sessionStart: null,
@@ -5256,7 +5265,7 @@ function startAppSession() {
   document.getElementById('d-goal').textContent    = S.goal || '—';
   document.getElementById('d-notes').textContent   = S.notes || '—';
   document.getElementById('d-conf').textContent    = `${TEMP} / ${MAX_TOK}`;
-  document.getElementById('d-model').textContent   = MODEL;
+  document.getElementById('d-model').textContent   = CLAUDE_KEY ? `Claude · ${CLAUDE_MODEL}` : `Featherless · ${FL_MODEL}`;
   document.getElementById('d-updates').textContent = S.parentUpdates || '—';
   const styleLabels = { socratic:'Socratic Guide', stepbystep:'Step by Step', friendly:'Warm & Patient', challenge:'Challenge Mode' };
   document.getElementById('d-style').textContent = styleLabels[S.style] || S.style || '—';
@@ -5342,7 +5351,7 @@ async function sendMsg(isHint = false, isGotIt = false) {
 
   const t0 = Date.now();
   try {
-    const { reply, usage } = await callClaude(ndCtx);
+    const { reply, usage } = await callLLM(ndCtx);
     const lat = Date.now() - t0;
     removeTyping(tid);
 
@@ -5417,7 +5426,7 @@ async function reqWhyLearn() {
   if (S.ndReady) ndCtx = await srchNeedle('real life application');
   const t0 = Date.now();
   try {
-    const { reply, usage } = await callFL(ndCtx);
+    const { reply, usage } = await callLLM(ndCtx);
     const lat = Date.now() - t0;
     removeTyping(tid);
     const clean = reply.replace(/^\[AHA\]\s*/, '').replace(/\[BLOOM:\w+\]/gi, '').trim();
@@ -5436,7 +5445,7 @@ async function reqWhyLearn() {
 }
 
 // ══════════════════════════════════════════════
-//  FEATHERLESS
+//  CLAUDE API (with prompt caching)
 // ══════════════════════════════════════════════
 async function callClaude(ndCtx) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -5445,28 +5454,104 @@ async function callClaude(ndCtx) {
       'Content-Type': 'application/json',
       'x-api-key': CLAUDE_KEY,
       'anthropic-version': '2023-06-01',
+      'anthropic-beta': 'prompt-caching-2024-07-31',
       'anthropic-dangerous-direct-browser-access': 'true'
     },
     body: JSON.stringify({
-      model: MODEL,
-      system: buildPrompt(ndCtx),
+      model: CLAUDE_MODEL,
+      system: [{ type: 'text', text: buildPrompt(ndCtx), cache_control: { type: 'ephemeral' } }],
       messages: S.history,
       max_tokens: MAX_TOK
     })
   });
   if (!res.ok) {
     const e = await res.json().catch(() => ({}));
-    throw new Error(e.error?.message || `API error ${res.status}`);
+    throw new Error(e.error?.message || `Claude API error ${res.status}`);
   }
   const data = await res.json();
   document.getElementById('d-raw').textContent = JSON.stringify(data, null, 2);
   const reply = data.content[0].text.trim();
+  const u = data.usage || {};
+  const cacheCreate = u.cache_creation_input_tokens || 0;
+  const cacheRead   = u.cache_read_input_tokens     || 0;
+  S.cacheCreate += cacheCreate;
+  S.cacheRead   += cacheRead;
   const usage = {
-    total_tokens:      (data.usage.input_tokens || 0) + (data.usage.output_tokens || 0),
-    prompt_tokens:     data.usage.input_tokens  || 0,
-    completion_tokens: data.usage.output_tokens || 0
+    total_tokens:      (u.input_tokens || 0) + (u.output_tokens || 0),
+    prompt_tokens:     u.input_tokens  || 0,
+    completion_tokens: u.output_tokens || 0,
+    cache_creation:    cacheCreate,
+    cache_read:        cacheRead
   };
   return { reply, usage };
+}
+
+// ══════════════════════════════════════════════
+//  FEATHERLESS API (OpenAI-compatible)
+// ══════════════════════════════════════════════
+async function callFL(ndCtx) {
+  const messages = [
+    { role: 'system', content: buildPrompt(ndCtx) },
+    ...S.history
+  ];
+  const res = await fetch('https://api.featherless.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${FL_KEY}`
+    },
+    body: JSON.stringify({
+      model: FL_MODEL,
+      messages,
+      max_tokens: MAX_TOK,
+      temperature: TEMP
+    })
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(e.error?.message || `Featherless API error ${res.status}`);
+  }
+  const data = await res.json();
+  document.getElementById('d-raw').textContent = JSON.stringify(data, null, 2);
+  const reply = data.choices?.[0]?.message?.content?.trim() || '';
+  const u = data.usage || {};
+  const usage = {
+    total_tokens:      u.total_tokens      || 0,
+    prompt_tokens:     u.prompt_tokens     || 0,
+    completion_tokens: u.completion_tokens || 0,
+    cache_creation:    0,
+    cache_read:        0
+  };
+  return { reply, usage };
+}
+
+// ══════════════════════════════════════════════
+//  HISTORY COMPRESSION (≥30 messages → compress oldest 20)
+// ══════════════════════════════════════════════
+function maybeCompressHistory() {
+  if (S.history.length < 30) return;
+  const old = S.history.splice(0, 20);
+  const summary = old.map(m => {
+    const who  = m.role === 'user' ? 'Student' : 'Tutor';
+    const text = String(m.content).replace(/\s+/g, ' ').slice(0, 150);
+    return `${who}: ${text}`;
+  }).join('\n');
+  // Insert a synthetic exchange so history stays alternating user/assistant
+  S.history.unshift(
+    { role: 'user',      content: `[Earlier conversation — condensed for context]\n${summary}` },
+    { role: 'assistant', content: 'I have the context from our earlier discussion.' }
+  );
+  toast('History compressed (session > 30 messages)', 'ok');
+}
+
+// ══════════════════════════════════════════════
+//  ROUTER — picks Claude or Featherless
+// ══════════════════════════════════════════════
+async function callLLM(ndCtx) {
+  maybeCompressHistory();
+  if (CLAUDE_KEY) return callClaude(ndCtx);
+  if (FL_KEY)     return callFL(ndCtx);
+  throw new Error('No API key set — open Settings and add a Claude or Featherless key.');
 }
 
 // ══════════════════════════════════════════════
@@ -5893,6 +5978,9 @@ function buildDashboard() {
 function updateDev(usage, lat) {
   document.getElementById('d-tot').textContent   = S.totTok.toLocaleString();
   document.getElementById('d-split').textContent = `${S.pTok.toLocaleString()} / ${S.cTok.toLocaleString()}`;
+  document.getElementById('d-cache').textContent = `${S.cacheCreate.toLocaleString()} / ${S.cacheRead.toLocaleString()}`;
+  const totalIn = S.pTok + S.cacheCreate + S.cacheRead;
+  document.getElementById('d-cache-pct').textContent = totalIn > 0 ? Math.round((S.cacheRead / totalIn) * 100) + '%' : '—';
   document.getElementById('d-calls').textContent = S.calls;
   document.getElementById('d-lat').textContent   = lat + 'ms';
 
@@ -6649,7 +6737,7 @@ async function launchAsSchoolStudent(student) {
   document.getElementById('d-goal').textContent    = S.goal || '—';
   document.getElementById('d-notes').textContent   = S.notes || '—';
   document.getElementById('d-conf').textContent    = `${TEMP} / ${MAX_TOK}`;
-  document.getElementById('d-model').textContent   = MODEL;
+  document.getElementById('d-model').textContent   = CLAUDE_KEY ? `Claude · ${CLAUDE_MODEL}` : `Featherless · ${FL_MODEL}`;
   document.getElementById('d-updates').textContent = S.parentUpdates;
 
   const styleLabels = {socratic:'Socratic Guide',stepbystep:'Step by Step',friendly:'Warm & Patient',challenge:'Challenge Mode'};
@@ -6893,7 +6981,7 @@ async function handleVoiceInput(text) {
   if (S.ndReady) ndCtx = await srchNeedle(text);
 
   try {
-    const { reply, usage } = await callClaude(ndCtx);
+    const { reply, usage } = await callLLM(ndCtx);
     S.loading = false;
 
     S.totTok += usage.total_tokens || 0;
@@ -6990,9 +7078,13 @@ async function speakTextEL(text) {
 //  SETUP SCREEN
 // ══════════════════════════════════════════════
 function saveSetup() {
-  const fl = document.getElementById('setup-claude-key').value.trim();
-  if (!fl) { toast('Claude API key is required', 'err'); return; }
-  localStorage.setItem('guided_claude_key', fl); CLAUDE_KEY = fl;
+  const ck = document.getElementById('setup-claude-key').value.trim();
+  const fk = document.getElementById('setup-fl-key').value.trim();
+  if (!ck && !fk) { toast('Add at least one API key (Claude or Featherless)', 'err'); return; }
+  if (ck) { localStorage.setItem('guided_claude_key', ck); CLAUDE_KEY = ck; }
+  else    { localStorage.removeItem('guided_claude_key'); CLAUDE_KEY = ''; }
+  if (fk) { localStorage.setItem('guided_fl_key', fk); FL_KEY = fk; }
+  else    { localStorage.removeItem('guided_fl_key'); FL_KEY = ''; }
   const el = document.getElementById('setup-el-key').value.trim();
   if (el) { localStorage.setItem('guided_elevenlabs_key', el); EL_KEY = el; }
   const nd = document.getElementById('setup-nd-key').value.trim();
@@ -7020,6 +7112,7 @@ function saveSetup() {
 
 function showSetupScreen() {
   document.getElementById('setup-claude-key').value = CLAUDE_KEY;
+  document.getElementById('setup-fl-key').value = FL_KEY;
   document.getElementById('setup-el-key').value = EL_KEY;
   document.getElementById('setup-nd-key').value = ND_KEY;
   document.getElementById('setup-sb-url').value = SUPABASE_URL;
@@ -7032,7 +7125,7 @@ function showSetupScreen() {
 // ── Show login/setup after dismissing landing page ───
 function showLoginFromLanding() {
   document.getElementById('landing').style.display = 'none';
-  if (!localStorage.getItem('guided_claude_key')) {
+  if (!localStorage.getItem('guided_claude_key') && !localStorage.getItem('guided_fl_key')) {
     document.getElementById('setup-screen').style.display = 'flex';
   } else {
     document.getElementById('login-screen').style.display = 'flex';
