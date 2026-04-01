@@ -3020,6 +3020,11 @@ body { background: #FFFFFF; }
         <label style="font-size:10.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink4)">Supabase Anon Key <span style="color:var(--ink5);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
         <input class="fi" id="setup-sb-key" type="password" placeholder="eyJ..." autocomplete="off" spellcheck="false"/>
       </div>
+      <div style="font-size:10.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--forest);margin-top:8px;margin-bottom:14px">School Connection (Slack)</div>
+      <div class="fgroup" style="margin-bottom:24px">
+        <label style="font-size:10.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink4)">Slack Bot Token <span style="color:var(--ink5);font-weight:400;text-transform:none;letter-spacing:0">(optional — for school integration)</span></label>
+        <input class="fi" id="setup-slack-token" type="password" placeholder="xoxb-..." autocomplete="off" spellcheck="false"/>
+      </div>
       <button class="btn-next" style="width:100%" onclick="saveSetup()">Save & Continue →</button>
     </div>
     <div style="text-align:center;margin-top:16px">
@@ -4329,6 +4334,8 @@ body { background: #FFFFFF; }
         <button class="btn-gotit" onclick="gotIt()">✓ I figured it out!</button>
       </div>
 
+      <div id="msg-remaining" style="font-size:10px;color:var(--ink4);text-align:center;padding:2px 0;font-family:var(--font-body)"></div>
+
       <div class="input-area" style="position:relative">
         <!-- Image preview strip -->
         <div id="img-preview-wrap">
@@ -4529,6 +4536,7 @@ marked.setOptions({ breaks: true, gfm: true });
 // ══════════════════════════════════════════════
 let SUPABASE_URL  = localStorage.getItem('guided_supabase_url')    || '';
 let SUPABASE_KEY  = localStorage.getItem('guided_supabase_key')    || '';
+let SLACK_TOKEN   = localStorage.getItem('guided_slack_token')     || '';
 
 // ══════════════════════════════════════════════
 //  SUPABASE CLIENT
@@ -4544,7 +4552,60 @@ initSupabase();
 // ══════════════════════════════════════════════
 //  CONFIG
 // ══════════════════════════════════════════════
-const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
+const MODELS = {
+  haiku:  'claude-haiku-4-5-20251001',
+  sonnet: 'claude-sonnet-4-20250514',
+  opus:   'claude-opus-4-20250514'
+};
+const MODEL_LABELS = {
+  'claude-haiku-4-5-20251001': 'Haiku 4.5',
+  'claude-sonnet-4-20250514':  'Sonnet 4',
+  'claude-opus-4-20250514':    'Opus 4'
+};
+
+function pickModel(isHint = false) {
+  if (isHint) return MODELS.haiku;
+  const lastBloom = S.events.filter(e => e.bloom && e.who === 'tutor').pop()?.bloom || null;
+  if (!lastBloom) return MODELS.haiku;
+  const isAdvanced = S.abitur || (S.subj || '').toLowerCase().includes('lk') || (S.lk?.length > 0);
+  switch (lastBloom) {
+    case 'remember':
+    case 'understand':  return MODELS.haiku;
+    case 'apply':
+    case 'analyze':     return MODELS.sonnet;
+    case 'evaluate':
+    case 'create':      return isAdvanced ? MODELS.opus : MODELS.sonnet;
+    default:            return MODELS.sonnet;
+  }
+}
+
+const MAX_DAILY_MESSAGES = 100;
+const DAILY_WARNING_AT   = 80;
+
+function getDailyMessageCount() {
+  const key = 'guided_daily_' + new Date().toISOString().split('T')[0];
+  return parseInt(localStorage.getItem(key) || '0', 10);
+}
+
+function incrementDailyMessageCount() {
+  const today = new Date().toISOString().split('T')[0];
+  const key = 'guided_daily_' + today;
+  const count = getDailyMessageCount() + 1;
+  localStorage.setItem(key, String(count));
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('guided_daily_') && k !== key) localStorage.removeItem(k);
+  }
+  return count;
+}
+
+function checkDailyLimit() {
+  const count = getDailyMessageCount();
+  if (count >= MAX_DAILY_MESSAGES) return { allowed: false, remaining: 0, count };
+  if (count >= DAILY_WARNING_AT)   return { allowed: true, remaining: MAX_DAILY_MESSAGES - count, count, warning: true };
+  return { allowed: true, remaining: MAX_DAILY_MESSAGES - count, count, warning: false };
+}
+
 const MAX_TOK  = 600;
 const TEMP     = 0.75;
 const CTX_WIN  = 8000;
@@ -4571,6 +4632,10 @@ const S = {
   // Bloom's taxonomy tracking
   bloom: { remember:0, understand:0, apply:0, analyze:0, evaluate:0, create:0 },
   bloomTotal: 0,
+  slackChannels: [],
+  selectedChannels: [],
+  schoolConnected: false,
+  schoolName: '',
 };
 
 // ══════════════════════════════════════════════
@@ -4957,6 +5022,10 @@ function obStudentBack() {
 }
 function obStudentNext() {
   if (obStudentStep === 1 && !document.getElementById('obs-name').value.trim()) { toast('Enter your name', 'err'); return; }
+  if (obStudentStep === 2 && SLACK_TOKEN) {
+    showSchoolConnectModal();
+    return;
+  }
   if (obStudentStep === 4) { launchStudent(); return; }
   obStudentStep++; renderObStudent();
 }
@@ -5248,7 +5317,7 @@ function startAppSession() {
   document.getElementById('d-goal').textContent    = S.goal || '—';
   document.getElementById('d-notes').textContent   = S.notes || '—';
   document.getElementById('d-conf').textContent    = `${TEMP} / ${MAX_TOK}`;
-  document.getElementById('d-model').textContent   = `Claude · ${CLAUDE_MODEL}`;
+  document.getElementById('d-model').textContent   = `Claude · Smart Routing`;
   document.getElementById('d-updates').textContent = S.parentUpdates || '—';
   const styleLabels = { socratic:'Socratic Guide', stepbystep:'Step by Step', friendly:'Warm & Patient', challenge:'Challenge Mode' };
   document.getElementById('d-style').textContent = styleLabels[S.style] || S.style || '—';
@@ -5275,6 +5344,19 @@ function startAppSession() {
   }
 
   document.getElementById('sbtn').disabled = false;
+  const _initLimit = checkDailyLimit();
+  const remEl = document.getElementById('msg-remaining');
+  if (remEl) remEl.textContent = `${_initLimit.remaining} messages left today`;
+  if (SLACK_TOKEN && S.selectedChannels.length && !S.lessonContext) {
+    console.log('[Guided] Slack fetch starting. Channels:', S.selectedChannels);
+    fetchSlackClassContent().then(ctx => {
+      console.log('[Guided] Slack result length:', ctx?.length || 0);
+      if (ctx) { S.lessonContext = ctx; toast('Class content loaded from school ✓', 'ok'); }
+      else { console.log('[Guided] Slack returned empty'); }
+    }).catch(e => console.error('[Guided] Slack fetch error:', e));
+  } else {
+    console.log('[Guided] Slack skipped. Token:', !!SLACK_TOKEN, 'Channels:', S.selectedChannels?.length, 'Existing context:', !!S.lessonContext);
+  }
 
   // Welcome message after short delay
   setTimeout(() => {
@@ -5290,6 +5372,13 @@ function startAppSession() {
 // ══════════════════════════════════════════════
 async function sendMsg(isHint = false, isGotIt = false) {
   if (S.loading) return;
+  const userMsgCount = S.events.filter(e => e.who === 'student' && e.type === 'message').length;
+  if (userMsgCount >= 100) {
+    toast('Du hast das Limit von 100 Nachrichten für diese Session erreicht.', 'err');
+    document.getElementById('sbtn').disabled = true;
+    document.getElementById('minput').disabled = true;
+    return;
+  }
   const ta = document.getElementById('minput');
   let text = isHint ? '(hint request)' : isGotIt ? '(student says they figured it out — check if correct, celebrate specifically if so)' : ta.value.trim();
 
@@ -5334,7 +5423,7 @@ async function sendMsg(isHint = false, isGotIt = false) {
 
   const t0 = Date.now();
   try {
-    const { reply, usage } = await callLLM(ndCtx);
+    const { reply, usage } = await callLLM(ndCtx, isHint);
     const lat = Date.now() - t0;
     removeTyping(tid);
 
@@ -5373,12 +5462,18 @@ async function sendMsg(isHint = false, isGotIt = false) {
 
   } catch(e) {
     removeTyping(tid);
-    addBubble('ai', '⚠️ Error: ' + e.message);
+    if (e.message === 'daily_limit_reached') {
+      addBubble('ai', `Das war's für heute! Du hast alle ${MAX_DAILY_MESSAGES} Nachrichten aufgebraucht 💪\n\nKomm morgen wieder!`);
+      document.getElementById('sbtn').disabled = true;
+      document.getElementById('minput').disabled = true;
+    } else {
+      addBubble('ai', '⚠️ Error: ' + e.message);
+    }
     S.history.pop();
   }
 
   S.loading = false;
-  document.getElementById('sbtn').disabled = false;
+  document.getElementById('sbtn').disabled = !!document.getElementById('minput').disabled;
   document.getElementById('minput').focus();
 }
 
@@ -5410,7 +5505,7 @@ async function reqWhyLearn() {
   if (S.ndReady) ndCtx = await srchNeedle('real life application');
   const t0 = Date.now();
   try {
-    const { reply, usage } = await callLLM(ndCtx);
+    const { reply, usage } = await callLLM(ndCtx, false);
     const lat = Date.now() - t0;
     removeTyping(tid);
     const { forHistory, forDisplay } = parseTutorNote(reply.replace(/^\[AHA\]\s*/, ''));
@@ -5431,7 +5526,7 @@ async function reqWhyLearn() {
 // ══════════════════════════════════════════════
 //  CLAUDE API (with prompt caching)
 // ══════════════════════════════════════════════
-async function callClaude(ndCtx) {
+async function callClaude(ndCtx, model) {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-proxy`, {
     method: 'POST',
     headers: {
@@ -5439,7 +5534,7 @@ async function callClaude(ndCtx) {
       'Authorization': `Bearer ${SUPABASE_KEY}`,
     },
     body: JSON.stringify({
-      model: CLAUDE_MODEL,
+      model: model || MODELS.sonnet,
       system: [{ type: 'text', text: buildPrompt(ndCtx), cache_control: { type: 'ephemeral' } }],
       messages: S.history,
       max_tokens: MAX_TOK
@@ -5489,10 +5584,19 @@ function maybeCompressHistory() {
 // ══════════════════════════════════════════════
 //  ROUTER
 // ══════════════════════════════════════════════
-async function callLLM(ndCtx) {
+async function callLLM(ndCtx, isHint = false) {
   maybeCompressHistory();
-  if (!CLAUDE_KEY) throw new Error('No Claude API key — open Settings to add one.');
-  return callClaude(ndCtx);
+  if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error('Supabase URL and Anon Key required — open Settings.');
+  const limit = checkDailyLimit();
+  if (!limit.allowed) throw new Error('daily_limit_reached');
+  const model = pickModel(isHint);
+  document.getElementById('d-model').textContent = `Claude · ${MODEL_LABELS[model] || model}`;
+  if (limit.warning) toast(`Noch ${limit.remaining} Nachrichten heute — nutz sie gut!`, 'ok');
+  const result = await callClaude(ndCtx, model);
+  const newCount = incrementDailyMessageCount();
+  const remEl = document.getElementById('msg-remaining');
+  if (remEl) remEl.textContent = `${MAX_DAILY_MESSAGES - newCount} left today`;
+  return result;
 }
 
 // ══════════════════════════════════════════════
@@ -6038,7 +6142,9 @@ function buildStarters() {
     'General / Mixed': ['Explain something I find confusing','How do I think more critically?','What is the scientific method?'],
   };
   const s = map[S.subj] || map['General / Mixed'];
-  const el = document.getElementById('starters'); el.innerHTML = '';
+  const el = document.getElementById('starters');
+  if (!el) return;
+  el.innerHTML = '';
   s.forEach(t => {
     const c = document.createElement('div'); c.className = 'starter'; c.textContent = t;
     c.onclick = () => fillInput(t); el.appendChild(c);
@@ -6678,6 +6784,9 @@ async function launchAsSchoolStudent(student) {
   S.goal = goalMap[S.learningGoal] || '';
 
   try { S.lessonContext = await fetchTodaysLessonContext(); } catch(e) { S.lessonContext = ''; }
+  if (!S.lessonContext && SLACK_TOKEN && S.selectedChannels.length) {
+    try { S.lessonContext = await fetchSlackClassContent(); } catch(e) {}
+  }
 
   // Load learning profile from past sessions + handover notes
   S.aiNotes = student.ai_notes || '';
@@ -6695,7 +6804,7 @@ async function launchAsSchoolStudent(student) {
   document.getElementById('d-goal').textContent    = S.goal || '—';
   document.getElementById('d-notes').textContent   = S.notes || '—';
   document.getElementById('d-conf').textContent    = `${TEMP} / ${MAX_TOK}`;
-  document.getElementById('d-model').textContent   = `Claude · ${CLAUDE_MODEL}`;
+  document.getElementById('d-model').textContent   = `Claude · Smart Routing`;
   document.getElementById('d-updates').textContent = S.parentUpdates;
 
   const styleLabels = {socratic:'Socratic Guide',stepbystep:'Step by Step',friendly:'Warm & Patient',challenge:'Challenge Mode'};
@@ -7038,6 +7147,178 @@ async function speakTextEL(text) {
 }
 
 // ══════════════════════════════════════════════
+//  SLACK SCHOOL INTEGRATION
+// ══════════════════════════════════════════════
+const SUBJECT_MAP_SLACK = {
+  'mathe':'Mathematics','math':'Mathematics','mathematik':'Mathematics',
+  'physik':'Physics','physics':'Physics','chemie':'Chemistry','chemistry':'Chemistry',
+  'biologie':'Biology','biology':'Biology','bio':'Biology',
+  'deutsch':'German','german':'German','englisch':'English','english':'English',
+  'geschichte':'History','history':'History','informatik':'Computer Science',
+  'kunst':'Art','musik':'Music','music':'Music','geo':'Geography',
+  'geographie':'Geography','philosophie':'Philosophy','wirtschaft':'Economics',
+  'französisch':'French','french':'French','spanisch':'Spanish','spanish':'Spanish',
+};
+
+function detectSubjectFromChannel(channelName) {
+  const lower = channelName.toLowerCase().replace(/[^a-zäöüß]/g, '');
+  for (const [key, val] of Object.entries(SUBJECT_MAP_SLACK)) {
+    if (lower.includes(key)) return val;
+  }
+  return null;
+}
+
+async function fetchSlackChannels() {
+  if (!SLACK_TOKEN) return [];
+  const PROXY = `${SUPABASE_URL}/functions/v1/slack-proxy`;
+  try {
+    const res = await fetch(PROXY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
+      body: JSON.stringify({ endpoint: 'conversations.list?types=public_channel&limit=200', token: SLACK_TOKEN })
+    });
+    const data = await res.json();
+    if (!data.ok) return [];
+    return (data.channels || []).filter(c => !c.is_archived).map(c => ({
+      id: c.id, name: c.name, subject: detectSubjectFromChannel(c.name),
+      topic: c.topic?.value || '', purpose: c.purpose?.value || '', memberCount: c.num_members || 0
+    }));
+  } catch(e) { console.error('fetchSlackChannels:', e); return []; }
+}
+
+async function validateSchoolCode(code) {
+  if (!code || !SLACK_TOKEN) return { valid: false, channels: [] };
+  const channels = await fetchSlackChannels();
+  const schoolChannels = channels.filter(c => {
+    const n = c.name.toLowerCase();
+    return n.includes(code.toLowerCase()) || n.includes('klasse') || n.includes('class') || n.includes('kurs') || c.subject;
+  });
+  return { valid: schoolChannels.length > 0, channels: schoolChannels, allChannels: channels };
+}
+
+async function fetchSlackClassContent() {
+  if (!SLACK_TOKEN || !S.selectedChannels.length) return '';
+  const PROXY = `${SUPABASE_URL}/functions/v1/slack-proxy`;
+  const since = String(Math.floor((Date.now() - 7*24*60*60*1000) / 1000));
+  let allContent = [];
+  const schoolWideIds = (S.slackChannels || []).filter(c => {
+    const n = c.name.toLowerCase();
+    return n.includes('announcement') || n.includes('general') || n.includes('info') || n.includes('schulweit');
+  }).map(c => c.id);
+  const allChannelIds = [...new Set([...S.selectedChannels, ...schoolWideIds])];
+  for (const chId of allChannelIds) {
+    try {
+      const chInfo = (S.slackChannels || []).find(c => c.id === chId);
+      const chName = chInfo?.name || chId;
+      const subject = chInfo?.subject || 'General';
+      const res = await fetch(PROXY, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
+        body: JSON.stringify({ endpoint: `conversations.history?channel=${chId}&oldest=${since}&limit=10`, token: SLACK_TOKEN })
+      });
+      const data = await res.json();
+      if (!data.ok || !data.messages?.length) continue;
+      for (const msg of data.messages.filter(m => m.type === 'message' && !m.subtype)) {
+        let authorName = 'Teacher';
+        if (msg.user) {
+          try {
+            const uRes = await fetch(PROXY, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
+              body: JSON.stringify({ endpoint: `users.info?user=${msg.user}`, token: SLACK_TOKEN })
+            });
+            const uData = await uRes.json();
+            if (uData.ok) authorName = uData.user?.real_name || uData.user?.name || 'Teacher';
+          } catch(e) {}
+        }
+        const date = new Date(parseFloat(msg.ts) * 1000).toLocaleDateString('de-DE');
+        allContent.push({ channel: chName, subject, author: authorName, date, text: msg.text });
+      }
+    } catch(e) { console.warn('Slack channel fetch:', chId, e); }
+  }
+  if (!allContent.length) return '';
+  let ctx = '\n━━━━━━━━━━━━━━━━━━━━━━━━\nSCHOOL CONTENT (from Slack — last 7 days)\n━━━━━━━━━━━━━━━━━━━━━━━━\n';
+  const bySubject = {};
+  allContent.forEach(c => { if (!bySubject[c.subject]) bySubject[c.subject] = []; bySubject[c.subject].push(c); });
+  for (const [subject, msgs] of Object.entries(bySubject)) {
+    ctx += `\n📚 ${subject} (#${msgs[0].channel}):\n`;
+    msgs.forEach(m => { ctx += `  [${m.date}] ${m.author}: ${m.text}\n`; });
+  }
+  ctx += '\nUse this context to ask specific questions about what the student learned this week.\n';
+  return ctx;
+}
+
+function showSchoolConnectModal() {
+  let modal = document.getElementById('school-connect-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'school-connect-modal';
+    modal.style.cssText = 'display:flex;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:24px';
+    modal.innerHTML = `
+      <div style="background:#fff;border-radius:24px;width:100%;max-width:500px;box-shadow:0 24px 80px rgba(0,0,0,.22);overflow:hidden;max-height:85vh;display:flex;flex-direction:column">
+        <div style="background:var(--forest);padding:24px 28px;flex-shrink:0">
+          <div style="font-family:var(--font-serif);font-size:20px;font-weight:700;color:#fff">Connect to Your School</div>
+          <div style="font-size:13px;color:rgba(255,255,255,.7);margin-top:4px">Enter your school code to load class content</div>
+        </div>
+        <div style="padding:24px 28px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;flex:1">
+          <div class="fgroup"><label>School Code</label><input class="fi" id="scm-code" placeholder="e.g. BCS" style="text-transform:uppercase;letter-spacing:2px"/></div>
+          <button class="btn-next" onclick="validateAndShowChannels()">Connect →</button>
+          <div id="scm-status" style="display:none"></div>
+          <div id="scm-channels" style="display:none;flex-direction:column;gap:8px"></div>
+          <div id="scm-actions" style="display:none"><button class="btn-next" onclick="confirmClassSelection()">Continue with selected classes →</button></div>
+        </div>
+        <div style="padding:12px 28px;border-top:1px solid var(--border);text-align:center">
+          <button onclick="skipSchoolConnect()" style="background:none;border:none;color:var(--ink4);font-size:13px;cursor:pointer">Skip — continue without school connection</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+  }
+  modal.style.display = 'flex';
+}
+
+async function validateAndShowChannels() {
+  const code = document.getElementById('scm-code').value.trim();
+  const statusEl = document.getElementById('scm-status');
+  const channelsEl = document.getElementById('scm-channels');
+  const actionsEl = document.getElementById('scm-actions');
+  if (!code) { toast('Enter a school code', 'err'); return; }
+  if (!SLACK_TOKEN) { statusEl.style.display = 'block'; statusEl.innerHTML = '<div style="color:var(--red);font-size:13px">Slack token missing — add it in Settings</div>'; return; }
+  statusEl.style.display = 'block';
+  statusEl.innerHTML = '<div style="color:var(--gold);font-size:13px">🔍 Looking for your school...</div>';
+  const result = await validateSchoolCode(code);
+  if (!result.valid) { statusEl.innerHTML = '<div style="color:var(--ink3);font-size:13px">No matching channels found.</div>'; return; }
+  S.slackChannels = result.allChannels || result.channels;
+  statusEl.innerHTML = `<div style="color:var(--forest);font-size:13px">✓ Found ${result.channels.length} class channels</div>`;
+  channelsEl.style.display = 'flex';
+  channelsEl.innerHTML = result.channels.map(c =>
+    `<label style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1.5px solid var(--border);border-radius:12px;cursor:pointer">
+      <input type="checkbox" value="${c.id}" checked style="accent-color:var(--forest);width:18px;height:18px"/>
+      <div><div style="font-weight:700;font-size:13px;color:var(--ink)">#${c.name}</div>
+      <div style="font-size:11px;color:var(--ink4)">${c.subject || 'General'} · ${c.memberCount} members</div></div>
+    </label>`).join('');
+  actionsEl.style.display = 'flex';
+}
+
+function confirmClassSelection() {
+  const selected = [...document.querySelectorAll('#scm-channels input:checked')].map(cb => cb.value);
+  S.selectedChannels = selected;
+  S.schoolConnected = true;
+  S.schoolName = document.getElementById('scm-code').value.trim().toUpperCase();
+  document.getElementById('school-connect-modal').style.display = 'none';
+  toast(`Connected to ${S.schoolName} — ${selected.length} classes`, 'ok');
+  obStudentStep++;
+  renderObStudent();
+}
+
+function skipSchoolConnect() {
+  S.selectedChannels = [];
+  S.schoolConnected = false;
+  document.getElementById('school-connect-modal').style.display = 'none';
+  obStudentStep++;
+  renderObStudent();
+}
+
+// ══════════════════════════════════════════════
 //  SETUP SCREEN
 // ══════════════════════════════════════════════
 function saveSetup() {
@@ -7045,6 +7326,8 @@ function saveSetup() {
   if (su) { localStorage.setItem('guided_supabase_url', su); SUPABASE_URL = su; }
   const sk = document.getElementById('setup-sb-key').value.trim();
   if (sk) { localStorage.setItem('guided_supabase_key', sk); SUPABASE_KEY = sk; }
+  const slk = document.getElementById('setup-slack-token').value.trim();
+  if (slk) { localStorage.setItem('guided_slack_token', slk); SLACK_TOKEN = slk; }
   if (!SUPABASE_URL || !SUPABASE_KEY) { toast('Supabase URL and key are required', 'err'); return; }
   initSupabase();
   document.getElementById('setup-screen').style.display = 'none';
@@ -7066,6 +7349,7 @@ function saveSetup() {
 function showSetupScreen() {
   document.getElementById('setup-sb-url').value = SUPABASE_URL;
   document.getElementById('setup-sb-key').value = SUPABASE_KEY;
+  document.getElementById('setup-slack-token').value = SLACK_TOKEN;
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('school-screen').style.display = 'none';
   document.getElementById('setup-screen').style.display = 'flex';
@@ -7145,7 +7429,7 @@ function goHome() {
   S.bloomTotal = 0; S.name = ''; S.accountId = null;
   // Clear chat
   const msgs = document.getElementById('msgs');
-  if (msgs) msgs.innerHTML = '<div id="empty-chat" class="empty-chat"><div class="empty-icon">✦</div><div class="empty-title">Start a conversation</div><div class="empty-sub">Ask anything — your tutor is ready.</div></div>';
+  if (msgs) msgs.innerHTML = '<div id="empty-chat" class="empty-chat"><div class="empty-icon-ring">🌱</div><div class="empty-title">Ready to learn!</div><div class="empty-sub">Ask anything.</div><div class="starter-grid" id="starters"></div></div>';
   document.getElementById('sbtn').disabled = true;
 }
 
