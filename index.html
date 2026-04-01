@@ -4529,6 +4529,7 @@ marked.setOptions({ breaks: true, gfm: true });
 // ══════════════════════════════════════════════
 let SUPABASE_URL  = localStorage.getItem('guided_supabase_url')    || '';
 let SUPABASE_KEY  = localStorage.getItem('guided_supabase_key')    || '';
+let SLACK_TOKEN   = localStorage.getItem('guided_slack_token')     || '';
 
 // ══════════════════════════════════════════════
 //  SUPABASE CLIENT
@@ -4544,7 +4545,60 @@ initSupabase();
 // ══════════════════════════════════════════════
 //  CONFIG
 // ══════════════════════════════════════════════
-const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
+const MODELS = {
+  haiku:  'claude-haiku-4-5-20251001',
+  sonnet: 'claude-sonnet-4-20250514',
+  opus:   'claude-opus-4-20250514'
+};
+const MODEL_LABELS = {
+  'claude-haiku-4-5-20251001': 'Haiku 4.5',
+  'claude-sonnet-4-20250514':  'Sonnet 4',
+  'claude-opus-4-20250514':    'Opus 4'
+};
+
+function pickModel(isHint = false) {
+  if (isHint) return MODELS.haiku;
+  const lastBloom = S.events.filter(e => e.bloom && e.who === 'tutor').pop()?.bloom || null;
+  if (!lastBloom) return MODELS.haiku;
+  const isAdvanced = S.abitur || (S.subj || '').toLowerCase().includes('lk') || (S.lk?.length > 0);
+  switch (lastBloom) {
+    case 'remember':
+    case 'understand':  return MODELS.haiku;
+    case 'apply':
+    case 'analyze':     return MODELS.sonnet;
+    case 'evaluate':
+    case 'create':      return isAdvanced ? MODELS.opus : MODELS.sonnet;
+    default:            return MODELS.sonnet;
+  }
+}
+
+const MAX_DAILY_MESSAGES = 100;
+const DAILY_WARNING_AT   = 80;
+
+function getDailyMessageCount() {
+  const key = 'guided_daily_' + new Date().toISOString().split('T')[0];
+  return parseInt(localStorage.getItem(key) || '0', 10);
+}
+
+function incrementDailyMessageCount() {
+  const today = new Date().toISOString().split('T')[0];
+  const key = 'guided_daily_' + today;
+  const count = getDailyMessageCount() + 1;
+  localStorage.setItem(key, String(count));
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('guided_daily_') && k !== key) localStorage.removeItem(k);
+  }
+  return count;
+}
+
+function checkDailyLimit() {
+  const count = getDailyMessageCount();
+  if (count >= MAX_DAILY_MESSAGES) return { allowed: false, remaining: 0, count };
+  if (count >= DAILY_WARNING_AT)   return { allowed: true, remaining: MAX_DAILY_MESSAGES - count, count, warning: true };
+  return { allowed: true, remaining: MAX_DAILY_MESSAGES - count, count, warning: false };
+}
+
 const MAX_TOK  = 600;
 const TEMP     = 0.75;
 const CTX_WIN  = 8000;
@@ -4571,6 +4625,10 @@ const S = {
   // Bloom's taxonomy tracking
   bloom: { remember:0, understand:0, apply:0, analyze:0, evaluate:0, create:0 },
   bloomTotal: 0,
+  slackChannels: [],
+  selectedChannels: [],
+  schoolConnected: false,
+  schoolName: '',
 };
 
 // ══════════════════════════════════════════════
@@ -5248,7 +5306,7 @@ function startAppSession() {
   document.getElementById('d-goal').textContent    = S.goal || '—';
   document.getElementById('d-notes').textContent   = S.notes || '—';
   document.getElementById('d-conf').textContent    = `${TEMP} / ${MAX_TOK}`;
-  document.getElementById('d-model').textContent   = `Claude · ${CLAUDE_MODEL}`;
+  document.getElementById('d-model').textContent   = `Claude · Smart Routing`;
   document.getElementById('d-updates').textContent = S.parentUpdates || '—';
   const styleLabels = { socratic:'Socratic Guide', stepbystep:'Step by Step', friendly:'Warm & Patient', challenge:'Challenge Mode' };
   document.getElementById('d-style').textContent = styleLabels[S.style] || S.style || '—';
@@ -5275,6 +5333,14 @@ function startAppSession() {
   }
 
   document.getElementById('sbtn').disabled = false;
+  const _initLimit = checkDailyLimit();
+  const remEl = document.getElementById('msg-remaining');
+  if (remEl) remEl.textContent = `${_initLimit.remaining} messages left today`;
+  if (SLACK_TOKEN && S.selectedChannels.length && !S.lessonContext) {
+    fetchSlackClassContent().then(ctx => {
+      if (ctx) { S.lessonContext = ctx; toast('Class content loaded from school ✓', 'ok'); }
+    });
+  }
 
   // Welcome message after short delay
   setTimeout(() => {
@@ -5290,6 +5356,13 @@ function startAppSession() {
 // ══════════════════════════════════════════════
 async function sendMsg(isHint = false, isGotIt = false) {
   if (S.loading) return;
+  const userMsgCount = S.events.filter(e => e.who === 'student' && e.type === 'message').length;
+  if (userMsgCount >= 100) {
+    toast('Du hast das Limit von 100 Nachrichten für diese Session erreicht.', 'err');
+    document.getElementById('sbtn').disabled = true;
+    document.getElementById('minput').disabled = true;
+    return;
+  }
   const ta = document.getElementById('minput');
   let text = isHint ? '(hint request)' : isGotIt ? '(student says they figured it out — check if correct, celebrate specifically if so)' : ta.value.trim();
 
@@ -5334,7 +5407,7 @@ async function sendMsg(isHint = false, isGotIt = false) {
 
   const t0 = Date.now();
   try {
-    const { reply, usage } = await callLLM(ndCtx);
+    const { reply, usage } = await callLLM(ndCtx, isHint);
     const lat = Date.now() - t0;
     removeTyping(tid);
 
@@ -5373,12 +5446,18 @@ async function sendMsg(isHint = false, isGotIt = false) {
 
   } catch(e) {
     removeTyping(tid);
-    addBubble('ai', '⚠️ Error: ' + e.message);
+    if (e.message === 'daily_limit_reached') {
+      addBubble('ai', `Das war's für heute! Du hast alle ${MAX_DAILY_MESSAGES} Nachrichten aufgebraucht 💪\n\nKomm morgen wieder!`);
+      document.getElementById('sbtn').disabled = true;
+      document.getElementById('minput').disabled = true;
+    } else {
+      addBubble('ai', '⚠️ Error: ' + e.message);
+    }
     S.history.pop();
   }
 
   S.loading = false;
-  document.getElementById('sbtn').disabled = false;
+  document.getElementById('sbtn').disabled = !!document.getElementById('minput').disabled;
   document.getElementById('minput').focus();
 }
 
@@ -5410,7 +5489,7 @@ async function reqWhyLearn() {
   if (S.ndReady) ndCtx = await srchNeedle('real life application');
   const t0 = Date.now();
   try {
-    const { reply, usage } = await callLLM(ndCtx);
+    const { reply, usage } = await callLLM(ndCtx, false);
     const lat = Date.now() - t0;
     removeTyping(tid);
     const { forHistory, forDisplay } = parseTutorNote(reply.replace(/^\[AHA\]\s*/, ''));
@@ -5431,7 +5510,7 @@ async function reqWhyLearn() {
 // ══════════════════════════════════════════════
 //  CLAUDE API (with prompt caching)
 // ══════════════════════════════════════════════
-async function callClaude(ndCtx) {
+async function callClaude(ndCtx, model) {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-proxy`, {
     method: 'POST',
     headers: {
@@ -5439,7 +5518,7 @@ async function callClaude(ndCtx) {
       'Authorization': `Bearer ${SUPABASE_KEY}`,
     },
     body: JSON.stringify({
-      model: CLAUDE_MODEL,
+      model: model || MODELS.sonnet,
       system: [{ type: 'text', text: buildPrompt(ndCtx), cache_control: { type: 'ephemeral' } }],
       messages: S.history,
       max_tokens: MAX_TOK
@@ -5489,10 +5568,19 @@ function maybeCompressHistory() {
 // ══════════════════════════════════════════════
 //  ROUTER
 // ══════════════════════════════════════════════
-async function callLLM(ndCtx) {
+async function callLLM(ndCtx, isHint = false) {
   maybeCompressHistory();
-  if (!CLAUDE_KEY) throw new Error('No Claude API key — open Settings to add one.');
-  return callClaude(ndCtx);
+  if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error('Supabase URL and Anon Key required — open Settings.');
+  const limit = checkDailyLimit();
+  if (!limit.allowed) throw new Error('daily_limit_reached');
+  const model = pickModel(isHint);
+  document.getElementById('d-model').textContent = `Claude · ${MODEL_LABELS[model] || model}`;
+  if (limit.warning) toast(`Noch ${limit.remaining} Nachrichten heute — nutz sie gut!`, 'ok');
+  const result = await callClaude(ndCtx, model);
+  const newCount = incrementDailyMessageCount();
+  const remEl = document.getElementById('msg-remaining');
+  if (remEl) remEl.textContent = `${MAX_DAILY_MESSAGES - newCount} left today`;
+  return result;
 }
 
 // ══════════════════════════════════════════════
@@ -6695,7 +6783,7 @@ async function launchAsSchoolStudent(student) {
   document.getElementById('d-goal').textContent    = S.goal || '—';
   document.getElementById('d-notes').textContent   = S.notes || '—';
   document.getElementById('d-conf').textContent    = `${TEMP} / ${MAX_TOK}`;
-  document.getElementById('d-model').textContent   = `Claude · ${CLAUDE_MODEL}`;
+  document.getElementById('d-model').textContent   = `Claude · Smart Routing`;
   document.getElementById('d-updates').textContent = S.parentUpdates;
 
   const styleLabels = {socratic:'Socratic Guide',stepbystep:'Step by Step',friendly:'Warm & Patient',challenge:'Challenge Mode'};
