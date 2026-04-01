@@ -5348,9 +5348,14 @@ function startAppSession() {
   const remEl = document.getElementById('msg-remaining');
   if (remEl) remEl.textContent = `${_initLimit.remaining} messages left today`;
   if (SLACK_TOKEN && S.selectedChannels.length && !S.lessonContext) {
+    console.log('[Guided] Slack fetch starting. Channels:', S.selectedChannels);
     fetchSlackClassContent().then(ctx => {
+      console.log('[Guided] Slack result length:', ctx?.length || 0);
       if (ctx) { S.lessonContext = ctx; toast('Class content loaded from school ✓', 'ok'); }
-    });
+      else { console.log('[Guided] Slack returned empty'); }
+    }).catch(e => console.error('[Guided] Slack fetch error:', e));
+  } else {
+    console.log('[Guided] Slack skipped. Token:', !!SLACK_TOKEN, 'Channels:', S.selectedChannels?.length, 'Existing context:', !!S.lessonContext);
   }
 
   // Welcome message after short delay
@@ -6137,7 +6142,9 @@ function buildStarters() {
     'General / Mixed': ['Explain something I find confusing','How do I think more critically?','What is the scientific method?'],
   };
   const s = map[S.subj] || map['General / Mixed'];
-  const el = document.getElementById('starters'); el.innerHTML = '';
+  const el = document.getElementById('starters');
+  if (!el) return;
+  el.innerHTML = '';
   s.forEach(t => {
     const c = document.createElement('div'); c.className = 'starter'; c.textContent = t;
     c.onclick = () => fillInput(t); el.appendChild(c);
@@ -7422,7 +7429,7 @@ function goHome() {
   S.bloomTotal = 0; S.name = ''; S.accountId = null;
   // Clear chat
   const msgs = document.getElementById('msgs');
-  if (msgs) msgs.innerHTML = '<div id="empty-chat" class="empty-chat"><div class="empty-icon">✦</div><div class="empty-title">Start a conversation</div><div class="empty-sub">Ask anything — your tutor is ready.</div></div>';
+  if (msgs) msgs.innerHTML = '<div id="empty-chat" class="empty-chat"><div class="empty-icon-ring">🌱</div><div class="empty-title">Ready to learn!</div><div class="empty-sub">Ask anything.</div><div class="starter-grid" id="starters"></div></div>';
   document.getElementById('sbtn').disabled = true;
 }
 
