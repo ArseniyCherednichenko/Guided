@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
 <style>
 /* ══════════════════════════════════════════════
    TOKENS & RESET
@@ -3007,22 +3008,9 @@ body { background: #FFFFFF; }
         </div>
       </div>
       <span class="ob-wordmark" style="display:block">Guided</span>
-      <span class="ob-tagline" style="display:block">Enter your API keys to get started</span>
+      <span class="ob-tagline" style="display:block">Connect your Supabase database to get started</span>
     </div>
     <div style="background:var(--white);border:1px solid var(--border);border-radius:24px;padding:32px 36px;box-shadow:var(--shadow-lg)">
-      <div class="fgroup" style="margin-bottom:18px">
-        <label style="font-size:10.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink4)">Claude API Key <span style="color:var(--red)">*</span></label>
-        <input class="fi" id="setup-claude-key" type="password" placeholder="sk-ant-..." autocomplete="off" spellcheck="false"/>
-      </div>
-      <div class="fgroup" style="margin-bottom:18px">
-        <label style="font-size:10.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink4)">ElevenLabs API Key <span style="color:var(--ink5);font-weight:400;text-transform:none;letter-spacing:0">(optional — for voice)</span></label>
-        <input class="fi" id="setup-el-key" type="password" placeholder="bb0..." autocomplete="off" spellcheck="false"/>
-      </div>
-      <div class="fgroup" style="margin-bottom:18px">
-        <label style="font-size:10.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink4)">Needle API Key <span style="color:var(--ink5);font-weight:400;text-transform:none;letter-spacing:0">(optional — for curriculum)</span></label>
-        <input class="fi" id="setup-nd-key" type="password" placeholder="apk_..." autocomplete="off" spellcheck="false"/>
-      </div>
-      <div style="height:1px;background:var(--border);margin:4px 0 18px"></div>
       <div style="font-size:10.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:14px">Database (Supabase)</div>
       <div class="fgroup" style="margin-bottom:18px">
         <label style="font-size:10.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink4)">Supabase Project URL <span style="color:var(--ink5);font-weight:400;text-transform:none;letter-spacing:0">(optional — for multi-device)</span></label>
@@ -4509,9 +4497,6 @@ marked.setOptions({ breaks: true, gfm: true });
 // ══════════════════════════════════════════════
 //  API KEYS (loaded from localStorage — never hardcoded)
 // ══════════════════════════════════════════════
-let CLAUDE_KEY    = localStorage.getItem('guided_claude_key')      || '';
-let EL_KEY        = localStorage.getItem('guided_elevenlabs_key')  || '';
-let ND_KEY        = localStorage.getItem('guided_needle_key')       || '';
 let SUPABASE_URL  = localStorage.getItem('guided_supabase_url')    || '';
 let SUPABASE_KEY  = localStorage.getItem('guided_supabase_key')    || '';
 
@@ -5411,13 +5396,11 @@ async function reqWhyLearn() {
 //  FEATHERLESS
 // ══════════════════════════════════════════════
 async function callClaude(ndCtx) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-proxy`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': CLAUDE_KEY,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
     },
     body: JSON.stringify({
       model: MODEL,
@@ -5515,9 +5498,9 @@ function genImg(p) {
 // ══════════════════════════════════════════════
 async function autoLoadNeedle(url) {
   try {
-    const cr = await fetch('https://needle-ai.com/api/v1/collections', {
+    const cr = await fetch(`${SUPABASE_URL}/functions/v1/needle-proxy`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-needle-api-key': ND_KEY },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}`, 'x-needle-path': '/collections' },
       body: JSON.stringify({ name: `guided_${S.name}_${Date.now()}` })
     });
     if (!cr.ok) throw new Error(`Collection ${cr.status}`);
@@ -5525,9 +5508,9 @@ async function autoLoadNeedle(url) {
     S.ndCollId = cd.id;
     document.getElementById('d-coll').textContent = cd.id;
 
-    await fetch(`https://needle-ai.com/api/v1/collections/${S.ndCollId}/files`, {
+    await fetch(`${SUPABASE_URL}/functions/v1/needle-proxy`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-needle-api-key': ND_KEY },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}`, 'x-needle-path': `/collections/${S.ndCollId}/files` },
       body: JSON.stringify({ url })
     });
 
@@ -5578,9 +5561,9 @@ async function autoLoadAbitur() {
   const urls = getAbiturUrls(S.bundesland, S.lk, S.gk);
   if (!urls.length) return;
   try {
-    const cr = await fetch('https://needle-ai.com/api/v1/collections', {
+    const cr = await fetch(`${SUPABASE_URL}/functions/v1/needle-proxy`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-needle-api-key': ND_KEY },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}`, 'x-needle-path': '/collections' },
       body: JSON.stringify({ name: `guided_abitur_${S.name}_${Date.now()}` })
     });
     if (!cr.ok) throw new Error(`Collection ${cr.status}`);
@@ -5590,9 +5573,9 @@ async function autoLoadAbitur() {
     let loaded = 0;
     for (const url of urls) {
       try {
-        const fr = await fetch(`https://needle-ai.com/api/v1/collections/${S.ndCollId}/files`, {
+        const fr = await fetch(`${SUPABASE_URL}/functions/v1/needle-proxy`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-needle-api-key': ND_KEY },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}`, 'x-needle-path': `/collections/${S.ndCollId}/files` },
           body: JSON.stringify({ url })
         });
         if (fr.ok) loaded++;
@@ -5652,9 +5635,9 @@ async function loadNeedle() {
   btn.disabled = true; btn.textContent = 'Loading...';
   showNdSt('ld', '⏳ Indexing document...');
   try {
-    const cr = await fetch('https://needle-ai.com/api/v1/collections', {
+    const cr = await fetch(`${SUPABASE_URL}/functions/v1/needle-proxy`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-needle-api-key': ND_KEY },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}`, 'x-needle-path': '/collections' },
       body: JSON.stringify({ name: `guided_${Date.now()}` })
     });
     if (!cr.ok) throw new Error(`Collection ${cr.status}`);
@@ -5663,9 +5646,9 @@ async function loadNeedle() {
     document.getElementById('d-coll').textContent = cd.id;
 
     const isUrl = url.startsWith('http');
-    const fr = await fetch(`https://needle-ai.com/api/v1/collections/${S.ndCollId}/files`, {
+    const fr = await fetch(`${SUPABASE_URL}/functions/v1/needle-proxy`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-needle-api-key': ND_KEY },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}`, 'x-needle-path': `/collections/${S.ndCollId}/files` },
       body: JSON.stringify(isUrl ? { url } : { content: url, name: 'material.txt' })
     });
     if (!fr.ok) throw new Error(`File ${fr.status}`);
@@ -5682,9 +5665,9 @@ async function loadNeedle() {
 async function srchNeedle(q) {
   if (!S.ndCollId || !q) return '';
   try {
-    const r = await fetch(`https://needle-ai.com/api/v1/collections/${S.ndCollId}/search`, {
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/needle-proxy`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-needle-api-key': ND_KEY },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}`, 'x-needle-path': `/collections/${S.ndCollId}/search` },
       body: JSON.stringify({ query: q, top_k: 3 })
     });
     const d = await r.json();
@@ -5915,7 +5898,7 @@ function addBubble(role, text, usage, isHint, isAha, bloomLvl) {
   d.innerHTML = `
     <div class="msg-av">${avatarContent}</div>
     <div class="msg-body">
-      <div class="${bubClass}">${role === 'ai' ? marked.parse(text) : escH(text)}</div>
+      <div class="${bubClass}">${role === 'ai' ? DOMPurify.sanitize(marked.parse(text)) : escH(text)}</div>
       <div class="msg-meta">
         ${new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}
         ${tokTag}
@@ -6925,13 +6908,17 @@ async function speakTextEL(text) {
     .replace(/<br>/gi, ' ').trim();
   const speakText = clean.length > 600 ? clean.slice(0, 600) + '.' : clean;
 
-  // No ElevenLabs key — use browser TTS
-  if (!EL_KEY) return speakBrowser(speakText);
+  // No Supabase connection — fall back to browser TTS
+  if (!SUPABASE_URL || !SUPABASE_KEY) return speakBrowser(speakText);
 
   try {
-    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}/stream`, {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/elevenlabs-proxy`, {
       method: 'POST',
-      headers: { 'xi-api-key': EL_KEY, 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'x-voice-id': VOICE_ID,
+      },
       body: JSON.stringify({
         text: speakText,
         model_id: 'eleven_multilingual_v2',
@@ -6955,17 +6942,11 @@ async function speakTextEL(text) {
 //  SETUP SCREEN
 // ══════════════════════════════════════════════
 function saveSetup() {
-  const fl = document.getElementById('setup-claude-key').value.trim();
-  if (!fl) { toast('Claude API key is required', 'err'); return; }
-  localStorage.setItem('guided_claude_key', fl); CLAUDE_KEY = fl;
-  const el = document.getElementById('setup-el-key').value.trim();
-  if (el) { localStorage.setItem('guided_elevenlabs_key', el); EL_KEY = el; }
-  const nd = document.getElementById('setup-nd-key').value.trim();
-  if (nd) { localStorage.setItem('guided_needle_key', nd); ND_KEY = nd; }
   const su = document.getElementById('setup-sb-url').value.trim();
   if (su) { localStorage.setItem('guided_supabase_url', su); SUPABASE_URL = su; }
   const sk = document.getElementById('setup-sb-key').value.trim();
   if (sk) { localStorage.setItem('guided_supabase_key', sk); SUPABASE_KEY = sk; }
+  if (!SUPABASE_URL || !SUPABASE_KEY) { toast('Supabase URL and key are required', 'err'); return; }
   initSupabase();
   document.getElementById('setup-screen').style.display = 'none';
   if (window._pendingSchool) {
@@ -6984,9 +6965,6 @@ function saveSetup() {
 }
 
 function showSetupScreen() {
-  document.getElementById('setup-claude-key').value = CLAUDE_KEY;
-  document.getElementById('setup-el-key').value = EL_KEY;
-  document.getElementById('setup-nd-key').value = ND_KEY;
   document.getElementById('setup-sb-url').value = SUPABASE_URL;
   document.getElementById('setup-sb-key').value = SUPABASE_KEY;
   document.getElementById('login-screen').style.display = 'none';
@@ -6997,7 +6975,7 @@ function showSetupScreen() {
 // ── Show login/setup after dismissing landing page ───
 function showLoginFromLanding() {
   document.getElementById('landing').style.display = 'none';
-  if (!localStorage.getItem('guided_claude_key')) {
+  if (!localStorage.getItem('guided_supabase_url')) {
     document.getElementById('setup-screen').style.display = 'flex';
   } else {
     document.getElementById('login-screen').style.display = 'flex';
@@ -7007,7 +6985,7 @@ function showLoginFromLanding() {
 // ── For Schools path: landing → school screen directly ───
 function showSchoolFromLanding() {
   document.getElementById('landing').style.display = 'none';
-  if (!localStorage.getItem('guided_claude_key')) {
+  if (!localStorage.getItem('guided_supabase_url')) {
     // Need keys first, then go to school screen
     document.getElementById('setup-screen').style.display = 'flex';
     // After saving keys, go to school screen instead of login
@@ -7024,7 +7002,7 @@ function showLandingFromSchool() {
 
 function showFamilyFromLanding() {
   document.getElementById('landing').style.display = 'none';
-  if (!localStorage.getItem('guided_claude_key')) {
+  if (!localStorage.getItem('guided_supabase_url')) {
     window._pendingFamily = true;
     document.getElementById('setup-screen').style.display = 'flex';
   } else {
@@ -7074,7 +7052,7 @@ function goHome() {
 
 function showSignInFromLanding() {
   document.getElementById('landing').style.display = 'none';
-  if (!localStorage.getItem('guided_claude_key')) {
+  if (!localStorage.getItem('guided_supabase_url')) {
     window._pendingSignin = true;
     document.getElementById('setup-screen').style.display = 'flex';
   } else {
