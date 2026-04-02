@@ -5376,6 +5376,13 @@ async function launchFamilyChild(child) {
   if (S.studentId) {
     try { S.lessonContext = await fetchTodaysLessonContext(); } catch(e) { S.lessonContext = ''; }
   }
+
+  // Load saved chat history for this child
+  if (child.history && child.history.length) {
+    S.history = child.history;
+    restoreHistoryBubbles();
+  }
+
   await loadLearningProfile(null);
   startAppSession();
 }
@@ -8140,11 +8147,26 @@ async function saveAccountFromBanner() {
 
 // ── Sync history to Supabase after each exchange ──
 async function syncHistoryToSupabase() {
-  if (!S.accountId || !SB) return;
+  if (!SB) return;
+
+  // Trim to last 50 messages (25 exchanges) to keep the blob small
+  const trimmedHistory = S.history.slice(-50);
+  const trimmedEvents = S.events.slice(-100);
+
   try {
-    await SB.from('guided_accounts').update({
-      history: S.history, events: S.events, updated_at: new Date().toISOString()
-    }).eq('id', S.accountId);
+    if (S.familyMemberId) {
+      // Family child → save to family_members.history
+      await SB.from('family_members').update({
+        history: trimmedHistory
+      }).eq('id', S.familyMemberId);
+    } else if (S.accountId) {
+      // Solo user → save to guided_accounts.history + events
+      await SB.from('guided_accounts').update({
+        history: trimmedHistory,
+        events: trimmedEvents,
+        updated_at: new Date().toISOString()
+      }).eq('id', S.accountId);
+    }
   } catch(e) { console.warn('History sync:', e); }
 }
 
@@ -8257,6 +8279,20 @@ Last session: ${last.subject||'General'} — score ${last.independence_score||'?
 
     S.learningProfile = profile.trim();
   } catch(e) { console.error('loadLearningProfile failed:', e); }
+
+  // Refresh ai_notes from DB (might have been updated on another device)
+  try {
+    if (S.studentId) {
+      const { data } = await SB.from('students').select('ai_notes').eq('id', S.studentId).single();
+      if (data?.ai_notes) S.aiNotes = data.ai_notes;
+    } else if (S.familyMemberId) {
+      const { data } = await SB.from('family_members').select('ai_notes').eq('id', S.familyMemberId).single();
+      if (data?.ai_notes) S.aiNotes = data.ai_notes;
+    } else if (S.accountId) {
+      const { data } = await SB.from('guided_accounts').select('ai_notes').eq('id', S.accountId).single();
+      if (data?.ai_notes) S.aiNotes = data.ai_notes;
+    }
+  } catch(e) { console.warn('ai_notes refresh:', e); }
 }
 
 // ══════════════════════════════════════════════
@@ -8319,6 +8355,18 @@ async function saveSession() {
     } else if (S.accountId) {
       SB.from('guided_accounts').update({ ai_notes: combined }).eq('id', S.accountId);
     }
+  }
+  // Sync profile snapshot for solo users
+  if (SB && S.accountId && !S.familyMemberId) {
+    const updatedProfile = {
+      name: S.name, age: S.age, subj: S.subj, style: S.style, goal: S.goal,
+      learningGoal: S.learningGoal, notes: S.notes, school: S.school,
+      bundesland: S.bundesland || '', lk: S.lk || [], gk: S.gk || [],
+      abitur: S.abitur || false, pace: S.pace || 'balanced'
+    };
+    SB.from('guided_accounts').update({
+      profile: updatedProfile, updated_at: new Date().toISOString()
+    }).eq('id', S.accountId).then(() => {}).catch(e => console.warn('Profile sync:', e));
   }
 }
 
