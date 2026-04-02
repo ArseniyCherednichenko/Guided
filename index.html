@@ -4848,7 +4848,7 @@ VISUAL LEARNING
 When a diagram would genuinely help (geometry, processes, anatomy, timelines, mathematical graphs), generate a simple inline SVG on its own line using this format:
 [SVG: <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="300" fill="#f9f9f9"/>...your shapes, lines, text labels here...</svg>]
 Rules: use basic shapes only (rect, circle, path, line, text). Label key elements with <text> tags. stroke="#333" for lines. Use color sparingly. No scripts. Keep it simple and clean. Maximum one per response.
-For mathematical graphs: draw explicit coordinate axes with arrows (x-axis: horizontal line with rightward arrowhead; y-axis: vertical line with upward arrowhead). Label axes (x, y) and mark key values on tick marks. Plot curves using <path d="M x0,y0 C ..."> with accurate control points — for exponential y=a^x the curve must start near-flat on the left and rise steeply on the right; for linear y=mx+b draw a straight diagonal line. Always map mathematical coordinates to SVG pixel space explicitly (e.g. origin at pixel 60,240; 1 unit = 30px). Never draw a straight line for a curve or vice versa.
+For mathematical graphs: set origin at pixel (60,240). Scale: 40px per unit on both axes. X-axis: &lt;line x1="40" y1="240" x2="380" y2="240" stroke="#333"/&gt; with arrowhead polygon at right. Y-axis: &lt;line x1="60" y1="260" x2="60" y2="20" stroke="#333"/&gt; with arrowhead polygon at top. For each curve, compute 10+ actual (px_x, px_y) points from the formula then use &lt;polyline points="px1,py1 px2,py2 ..."/&gt; — do NOT use a single straight &lt;line&gt; for a curve. Pixel mapping: px_x = 60 + x*40, px_y = 240 - y*40. Example exponential y=2^x at x=-2,-1,0,1,2,3: points="(-2→ 0,250) (-1→ 40,245) (0→ 60,240) (1→ 100,220) (2→ 180,176) (3→ 300,80)" → polyline points="0,250 40,245 60,240 100,220 180,176 300,80". Add tick marks and numeric labels at regular intervals on both axes.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 FORMAT
@@ -5612,10 +5612,13 @@ function parseTutorNote(raw) {
     S.latestTutorNote = note;
     S.sessionNotes.push(note);
   }
-  const forHistory = raw.replace(/\[BLOOM:\s*\w+\]/gi, '').trim();       // keep TUTOR_NOTE
+  const forHistory = raw
+    .replace(/\[BLOOM:\s*\w+\]/gi, '')          // complete BLOOM tag
+    .replace(/\[BLOOM[\s\S]*$/gi, '')           // truncated BLOOM tag at end
+    .trim();
   const forDisplay = forHistory
-    .replace(/\[TUTOR_NOTE:[\s\S]*?\]/gi, '')   // complete tag
-    .replace(/\[TUTOR_NOTE:[\s\S]*$/gi, '')      // truncated tag (no closing bracket)
+    .replace(/\[TUTOR_NOTE:[\s\S]*?\]/gi, '')   // complete TUTOR_NOTE tag
+    .replace(/\[TUTOR[\s\S]*$/gi, '')           // any truncation of TUTOR_NOTE at end
     .trim();
   return { note, forHistory, forDisplay };
 }
