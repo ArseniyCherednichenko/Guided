@@ -1012,6 +1012,68 @@ input[type=range]::-webkit-slider-thumb:hover {
 }
 .btn-whylearn:hover { background: #E0E7FF; }
 
+.btn-testprep {
+  background: var(--blue-dim);
+  border: 1.5px solid rgba(37,99,235,.2);
+  color: var(--blue);
+  border-radius: 20px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all .15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-testprep:hover { background: rgba(37,99,235,.14); }
+.btn-testprep.active {
+  background: linear-gradient(135deg, rgba(37,99,235,.15), rgba(37,99,235,.08));
+  border-color: rgba(37,99,235,.4);
+}
+.tp-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--blue);
+  flex-shrink: 0;
+  animation: tp-pulse 2s infinite;
+}
+@keyframes tp-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: .45; transform: scale(.75); }
+}
+.test-banner {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  background: rgba(37,99,235,.06);
+  border-bottom: 1px solid rgba(37,99,235,.15);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--blue);
+  flex-shrink: 0;
+}
+.test-banner .tp-dot { width: 6px; height: 6px; }
+/* Stat grid for status modal */
+.tp-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.tp-stat-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+.tp-stat-label { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink3); margin-bottom: 4px; }
+.tp-stat-value { font-size: 22px; font-weight: 800; color: var(--ink); }
+.tp-topic-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--border-soft); gap: 8px; }
+.tp-topic-row:last-child { border-bottom: none; }
+.tp-topic-name { font-size: 13.5px; font-weight: 600; color: var(--ink); flex: 1; }
+.tp-topic-meta { font-size: 12px; color: var(--ink3); text-align: right; }
+.tp-phase-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.tp-phase-badge.diagnose { background: rgba(184,130,42,.12); color: var(--gold); }
+.tp-phase-badge.build    { background: rgba(26,51,40,.1);    color: var(--forest); }
+.tp-phase-badge.simulate { background: var(--blue-dim);      color: var(--blue); }
+@media (max-width: 500px) {
+  .btn-testprep .tp-label { display: none; }
+  .btn-testprep { padding: 7px 10px; }
+}
+
 /* Abitur toggle panel */
 .abitur-toggle-row {
   display: flex;
@@ -4607,6 +4669,10 @@ body { background: #FFFFFF; }
 
     <div id="chat-col">
 
+      <div class="test-banner" id="test-banner">
+        <span class="tp-dot"></span>
+        <span id="test-banner-text">Test Prep active</span>
+      </div>
 
       <div id="msgs">
         <div class="empty-chat" id="empty-chat">
@@ -4619,6 +4685,9 @@ body { background: #FFFFFF; }
 
 
       <div class="action-bar">
+        <button class="btn-testprep" id="btn-testprep" onclick="handleTestPrepClick()">
+          📝 <span class="tp-label">Prepare for Test</span>
+        </button>
         <button class="btn-hint" id="btn-hint" onclick="reqHint()">
           💡 Need a hint
           <span class="hint-count" id="hcount">3</span>
@@ -4949,6 +5018,18 @@ const S = {
   familyMemberId: null,
   familyCode: null,
   parentAccountId: null,
+  // Test Prep Mode
+  testMode: false,
+  testSubject: '',
+  testDate: null,
+  testTopics: [],
+  testPhase: 'diagnose',
+  testTotalDays: 0,
+  testDiagnosis: {},
+  testErrorLog: [],
+  testConfidenceLog: [],
+  testSessionCount: 0,
+  testInterleaveQueue: [],
 };
 
 // ══════════════════════════════════════════════
@@ -5038,6 +5119,107 @@ const ABITUR_SUBJECT_URLS = {
 // ══════════════════════════════════════════════
 //  SYSTEM PROMPT
 // ══════════════════════════════════════════════
+function buildTestModePrompt() {
+  const daysLeft = testDaysLeft();
+  const phase = S.testPhase;
+  const diag = S.testDiagnosis;
+  const topicList = S.testTopics.length ? S.testTopics : Object.keys(diag);
+
+  // Topic knowledge map
+  const topicMapLines = topicList.length
+    ? topicList.map(t => {
+        const d = diag[t] || { status:'unknown', confidence:0, errorCount:0 };
+        return `  • ${t}: ${d.status.toUpperCase()} | confidence ${d.confidence}/5 | errors ${d.errorCount}`;
+      }).join('\n')
+    : '  (No topics have been assessed yet)';
+
+  // Error log (last 5)
+  const recentErrors = S.testErrorLog.slice(-5);
+  const errorLines = recentErrors.length
+    ? recentErrors.map(e => `  • [${e.topic}] Correct answer: ${e.correction}`).join('\n')
+    : '  (None yet)';
+
+  // Interleave queue
+  const interleaveTopics = getInterleaveTopics();
+
+  // Phase-specific instructions
+  let phaseInstructions = '';
+  if (phase === 'diagnose') {
+    phaseInstructions = `
+━━━━━━━━━━━━━━━━━━━━━━━━
+CURRENT PHASE: DIAGNOSE
+━━━━━━━━━━━━━━━━━━━━━━━━
+YOUR SOLE JOB IS TO ASSESS — DO NOT TEACH.
+Rules:
+① Ask ONE question per topic, starting simple, escalating if correct
+② If student answers correctly: probe deeper, then tag [TOPIC_STATUS: topicName | strong]
+③ If student answers incorrectly or partially: do NOT reveal the answer. Tag [TEST_ERROR: topicName | the correct answer here] and [TOPIC_STATUS: topicName | weak]. Say something like "Interesting — let's come back to that." Move to next topic.
+④ After each topic assessed, ask: "On a scale of 1–5, how confident did you feel about that?"
+⑤ NEVER explain, correct, or teach during this phase — you are only collecting data
+⑥ After covering all topics (or ~8–10 questions), write: "✅ Diagnosis complete! Here's what I found:" then summarize strong/weak/unknown topics
+⑦ Be warm and encouraging about wrong answers — they're actually the most valuable data
+
+RESPONSE LENGTH: Max 1 paragraph + 1 question. Short, focused, no preamble.`;
+  } else if (phase === 'build') {
+    phaseInstructions = `
+━━━━━━━━━━━━━━━━━━━━━━━━
+CURRENT PHASE: BUILD
+━━━━━━━━━━━━━━━━━━━━━━━━
+ACTIVE RETRIEVAL + INTERLEAVING — this is where the real learning happens.
+Rules:
+① EVERY response MUST start with a retrieval question about something from a PREVIOUS exchange (not the most recent topic)
+② INTERLEAVING IS MANDATORY: Never ask 3+ questions on the same topic in a row. Priority topics to interleave right now: ${interleaveTopics.join(', ') || 'all topics equally'}
+③ Use elaborative interrogation: "Why is that true?", "How does this connect to [other topic]?", "What would happen if...?"
+④ Every 4th–5th exchange: "Explain [concept] to me like I'm 10 years old" or "Teach me this as if I've never heard of it"
+⑤ Ask "Confidence? (1–5)" after any challenging question
+⑥ Questions should feel slightly TOO HARD (desirable difficulty — make them reach)
+⑦ When wrong: tag [TEST_ERROR: topic | correction], give a brief 1–2 sentence correction ONLY, then ask a related follow-up immediately
+⑧ Bring back items from the Error Log above as spaced retrieval — revisit what was wrong before
+⑨ MODIFIED RULE: Brief corrections ARE allowed after wrong answers. But NEVER give unprompted explanations.
+
+RESPONSE LENGTH: Max 2 short paragraphs + 1 question.`;
+  } else if (phase === 'simulate') {
+    phaseInstructions = `
+━━━━━━━━━━━━━━━━━━━━━━━━
+CURRENT PHASE: SIMULATE — MOCK TEST CONDITIONS
+━━━━━━━━━━━━━━━━━━━━━━━━
+You are now a strict examiner. No teaching, no analogies, no encouragement mid-question.
+Rules:
+① Ask direct exam-style questions matching real test difficulty for this subject
+② After each answer: Grade it (✅ Correct / ⚠️ Partial / ❌ Incorrect), give brief 1-sentence feedback, then ask next question
+③ ALWAYS ask "Confidence? (1–5)" after every answer
+④ If student is stuck after 20 seconds: briefly explain and move on
+⑤ After 8–10 questions OR when student says "done" or "finished", produce a MOCK TEST REPORT:
+   — Score: X/Y correct (Z%)
+   — Strongest topics
+   — Weakest topics (needs more work before test)
+   — Confidence calibration: were they overconfident about wrong answers? Underconfident about right ones?
+   — Specific study advice for the ${daysLeft} day(s) remaining
+   — 3 exam strategy tips for the actual test day
+
+RESPONSE LENGTH: 1 paragraph feedback + next question (or full report at end).`;
+  }
+
+  return `
+━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 TEST PREP MODE ACTIVE
+━━━━━━━━━━━━━━━━━━━━━━━━
+Student: ${S.name} | Subject: ${S.testSubject} | Test date: ${S.testDate} | Days remaining: ${daysLeft} | Session: #${S.testSessionCount}
+
+TOPIC KNOWLEDGE MAP:
+${topicMapLines}
+
+ERROR LOG (for spaced retrieval — bring these back):
+${errorLines}
+${phaseInstructions}
+
+TAG RULES — YOU MUST FOLLOW THESE:
+• Append [TOPIC_STATUS: topicName | strong/weak/partial] whenever you assess a topic
+• Append [TEST_ERROR: topicName | the correct answer] whenever the student makes an error
+• Continue to append [BLOOM:level] as always
+• These tags are parsed by the app and removed before the student sees them — always include them`;
+}
+
 function buildPrompt(ndCtx) {
   const styleInstructions = {
     socratic: `
@@ -5092,6 +5274,7 @@ ${S.school ? `School: ${S.school}` : ''}
 ${S.goal ? `Session goal: ${S.goal}` : ''}
 ${S.notes ? `IMPORTANT about this student: ${S.notes}` : ''}
 ${abiturContext}
+${S.testMode ? buildTestModePrompt() : ''}
 ${S.learningProfile ? `\n${S.learningProfile}` : ''}
 ${S.aiNotes ? `\n━━━━━━━━━━━━━━━━━━━━━━━━\nTUTOR HANDOVER NOTES\n━━━━━━━━━━━━━━━━━━━━━━━━\n${S.aiNotes}` : ''}
 
@@ -5524,6 +5707,18 @@ async function launchFamilyChild(child) {
   if (child.history && child.history.length) {
     S.history = child.history;
     restoreHistoryBubbles();
+  }
+
+  // Restore test mode state if active
+  const tms = child.test_mode_state;
+  if (tms && tms.testMode) {
+    S.testMode = true; S.testSubject = tms.testSubject || ''; S.testDate = tms.testDate || null;
+    S.testTopics = tms.testTopics || []; S.testPhase = tms.testPhase || 'diagnose';
+    S.testTotalDays = tms.testTotalDays || 0; S.testDiagnosis = tms.testDiagnosis || {};
+    S.testErrorLog = tms.testErrorLog || []; S.testConfidenceLog = tms.testConfidenceLog || [];
+    S.testSessionCount = (tms.testSessionCount || 0) + 1;
+    S.testInterleaveQueue = tms.testInterleaveQueue || [];
+    updateTestPhase();
   }
 
   await loadLearningProfile(null);
@@ -6179,8 +6374,15 @@ function startAppSession() {
 
   // Welcome message after short delay
   setTimeout(() => {
-    const goalLine = S.goal ? ` Your goal: ${S.goal}.` : '';
-    addBubble('ai', `Hi ${S.name}! 👋 I'm your personal tutor.${goalLine} Ask me anything — I won't just give you answers, I'll help you actually think through them so you understand them for good. What's on your mind?`);
+    if (S.testMode) {
+      const daysLeft = testDaysLeft();
+      const phaseLabels = { diagnose:'Diagnose', build:'Build', simulate:'Simulate' };
+      updateTestPrepUI();
+      addBubble('ai', `👋 Welcome back, ${S.name}! Test prep for **${S.testSubject}** is still active — ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left, currently in the **${phaseLabels[S.testPhase]}** phase. Ready to continue?`);
+    } else {
+      const goalLine = S.goal ? ` Your goal: ${S.goal}.` : '';
+      addBubble('ai', `Hi ${S.name}! 👋 I'm your personal tutor.${goalLine} Ask me anything — I won't just give you answers, I'll help you actually think through them so you understand them for good. What's on your mind?`);
+    }
   }, 500);
 
   document.getElementById('minput').focus();
@@ -6263,6 +6465,12 @@ async function sendMsg(isHint = false, isGotIt = false) {
     addBubble('ai', txt, usage, isHint, isAha, bloomLvl);
     S.history.push({ role: 'assistant', content: forHistory });
     S.events.push({ who: 'tutor', text: txt, type: isAha ? 'aha' : isHint ? 'hint' : 'message', bloom: bloomLvl, ts: Date.now() });
+
+    if (S.testMode) {
+      processTestModeTags(reply, text);
+      updateTestPhase();
+      updateTestPrepUI();
+    }
 
     if (isAha) { S.ahas++; document.getElementById('d-ahas').textContent = S.ahas; }
 
@@ -6437,6 +6645,8 @@ function parseTutorNote(raw) {
   const forDisplay = forHistory
     .replace(/\[TUTOR_NOTE:[\s\S]*?\]/gi, '')   // complete TUTOR_NOTE tag
     .replace(/\[TUTOR[\s\S]*$/gi, '')           // any truncation of TUTOR_NOTE at end
+    .replace(/\[TOPIC_STATUS:[\s\S]*?\]/gi, '') // test mode topic status tag
+    .replace(/\[TEST_ERROR:[\s\S]*?\]/gi, '')   // test mode error tag
     .trim();
   return { note, forHistory, forDisplay };
 }
@@ -7235,6 +7445,260 @@ async function refreshCalendar() {
   } catch(e) {}
   renderCalendar(S._calFilter || 'all');
   if (btn) btn.classList.remove('loading');
+}
+
+// ══════════════════════════════════════════════
+//  TEST PREP MODE
+// ══════════════════════════════════════════════
+
+function testDaysLeft() {
+  if (!S.testDate) return 0;
+  const diff = new Date(S.testDate) - new Date(new Date().toDateString());
+  return Math.max(0, Math.round(diff / (1000 * 60 * 60 * 24)));
+}
+
+function handleTestPrepClick() {
+  if (S.testMode) openTestPrepStatus(); else openTestPrepSetup();
+}
+
+function openTestPrepSetup() {
+  const subj = document.getElementById('tp-subject');
+  if (subj) subj.value = S.testSubject || S.currentSubject || S.subj || '';
+  const dateEl = document.getElementById('tp-date');
+  if (dateEl) {
+    dateEl.min = new Date().toISOString().split('T')[0];
+    dateEl.value = S.testDate || '';
+  }
+  const topicsEl = document.getElementById('tp-topics');
+  if (topicsEl) topicsEl.value = S.testTopics.join('\n');
+  document.getElementById('tp-setup-modal').style.display = 'flex';
+}
+
+function closeTestPrep() {
+  document.getElementById('tp-setup-modal').style.display = 'none';
+}
+
+function closeTestPrepStatus() {
+  document.getElementById('tp-status-modal').style.display = 'none';
+}
+
+function activateTestMode() {
+  const subject = document.getElementById('tp-subject').value.trim();
+  const dateVal  = document.getElementById('tp-date').value;
+  if (!subject) { toast('Enter a subject', 'err'); return; }
+  if (!dateVal)  { toast('Pick a test date', 'err'); return; }
+
+  const rawTopics = document.getElementById('tp-topics').value;
+  const topics = rawTopics.split(/[\n,]+/).map(t => t.trim()).filter(Boolean);
+  const daysLeft = Math.max(0, Math.round((new Date(dateVal) - new Date(new Date().toDateString())) / 86400000));
+
+  const diag = {};
+  topics.forEach(t => { diag[t] = { status:'unknown', lastSeen: null, confidence:0, errorCount:0, lastError:'' }; });
+
+  S.testMode        = true;
+  S.testSubject     = subject;
+  S.testDate        = dateVal;
+  S.testTopics      = topics;
+  S.testTotalDays   = daysLeft;
+  S.testDiagnosis   = diag;
+  S.testErrorLog    = S.testErrorLog.length ? S.testErrorLog : [];
+  S.testConfidenceLog = S.testConfidenceLog.length ? S.testConfidenceLog : [];
+  S.testSessionCount++;
+  S.testInterleaveQueue = [...topics];
+
+  if (daysLeft <= 1)      S.testPhase = 'simulate';
+  else if (daysLeft <= 2) S.testPhase = 'build';
+  else                    S.testPhase = 'diagnose';
+
+  closeTestPrep();
+  updateTestPrepUI();
+
+  const msgs = document.getElementById('msgs');
+  if (msgs) msgs.innerHTML = '';
+  const phaseLabels = { diagnose:'Diagnose', build:'Build', simulate:'Simulate' };
+  addBubble('ai', `🎯 **Test Prep activated** — ${subject} · ${daysLeft} day${daysLeft !== 1 ? 's' : ''} until test · Phase: ${phaseLabels[S.testPhase]}`);
+
+  const phaseMsg = S.testPhase === 'diagnose'
+    ? `(Test prep session ${S.testSessionCount} starting. Begin the DIAGNOSE phase. Start by asking the first diagnostic question for ${subject}${topics.length ? ', covering: ' + topics.join(', ') : ''}. Remember: no teaching, only assessment.)`
+    : S.testPhase === 'build'
+    ? `(Test prep session ${S.testSessionCount} starting. ${daysLeft} days left. Begin BUILD phase for ${subject}. Start with a retrieval question about a core topic.)`
+    : `(Test prep session ${S.testSessionCount} starting. Only ${daysLeft} day(s) left. Begin SIMULATE phase. Give the first exam-style question for ${subject} immediately.)`;
+
+  S.history.push({ role: 'user', content: phaseMsg });
+  sendMsg(false, false);
+}
+
+function updateTestPrepUI() {
+  const btn = document.getElementById('btn-testprep');
+  const banner = document.getElementById('test-banner');
+  const bannerText = document.getElementById('test-banner-text');
+  if (!btn || !banner) return;
+
+  if (S.testMode) {
+    const daysLeft = testDaysLeft();
+    const phaseLabels = { diagnose:'Diagnose', build:'Build', simulate:'Simulate' };
+    btn.classList.add('active');
+    btn.innerHTML = `<span class="tp-dot"></span><span class="tp-label">${daysLeft}d · ${phaseLabels[S.testPhase]}</span>`;
+    banner.style.display = 'flex';
+    if (bannerText) bannerText.textContent = `${S.testSubject} · ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left · ${phaseLabels[S.testPhase]} phase`;
+  } else {
+    btn.classList.remove('active');
+    btn.innerHTML = `📝 <span class="tp-label">Prepare for Test</span>`;
+    banner.style.display = 'none';
+  }
+}
+
+function openTestPrepStatus() {
+  const daysLeft = testDaysLeft();
+  const recentConf = S.testConfidenceLog.slice(-10);
+  const avgConf = recentConf.length
+    ? (recentConf.reduce((a,c) => a + c.confidence, 0) / recentConf.length).toFixed(1)
+    : '—';
+  const recentAcc = recentConf.filter(c => c.wasCorrect);
+  const accuracy = recentConf.length ? Math.round(recentAcc.length / recentConf.length * 100) : '—';
+  const phaseClass = S.testPhase || 'diagnose';
+  const phaseLabel = { diagnose:'Diagnose', build:'Build', simulate:'Simulate' }[S.testPhase] || S.testPhase;
+
+  let html = `
+    <div style="margin-bottom:12px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:15px;font-weight:700;color:var(--ink)">${S.testSubject}</span>
+      <span class="tp-phase-badge ${phaseClass}">${phaseLabel}</span>
+    </div>
+    <div class="tp-stat-grid">
+      <div class="tp-stat-card"><div class="tp-stat-label">Days Left</div><div class="tp-stat-value">${daysLeft}</div></div>
+      <div class="tp-stat-card"><div class="tp-stat-label">Sessions</div><div class="tp-stat-value">${S.testSessionCount}</div></div>
+      <div class="tp-stat-card"><div class="tp-stat-label">Avg Confidence</div><div class="tp-stat-value">${avgConf}</div></div>
+      <div class="tp-stat-card"><div class="tp-stat-label">Accuracy</div><div class="tp-stat-value">${accuracy}${typeof accuracy === 'number' ? '%' : ''}</div></div>
+    </div>`;
+
+  const topicList = S.testTopics.length ? S.testTopics : Object.keys(S.testDiagnosis);
+  if (topicList.length) {
+    html += `<div class="stg-section-title" style="margin-top:4px;margin-bottom:10px">Topics</div>`;
+    html += topicList.map(t => {
+      const d = S.testDiagnosis[t] || { status:'unknown', confidence:0, errorCount:0 };
+      const icon = d.status === 'strong' ? '✅' : d.status === 'weak' ? '⚠️' : '❓';
+      return `<div class="tp-topic-row">
+        <span>${icon}</span>
+        <span class="tp-topic-name">${t}</span>
+        <span class="tp-topic-meta">conf ${d.confidence}/5 · ${d.errorCount} error${d.errorCount !== 1 ? 's' : ''}</span>
+      </div>`;
+    }).join('');
+  }
+
+  html += `<div style="margin-top:14px;font-size:12.5px;color:var(--ink3)">Total errors logged: ${S.testErrorLog.length}</div>`;
+  document.getElementById('tp-status-content').innerHTML = html;
+  document.getElementById('tp-status-modal').style.display = 'flex';
+}
+
+function endTestMode() {
+  S.testMode = false; S.testSubject = ''; S.testDate = null;
+  S.testTopics = []; S.testPhase = 'diagnose'; S.testTotalDays = 0;
+  S.testDiagnosis = {}; S.testErrorLog = []; S.testConfidenceLog = [];
+  S.testSessionCount = 0; S.testInterleaveQueue = [];
+  closeTestPrepStatus();
+  updateTestPrepUI();
+  toast('Test prep ended', 'ok');
+}
+
+function updateTestPhase() {
+  if (!S.testMode) return;
+  const daysLeft = testDaysLeft();
+
+  if (daysLeft <= 0) {
+    addBubble('ai', `🍀 Good luck on your ${S.testSubject} test today! You've put in the work — trust what you've learned.`);
+    endTestMode();
+    return;
+  }
+
+  const topicList = S.testTopics.length ? S.testTopics : Object.keys(S.testDiagnosis);
+  const allAssessed = topicList.length > 0 && topicList.every(t => {
+    const d = S.testDiagnosis[t];
+    return d && d.status !== 'unknown';
+  });
+
+  if (S.testPhase === 'diagnose') {
+    if (allAssessed || S.testSessionCount >= 2) {
+      S.testPhase = 'build';
+      addBubble('ai', `✅ **Diagnosis complete!** Moving to BUILD phase — retrieval, interleaving, and spaced review of your errors start now.`);
+      updateTestPrepUI();
+    }
+  } else if (S.testPhase === 'build') {
+    const threshold = Math.max(1, Math.floor(S.testTotalDays * 0.15));
+    if (daysLeft <= threshold) {
+      S.testPhase = 'simulate';
+      addBubble('ai', `⏱️ **${daysLeft} day${daysLeft !== 1 ? 's' : ''} to go!** Switching to SIMULATE — exam questions and grading from here.`);
+      updateTestPrepUI();
+    }
+  }
+}
+
+function processTestModeTags(aiReply, userMsg) {
+  const statusMatches = [...aiReply.matchAll(/\[TOPIC_STATUS:\s*([^|]+?)\s*\|\s*(strong|weak|partial)\s*\]/gi)];
+  for (const m of statusMatches) {
+    const topic = m[1].trim();
+    const status = m[2].toLowerCase() === 'partial' ? 'weak' : m[2].toLowerCase();
+    if (!S.testDiagnosis[topic]) {
+      S.testDiagnosis[topic] = { status:'unknown', lastSeen:null, confidence:0, errorCount:0, lastError:'' };
+      if (!S.testTopics.includes(topic)) S.testTopics.push(topic);
+    }
+    S.testDiagnosis[topic].status = status;
+    S.testDiagnosis[topic].lastSeen = Date.now();
+  }
+
+  const errorMatches = [...aiReply.matchAll(/\[TEST_ERROR:\s*([^|]+?)\s*\|\s*([\s\S]+?)\]/gi)];
+  for (const m of errorMatches) {
+    const topic = m[1].trim();
+    const correction = m[2].trim();
+    if (!S.testDiagnosis[topic]) {
+      S.testDiagnosis[topic] = { status:'weak', lastSeen:null, confidence:0, errorCount:0, lastError:'' };
+      if (!S.testTopics.includes(topic)) S.testTopics.push(topic);
+    }
+    S.testDiagnosis[topic].errorCount = (S.testDiagnosis[topic].errorCount || 0) + 1;
+    S.testDiagnosis[topic].lastError = correction;
+    S.testErrorLog.push({ topic, correction, ts: Date.now() });
+    if (S.testErrorLog.length > 50) S.testErrorLog.shift();
+  }
+
+  const confMatch = userMsg && (
+    userMsg.match(/conf(?:idence)?\s*[:\-]?\s*([1-5])/i) ||
+    userMsg.match(/([1-5])\s*\/\s*5/) ||
+    userMsg.match(/^([1-5])$/)
+  );
+  if (confMatch) {
+    const conf = parseInt(confMatch[1]);
+    const topicList = S.testTopics.length ? S.testTopics : Object.keys(S.testDiagnosis);
+    const lastTopic = topicList.reduce((best, t) => {
+      const d = S.testDiagnosis[t];
+      if (!d) return best;
+      if (!best || (d.lastSeen || 0) > (S.testDiagnosis[best]?.lastSeen || 0)) return t;
+      return best;
+    }, null);
+    if (lastTopic && S.testDiagnosis[lastTopic]) {
+      S.testDiagnosis[lastTopic].confidence = conf;
+      const wasCorrect = S.testDiagnosis[lastTopic].status === 'strong';
+      S.testConfidenceLog.push({ topic: lastTopic, confidence: conf, wasCorrect, ts: Date.now() });
+      if (S.testConfidenceLog.length > 100) S.testConfidenceLog.shift();
+    }
+  }
+
+  // Rebuild interleave queue
+  const topicList = S.testTopics.length ? S.testTopics : Object.keys(S.testDiagnosis);
+  S.testInterleaveQueue = topicList.slice().sort((a, b) => {
+    const score = t => {
+      const d = S.testDiagnosis[t] || {};
+      let s = d.status === 'weak' ? 30 : d.status === 'unknown' ? 20 : 5;
+      const hoursSince = d.lastSeen ? (Date.now() - d.lastSeen) / 3600000 : 24;
+      s += Math.min(hoursSince, 48);
+      s += (d.errorCount || 0) * 10;
+      s -= (d.confidence || 0) * 3;
+      return s;
+    };
+    return score(b) - score(a);
+  });
+}
+
+function getInterleaveTopics() {
+  return S.testInterleaveQueue.slice(0, 3);
 }
 
 // ══════════════════════════════════════════════
@@ -8488,6 +8952,11 @@ function goHome() {
   S.ndReady = false; S.ndCollId = null; S.ndSearches = 0;
   S.bloom = { remember:0, understand:0, apply:0, analyze:0, evaluate:0, create:0 };
   S.bloomTotal = 0; S.name = ''; S.accountId = null;
+  // Clear test mode state
+  S.testMode = false; S.testSubject = ''; S.testDate = null;
+  S.testTopics = []; S.testPhase = 'diagnose'; S.testTotalDays = 0;
+  S.testDiagnosis = {}; S.testErrorLog = []; S.testConfidenceLog = [];
+  S.testSessionCount = 0; S.testInterleaveQueue = [];
   // Clear chat
   const msgs = document.getElementById('msgs');
   if (msgs) msgs.innerHTML = '<div id="empty-chat" class="empty-chat"><div class="empty-icon-ring">🌱</div><div class="empty-title">Ready to learn!</div><div class="empty-sub">Ask anything.</div><div class="starter-grid" id="starters"></div></div>';
@@ -8583,6 +9052,17 @@ async function unifiedSignIn() {
       }
     } else {
       S.aiNotes = account.ai_notes || '';
+      // Restore test mode state if active
+      const tms = account.test_mode_state;
+      if (tms && tms.testMode) {
+        S.testMode = true; S.testSubject = tms.testSubject || ''; S.testDate = tms.testDate || null;
+        S.testTopics = tms.testTopics || []; S.testPhase = tms.testPhase || 'diagnose';
+        S.testTotalDays = tms.testTotalDays || 0; S.testDiagnosis = tms.testDiagnosis || {};
+        S.testErrorLog = tms.testErrorLog || []; S.testConfidenceLog = tms.testConfidenceLog || [];
+        S.testSessionCount = (tms.testSessionCount || 0) + 1;
+        S.testInterleaveQueue = tms.testInterleaveQueue || [];
+        updateTestPhase();
+      }
       if (S.history.length) restoreHistoryBubbles();
       await loadLearningProfile(null);
       startAppSession();
@@ -8679,18 +9159,31 @@ async function syncHistoryToSupabase() {
   const trimmedHistory = S.history.slice(-50);
   const trimmedEvents = S.events.slice(-100);
 
+  // Test mode state snapshot for cross-session restoration
+  // ALTER TABLE family_members ADD COLUMN IF NOT EXISTS test_mode_state jsonb;
+  // ALTER TABLE guided_accounts ADD COLUMN IF NOT EXISTS test_mode_state jsonb;
+  const testModeState = S.testMode ? {
+    testMode: true, testSubject: S.testSubject, testDate: S.testDate,
+    testTopics: S.testTopics, testPhase: S.testPhase, testTotalDays: S.testTotalDays,
+    testDiagnosis: S.testDiagnosis, testErrorLog: S.testErrorLog.slice(-20),
+    testConfidenceLog: S.testConfidenceLog.slice(-30),
+    testSessionCount: S.testSessionCount, testInterleaveQueue: S.testInterleaveQueue,
+  } : null;
+
   try {
     if (S.familyMemberId) {
       // Family child → save to family_members.history
       await SB.from('family_members').update({
-        history: trimmedHistory
+        history: trimmedHistory,
+        test_mode_state: testModeState,
       }).eq('id', S.familyMemberId);
     } else if (S.accountId) {
       // Solo user → save to guided_accounts.history + events
       await SB.from('guided_accounts').update({
         history: trimmedHistory,
         events: trimmedEvents,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        test_mode_state: testModeState,
       }).eq('id', S.accountId);
     }
   } catch(e) { console.warn('History sync:', e); }
@@ -8855,7 +9348,20 @@ async function saveSession() {
       independence_score: computeScore(),
       bloom_data:        S.bloom,
       total_tokens:      S.totTok,
-      is_school_session: !!S.studentId
+      is_school_session: !!S.studentId,
+      // Test prep columns (add to sessions table if needed):
+      // ALTER TABLE sessions ADD COLUMN IF NOT EXISTS is_test_prep boolean DEFAULT false;
+      // ALTER TABLE sessions ADD COLUMN IF NOT EXISTS test_subject text;
+      // ALTER TABLE sessions ADD COLUMN IF NOT EXISTS test_phase text;
+      // ALTER TABLE sessions ADD COLUMN IF NOT EXISTS test_diagnosis jsonb;
+      // ALTER TABLE sessions ADD COLUMN IF NOT EXISTS test_error_count integer DEFAULT 0;
+      ...(S.testMode ? {
+        is_test_prep: true,
+        test_subject: S.testSubject,
+        test_phase:   S.testPhase,
+        test_diagnosis: S.testDiagnosis,
+        test_error_count: S.testErrorLog.length,
+      } : {})
     }).select().single();
     if (error || !session) return;
     if (S.events.length) {
@@ -8905,6 +9411,60 @@ document.addEventListener('keydown', e => {
 window.addEventListener('beforeunload', () => { if (S.exchanges > 0) saveSession(); });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && S.exchanges > 0) saveSession(); });
 </script>
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║         TEST PREP SETUP MODAL          ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<div id="tp-setup-modal" class="stg-modal" style="display:none" onclick="if(event.target===this)closeTestPrep()">
+  <div class="stg-card">
+    <div class="stg-header">
+      <h2>📝 Prepare for Test</h2>
+      <button class="stg-close" onclick="closeTestPrep()">✕</button>
+    </div>
+    <div class="stg-section">
+      <div class="stg-section-title">Subject</div>
+      <input class="fi" id="tp-subject" placeholder="e.g. Biology — Cell Division" style="width:100%;box-sizing:border-box"/>
+    </div>
+    <div class="stg-section">
+      <div class="stg-section-title">Test Date</div>
+      <input class="fi" id="tp-date" type="date" style="width:100%;box-sizing:border-box"/>
+    </div>
+    <div class="stg-section">
+      <div class="stg-section-title">Topics <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:12px;color:var(--ink4)">(one per line or comma-separated — optional)</span></div>
+      <textarea class="fta" id="tp-topics" placeholder="Mitosis&#10;Meiosis&#10;Cell cycle&#10;DNA replication" style="min-height:90px;width:100%;box-sizing:border-box"></textarea>
+    </div>
+    <div class="stg-section">
+      <div class="stg-section-title">How it works</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;line-height:1.5">
+        <div style="display:flex;gap:10px;align-items:flex-start"><span style="background:rgba(184,130,42,.15);color:var(--gold);font-weight:700;padding:2px 10px;border-radius:20px;font-size:11px;white-space:nowrap;margin-top:1px">DIAGNOSE</span><span style="color:var(--ink2)">Guided asks questions to find what you know and don't know — no teaching yet.</span></div>
+        <div style="display:flex;gap:10px;align-items:flex-start"><span style="background:rgba(26,51,40,.1);color:var(--forest);font-weight:700;padding:2px 10px;border-radius:20px;font-size:11px;white-space:nowrap;margin-top:1px">BUILD</span><span style="color:var(--ink2)">Active retrieval practice with interleaving, explain-backs, and spaced review of your errors.</span></div>
+        <div style="display:flex;gap:10px;align-items:flex-start"><span style="background:var(--blue-dim);color:var(--blue);font-weight:700;padding:2px 10px;border-radius:20px;font-size:11px;white-space:nowrap;margin-top:1px">SIMULATE</span><span style="color:var(--ink2)">Mock test conditions — real exam questions, graded answers, and a final report.</span></div>
+      </div>
+    </div>
+    <div class="stg-section">
+      <button onclick="activateTestMode()" style="width:100%;padding:13px;border-radius:12px;border:none;background:var(--btn-gradient);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font-body)">Start Test Prep →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║        TEST PREP STATUS MODAL          ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<div id="tp-status-modal" class="stg-modal" style="display:none" onclick="if(event.target===this)closeTestPrepStatus()">
+  <div class="stg-card">
+    <div class="stg-header">
+      <h2>📝 Test Prep Status</h2>
+      <button class="stg-close" onclick="closeTestPrepStatus()">✕</button>
+    </div>
+    <div class="stg-section">
+      <div id="tp-status-content"><!-- populated by JS --></div>
+    </div>
+    <div class="stg-section" style="display:flex;gap:10px">
+      <button onclick="closeTestPrepStatus()" style="flex:1;padding:11px;border-radius:10px;border:1.5px solid var(--border2);background:transparent;font-size:13.5px;font-weight:600;cursor:pointer;font-family:var(--font-body);color:var(--ink2)">Back to Study</button>
+      <button onclick="endTestMode()" style="flex:1;padding:11px;border-radius:10px;border:1.5px solid var(--red);background:var(--red-dim);color:var(--red);font-size:13.5px;font-weight:600;cursor:pointer;font-family:var(--font-body)">End Test Prep</button>
+    </div>
+  </div>
+</div>
 
 <!-- ╔══════════════════════════════════════════╗ -->
 <!-- ║           SETTINGS MODAL               ║ -->
