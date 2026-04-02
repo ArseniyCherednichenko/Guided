@@ -5029,6 +5029,51 @@ function obStudentNext() {
   if (obStudentStep === 4) { launchStudent(); return; }
   obStudentStep++; renderObStudent();
 }
+// ── Enter = green button across all onboarding screens ──
+function _enterGuard(e) {
+  if (e.key !== 'Enter') return false;
+  const tag = document.activeElement?.tagName;
+  if (tag === 'TEXTAREA' || tag === 'SELECT') return false;
+  e.preventDefault();
+  return true;
+}
+
+document.getElementById('ob-student').addEventListener('keydown', e => {
+  if (!_enterGuard(e)) return;
+  obStudentNext();
+});
+
+document.getElementById('ob').addEventListener('keydown', e => {
+  if (!_enterGuard(e)) return;
+  if (document.getElementById('ob-parent-flow').style.display !== 'none') { obParentNext(); return; }
+  if (document.getElementById('ob-child-flow').style.display !== 'none')  { obChildNext();  return; }
+  if (document.getElementById('ob-child-code-screen').style.display !== 'none') { submitFamilyCode(); return; }
+});
+
+document.getElementById('school-screen').addEventListener('keydown', e => {
+  if (!_enterGuard(e)) return;
+  if (document.getElementById('sch-student-panel').style.display !== 'none') { studentLogin(); return; }
+  if (document.getElementById('sch-teacher-panel').style.display !== 'none') { teacherLogin(); return; }
+  if (document.getElementById('sch-admin-panel').style.display   !== 'none') { adminLogin();   return; }
+});
+
+document.getElementById('setup-screen').addEventListener('keydown', e => {
+  if (!_enterGuard(e)) return;
+  saveSetup();
+});
+
+document.getElementById('signin-screen').addEventListener('keydown', e => {
+  if (!_enterGuard(e)) return;
+  if (document.getElementById('si-school-panel').style.display !== 'none') { unifiedSignInSchool(); return; }
+  unifiedSignIn();
+});
+
+document.addEventListener('keydown', e => {
+  if (!_enterGuard(e)) return;
+  const modal = document.getElementById('school-connect-modal');
+  if (modal && modal.style.display !== 'none') { validateAndShowChannels(); }
+});
+
 function renderObStudent() {
   ['obs1','obs2','obs3','obs4'].forEach((id,i) => {
     document.getElementById(id).classList.toggle('active', i+1===obStudentStep);
