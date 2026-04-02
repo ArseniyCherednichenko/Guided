@@ -8236,6 +8236,7 @@ async function unifiedSignIn() {
       if (member.child_profile?.onboarded) {
         await launchFamilyChild(window.selectedFamilyChild);
       } else {
+        document.getElementById('ob').style.display = 'flex';
         startChildOnboarding(window.selectedFamilyChild);
       }
     } else {
