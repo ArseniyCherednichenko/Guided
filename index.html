@@ -3799,6 +3799,7 @@ body { background: #FFFFFF; }
             <input class="fi" id="child-ob-school-code" placeholder="e.g. GOETHE01" style="text-transform:uppercase;letter-spacing:2px"/>
             <button onclick="connectSchoolCode('child-ob-school-code','child-ob-school-status')" style="margin-top:8px;width:100%;background:var(--white);border:1.5px solid var(--forest);color:var(--forest);border-radius:var(--r);padding:11px 16px;font-size:13.5px;font-weight:700;cursor:pointer;transition:all .2s;font-family:var(--font-body)" onmouseover="this.style.background='rgba(26,51,40,.05)'" onmouseout="this.style.background='var(--white)'">Connect School →</button>
             <div id="child-ob-school-status" style="font-size:12.5px;margin-top:8px;display:none;font-weight:600"></div>
+            <button class="btn-next" id="ob-co4-continue" onclick="obChildOnboardingNext()" style="display:none;width:100%;margin-top:10px">Continue →</button>
           </div>
           <button class="btn-back" onclick="finishChildOnboarding()" style="width:100%;text-align:center;margin-top:-4px;background:none;border:1.5px solid var(--border);color:var(--ink3)">Skip — I'll do this later</button>
         </div>
@@ -3974,6 +3975,7 @@ body { background: #FFFFFF; }
             <input class="fi" id="ob-p-school-code" placeholder="e.g. GOETHE01" style="text-transform:uppercase;letter-spacing:2px"/>
             <button onclick="connectSchoolCode('ob-p-school-code','ob-p-school-code-status')" style="margin-top:8px;width:100%;background:var(--white);border:1.5px solid var(--forest);color:var(--forest);border-radius:var(--r);padding:11px 16px;font-size:13.5px;font-weight:700;cursor:pointer;transition:all .2s;font-family:var(--font-body)" onmouseover="this.style.background='rgba(26,51,40,.05)'" onmouseout="this.style.background='var(--white)'">Connect School →</button>
             <div id="ob-p-school-code-status" style="font-size:12.5px;margin-top:8px;display:none;font-weight:600"></div>
+            <button class="btn-next" id="ob-p4-continue" onclick="obParentNext()" style="display:none;width:100%;margin-top:10px">Continue →</button>
           </div>
           <button class="btn-back" onclick="obParentSkipSchool()" style="width:100%;text-align:center;margin-top:-4px;background:none;border:1.5px solid var(--border);color:var(--ink3)">Skip for now →</button>
         </div>
@@ -5476,6 +5478,18 @@ async function launchFamilyChild(child) {
 
   if (S.studentId) {
     try { S.lessonContext = await fetchTodaysLessonContext(); } catch(e) { S.lessonContext = ''; }
+    if (SLACK_TOKEN && SB) {
+      try {
+        const { data: st } = await SB.from('students').select('school_id, schools(code)').eq('id', S.studentId).single();
+        if (st?.schools?.code) {
+          const result = await validateSchoolCode(st.schools.code);
+          if (result.valid) {
+            S.slackChannels = result.allChannels || result.channels;
+            S.selectedChannels = result.channels.map(c => c.id);
+          }
+        }
+      } catch(e) { console.warn('School channels fetch:', e); }
+    }
   }
 
   // Load saved chat history for this child
@@ -5658,6 +5672,9 @@ async function connectSchoolCode(inputId, statusId) {
   if (school) {
     statusEl.style.color = 'var(--forest)'; statusEl.textContent = `✓ Connected to ${school.name}`;
     window._connectedSchool = school;
+    const continueMap = { 'child-ob-school-status': 'ob-co4-continue', 'ob-p-school-code-status': 'ob-p4-continue' };
+    const continueBtn = document.getElementById(continueMap[statusId]);
+    if (continueBtn) continueBtn.style.display = 'block';
   } else {
     statusEl.style.color = 'var(--red)'; statusEl.textContent = 'Code not found. Check with your teacher.';
     window._connectedSchool = null;
@@ -5701,8 +5718,8 @@ function renderObParent() {
   });
   document.getElementById('ob-p-prog').style.width = (obParentStep/4*100)+'%';
   document.getElementById('ob-p-back').style.display = obParentStep>1 ? 'block' : 'none';
-  document.getElementById('ob-p-next').style.display = obParentStep===4 ? 'none' : 'block';
-  document.getElementById('ob-p-next').textContent = obParentStep===3 ? 'Continue →' : 'Continue →';
+  document.getElementById('ob-p-next').style.display = 'block';
+  document.getElementById('ob-p-next').textContent = obParentStep===4 ? 'Finish Setup →' : 'Continue →';
   // Update step 3 title with child name
   if (obParentStep >= 3) {
     const childName = document.getElementById('ob-p-child-name').value.trim();
@@ -5756,6 +5773,7 @@ function _enterGuard(e) {
   const tag = document.activeElement?.tagName;
   if (tag === 'TEXTAREA' || tag === 'SELECT') return false;
   e.preventDefault();
+  e.stopPropagation();
   return true;
 }
 
@@ -5768,6 +5786,10 @@ document.getElementById('ob').addEventListener('keydown', e => {
   if (!_enterGuard(e)) return;
   if (document.getElementById('ob-parent-flow').style.display !== 'none') { obParentNext(); return; }
   if (document.getElementById('ob-child-onboarding').style.display !== 'none') { obChildOnboardingNext(); return; }
+  if (document.getElementById('ob-child-account').style.display !== 'none') {
+    if (document.getElementById('ob-child-account-create').style.display !== 'none') { submitChildAccountCreate(); return; }
+    if (document.getElementById('ob-child-account-signin').style.display !== 'none') { submitChildAccountSignIn(); return; }
+  }
   if (document.getElementById('ob-child-flow').style.display !== 'none')  { obChildNext();  return; }
   if (document.getElementById('ob-child-code-screen').style.display !== 'none') { submitFamilyCode(); return; }
 });
