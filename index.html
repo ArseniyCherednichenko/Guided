@@ -3594,6 +3594,49 @@ body { background: #FFFFFF; }
       </div>
     </div>
 
+    <!-- Child account: create (first time) or sign in (returning) -->
+    <div id="ob-child-account" style="display:none">
+      <div class="ob-card" style="padding:32px 36px">
+        <div class="ob-step-eyebrow" style="text-align:center;margin-bottom:8px">Family</div>
+
+        <!-- Account creation form (first time) -->
+        <div id="ob-child-account-create" style="display:none;flex-direction:column;gap:18px">
+          <div class="ob-step-title" style="text-align:center;font-size:22px;margin-bottom:0" id="ob-child-create-title">Create your account</div>
+          <div class="ob-step-desc" style="text-align:center;margin-top:-8px">Set up your private login so you can always come back.</div>
+          <div class="fgroup">
+            <label>Your email</label>
+            <input class="fi" id="ob-child-email-create" type="email" placeholder="you@example.com" autocomplete="email"/>
+          </div>
+          <div class="fgroup">
+            <label>Choose a password</label>
+            <input class="fi" id="ob-child-pw-create" type="password" placeholder="Min. 6 characters" autocomplete="new-password"/>
+          </div>
+          <div id="ob-child-account-create-error" style="color:var(--red);font-size:12.5px;display:none"></div>
+          <button class="btn-next" style="width:100%" id="ob-child-create-btn" onclick="submitChildAccountCreate()">Create Account →</button>
+        </div>
+
+        <!-- Sign-in form (returning child) -->
+        <div id="ob-child-account-signin" style="display:none;flex-direction:column;gap:18px">
+          <div class="ob-step-title" style="text-align:center;font-size:22px;margin-bottom:0" id="ob-child-signin-title">Welcome back!</div>
+          <div class="ob-step-desc" style="text-align:center;margin-top:-8px">Sign in with your email and password.</div>
+          <div class="fgroup">
+            <label>Your email</label>
+            <input class="fi" id="ob-child-email-signin" type="email" placeholder="you@example.com" autocomplete="email"/>
+          </div>
+          <div class="fgroup">
+            <label>Password</label>
+            <input class="fi" id="ob-child-pw-signin" type="password" placeholder="Your password" autocomplete="current-password"/>
+          </div>
+          <div id="ob-child-account-signin-error" style="color:var(--red);font-size:12.5px;display:none"></div>
+          <button class="btn-next" style="width:100%" id="ob-child-signin-btn" onclick="submitChildAccountSignIn()">Sign In →</button>
+        </div>
+
+        <div style="text-align:center;margin-top:18px">
+          <button onclick="obFamilyBackToChoice()" style="background:none;border:none;color:var(--ink4);font-size:13px;cursor:pointer;font-family:var(--font-body)">← Back</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Child mini-onboarding (first time only, 4 steps) -->
     <div id="ob-child-onboarding" style="display:none">
       <div class="ob-card">
@@ -3721,7 +3764,8 @@ body { background: #FFFFFF; }
           <div class="fgroup">
             <label>School code <span style="color:var(--ink4);font-weight:400">(from your teacher)</span></label>
             <input class="fi" id="child-ob-school-code" placeholder="e.g. GOETHE01" style="text-transform:uppercase;letter-spacing:2px"/>
-            <div id="child-ob-school-status" style="font-size:12px;margin-top:6px;display:none"></div>
+            <button onclick="connectSchoolCode('child-ob-school-code','child-ob-school-status')" style="margin-top:8px;width:100%;background:var(--white);border:1.5px solid var(--forest);color:var(--forest);border-radius:var(--r);padding:11px 16px;font-size:13.5px;font-weight:700;cursor:pointer;transition:all .2s;font-family:var(--font-body)" onmouseover="this.style.background='rgba(26,51,40,.05)'" onmouseout="this.style.background='var(--white)'">Connect School →</button>
+            <div id="child-ob-school-status" style="font-size:12.5px;margin-top:8px;display:none;font-weight:600"></div>
           </div>
           <button class="btn-back" onclick="finishChildOnboarding()" style="width:100%;text-align:center;margin-top:-4px;background:none;border:1.5px solid var(--border);color:var(--ink3)">Skip — I'll do this later</button>
         </div>
@@ -3895,7 +3939,8 @@ body { background: #FFFFFF; }
           <div class="fgroup">
             <label>School code <span style="color:var(--ink4);font-weight:400">(ask your child's teacher)</span></label>
             <input class="fi" id="ob-p-school-code" placeholder="e.g. GOETHE01" style="text-transform:uppercase;letter-spacing:2px"/>
-            <div id="ob-p-school-code-status" style="font-size:12px;margin-top:6px;display:none"></div>
+            <button onclick="connectSchoolCode('ob-p-school-code','ob-p-school-code-status')" style="margin-top:8px;width:100%;background:var(--white);border:1.5px solid var(--forest);color:var(--forest);border-radius:var(--r);padding:11px 16px;font-size:13.5px;font-weight:700;cursor:pointer;transition:all .2s;font-family:var(--font-body)" onmouseover="this.style.background='rgba(26,51,40,.05)'" onmouseout="this.style.background='var(--white)'">Connect School →</button>
+            <div id="ob-p-school-code-status" style="font-size:12.5px;margin-top:8px;display:none;font-weight:600"></div>
           </div>
           <button class="btn-back" onclick="obParentSkipSchool()" style="width:100%;text-align:center;margin-top:-4px;background:none;border:1.5px solid var(--border);color:var(--ink3)">Skip for now →</button>
         </div>
@@ -4473,7 +4518,7 @@ body { background: #FFFFFF; }
 
   <div class="topnav">
     <div class="nav-logo" style="display:flex;align-items:center;gap:10px">
-      <button onclick="goHome()" style="background:none;border:none;color:var(--ink4);font-size:13px;cursor:pointer;padding:4px 6px;border-radius:8px;transition:background .15s;line-height:1" title="Back to home">←</button>
+      <button onclick="goHome()" style="display:none;background:none;border:none;color:var(--ink4);font-size:13px;cursor:pointer;padding:4px 6px;border-radius:8px;transition:background .15s;line-height:1" title="Back to home">←</button>
       <div class="nav-logo-dot"></div>
       Guided
     </div>
@@ -5143,6 +5188,7 @@ function obFamilyBackToChoice() {
   document.getElementById('ob-child-code-screen').style.display = 'none';
   document.getElementById('ob-child-picker').style.display = 'none';
   document.getElementById('ob-child-onboarding').style.display = 'none';
+  document.getElementById('ob-child-account').style.display = 'none';
   document.getElementById('ob-subchoice').style.display = 'block';
 }
 
@@ -5343,7 +5389,7 @@ async function finishChildOnboarding() {
 
 // ── Launch family child (new or returning) ──
 async function launchFamilyChild(child) {
-  ['ob','ob-child-picker','ob-child-onboarding','ob-child-code-screen','ob-child-flow'].forEach(id => {
+  ['ob','ob-child-picker','ob-child-onboarding','ob-child-code-screen','ob-child-flow','ob-child-account'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
@@ -5451,10 +5497,117 @@ function proceedAfterChildSelection() {
   if (!child) return;
   document.getElementById('ob-child-picker').style.display = 'none';
   document.getElementById('ob-child-code-screen').style.display = 'none';
-  if (child.child_profile?.onboarded) {
-    launchFamilyChild(child);
+  showChildAccountForm(child);
+}
+
+function showChildAccountForm(child) {
+  const panel = document.getElementById('ob-child-account');
+  panel.style.display = 'block';
+  const createDiv = document.getElementById('ob-child-account-create');
+  const signinDiv = document.getElementById('ob-child-account-signin');
+  // Clear inputs
+  document.getElementById('ob-child-email-create').value = '';
+  document.getElementById('ob-child-pw-create').value = '';
+  document.getElementById('ob-child-email-signin').value = '';
+  document.getElementById('ob-child-pw-signin').value = '';
+  document.getElementById('ob-child-account-create-error').style.display = 'none';
+  document.getElementById('ob-child-account-signin-error').style.display = 'none';
+  if (child.child_account_id) {
+    createDiv.style.display = 'none';
+    signinDiv.style.display = 'flex';
+    const t = document.getElementById('ob-child-signin-title');
+    if (t && child.name) t.textContent = `Welcome back, ${child.name}!`;
   } else {
-    startChildOnboarding(child);
+    createDiv.style.display = 'flex';
+    signinDiv.style.display = 'none';
+    const t = document.getElementById('ob-child-create-title');
+    if (t && child.name) t.textContent = `Create your account, ${child.name}`;
+  }
+}
+
+async function submitChildAccountCreate() {
+  const child = window.selectedFamilyChild;
+  if (!child) return;
+  const email  = document.getElementById('ob-child-email-create').value.trim().toLowerCase();
+  const pw     = document.getElementById('ob-child-pw-create').value;
+  const errEl  = document.getElementById('ob-child-account-create-error');
+  const btn    = document.getElementById('ob-child-create-btn');
+  errEl.style.display = 'none';
+  if (!email || !email.includes('@')) { errEl.textContent = 'Please enter a valid email.'; errEl.style.display = 'block'; return; }
+  if (!pw || pw.length < 6)           { errEl.textContent = 'Password must be at least 6 characters.'; errEl.style.display = 'block'; return; }
+  if (!SB)                            { errEl.textContent = 'Not connected to database.'; errEl.style.display = 'block'; return; }
+  btn.textContent = 'Creating…'; btn.disabled = true;
+  try {
+    const hash = await sha256(pw);
+    const { data: existing } = await SB.from('guided_accounts').select('id').eq('email', email).maybeSingle();
+    if (existing) { errEl.textContent = 'This email is already registered.'; errEl.style.display = 'block'; return; }
+    const { data: account, error } = await SB.from('guided_accounts').insert({
+      email,
+      password_hash: hash,
+      user_type: 'child',
+      parent_account_id: child.account_id || null,
+      profile: { name: child.name, age: child.age },
+      created_at: new Date().toISOString()
+    }).select().single();
+    if (error || !account) throw new Error(error?.message || 'Account creation failed');
+    await SB.from('family_members').update({ child_account_id: account.id }).eq('id', child.id);
+    child.child_account_id = account.id;
+    document.getElementById('ob-child-account').style.display = 'none';
+    if (child.child_profile?.onboarded) {
+      launchFamilyChild(child);
+    } else {
+      startChildOnboarding(child);
+    }
+  } catch(e) {
+    errEl.textContent = 'Error: ' + e.message; errEl.style.display = 'block';
+  } finally {
+    btn.textContent = 'Create Account →'; btn.disabled = false;
+  }
+}
+
+async function submitChildAccountSignIn() {
+  const child = window.selectedFamilyChild;
+  if (!child) return;
+  const email  = document.getElementById('ob-child-email-signin').value.trim().toLowerCase();
+  const pw     = document.getElementById('ob-child-pw-signin').value;
+  const errEl  = document.getElementById('ob-child-account-signin-error');
+  const btn    = document.getElementById('ob-child-signin-btn');
+  errEl.style.display = 'none';
+  if (!email || !pw) { errEl.textContent = 'Please enter your email and password.'; errEl.style.display = 'block'; return; }
+  if (!SB)           { errEl.textContent = 'Not connected to database.'; errEl.style.display = 'block'; return; }
+  btn.textContent = 'Signing in…'; btn.disabled = true;
+  try {
+    const hash = await sha256(pw);
+    const { data: account, error } = await SB.from('guided_accounts')
+      .select('id').eq('email', email).eq('password_hash', hash).eq('id', child.child_account_id).single();
+    if (error || !account) { errEl.textContent = 'Incorrect email or password.'; errEl.style.display = 'block'; return; }
+    document.getElementById('ob-child-account').style.display = 'none';
+    if (child.child_profile?.onboarded) {
+      launchFamilyChild(child);
+    } else {
+      startChildOnboarding(child);
+    }
+  } catch(e) {
+    errEl.textContent = 'Error: ' + e.message; errEl.style.display = 'block';
+  } finally {
+    btn.textContent = 'Sign In →'; btn.disabled = false;
+  }
+}
+
+async function connectSchoolCode(inputId, statusId) {
+  const code    = document.getElementById(inputId)?.value?.trim()?.toUpperCase();
+  const statusEl = document.getElementById(statusId);
+  if (!statusEl) return;
+  if (!code) { statusEl.style.display = 'block'; statusEl.style.color = 'var(--red)'; statusEl.textContent = 'Please enter a school code.'; return; }
+  if (!SB)   { statusEl.style.display = 'block'; statusEl.style.color = 'var(--red)'; statusEl.textContent = 'Not connected to database.'; return; }
+  statusEl.style.display = 'block'; statusEl.style.color = 'var(--gold)'; statusEl.textContent = 'Searching…';
+  const { data: school } = await SB.from('schools').select('id,name').eq('code', code).maybeSingle();
+  if (school) {
+    statusEl.style.color = 'var(--forest)'; statusEl.textContent = `✓ Connected to ${school.name}`;
+    window._connectedSchool = school;
+  } else {
+    statusEl.style.color = 'var(--red)'; statusEl.textContent = 'Code not found. Check with your teacher.';
+    window._connectedSchool = null;
   }
 }
 
@@ -5681,8 +5834,7 @@ function renderParentDashboard() {
         ${c.notes?`<div class="child-setting-row"><span class="child-setting-label">Notes</span><span class="child-setting-val" style="font-size:11px;max-width:160px;text-align:right;color:var(--ink3)">${c.notes.slice(0,40)}${c.notes.length>40?'...':''}</span></div>`:''}
       </div>
       <div class="child-card-btns">
-        <button class="btn-start-child" onclick="launchFromDashboard(${i})">Start Learning →</button>
-        <button class="btn-edit-child" onclick="showChildDashboard(${i})">Dashboard</button>
+        <button class="btn-edit-child" style="flex:1" onclick="showChildDashboard(${i})">View Dashboard →</button>
       </div>
     </div>`;
   }).join('');
@@ -8043,12 +8195,13 @@ async function unifiedSignIn() {
     S.subjectLog  = S.subjectLog || [];
     document.getElementById('signin-screen').style.display = 'none';
 
+    const goalMap     = { critical:'Build strong critical thinking', homework:'Homework support', curiosity:'Curiosity & love of learning' };
+    const styleLabels = { socratic:'Socratic Guide', stepbystep:'Step by Step', friendly:'Warm & Patient', challenge:'Challenge Mode' };
+    const paceLabels  = { guided:'Guided', balanced:'Balanced', direct:'Direct' };
+
     if (account.user_type === 'family') {
       S.familyCode = account.family_code || null;
       const { data: members } = await SB.from('family_members').select('*').eq('account_id', account.id);
-      const goalMap     = { critical:'Build strong critical thinking', homework:'Homework support', curiosity:'Curiosity & love of learning' };
-      const styleLabels = { socratic:'Socratic Guide', stepbystep:'Step by Step', friendly:'Warm & Patient', challenge:'Challenge Mode' };
-      const paceLabels  = { guided:'Guided', balanced:'Balanced', direct:'Direct' };
       window.parentData = {
         name: S.name,
         familyCode: S.familyCode,
@@ -8056,13 +8209,35 @@ async function unifiedSignIn() {
           id: m.id, name: m.name, age: m.age, school: m.school,
           style: m.style, goal: m.goal, pace: m.pace, notes: m.notes,
           subjects: m.subjects || [], ai_notes: m.ai_notes || '',
+          history: m.history || [],
           child_profile: m.child_profile || null,
+          child_account_id: m.child_account_id || null,
+          account_id: m.account_id || null,
+          student_id: m.student_id || null,
           styleLabel: styleLabels[m.style] || m.style,
           goalLabel:  goalMap[m.goal]      || m.goal,
           paceLabel:  paceLabels[m.pace]   || m.pace,
         }))
       };
       showParentDashboard();
+    } else if (account.user_type === 'child') {
+      // Child logging in directly via Sign In — load their family_member data
+      const { data: member } = await SB.from('family_members').select('*').eq('child_account_id', account.id).maybeSingle();
+      if (!member) { errEl.textContent = 'Account data not found. Contact your parent.'; errEl.style.display = 'block'; return; }
+      window.selectedFamilyChild = {
+        ...member,
+        child_profile: member.child_profile || null,
+        child_account_id: account.id,
+        styleLabel: styleLabels[member.style] || member.style,
+        goalLabel:  goalMap[member.goal]      || member.goal,
+        paceLabel:  paceLabels[member.pace]   || member.pace,
+      };
+      document.getElementById('signin-screen').style.display = 'none';
+      if (member.child_profile?.onboarded) {
+        await launchFamilyChild(window.selectedFamilyChild);
+      } else {
+        startChildOnboarding(window.selectedFamilyChild);
+      }
     } else {
       S.aiNotes = account.ai_notes || '';
       if (S.history.length) restoreHistoryBubbles();
