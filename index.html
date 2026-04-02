@@ -2815,6 +2815,34 @@ body { background: #FFFFFF; }
 .cal-empty-icon { font-size: 40px; margin-bottom: 12px; }
 .cal-empty-title { font-size: 17px; font-weight: 700; color: var(--ink2); margin-bottom: 6px; }
 .cal-empty-sub { font-size: 14px; color: var(--ink3); max-width: 340px; margin: 0 auto; }
+
+/* ── Settings Modal ── */
+.stg-modal { position:fixed;inset:0;z-index:800;background:rgba(28,28,28,.45);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:24px; }
+.stg-card { background:#fff;border-radius:20px;width:100%;max-width:480px;box-shadow:0 12px 48px rgba(0,0,0,.16),0 4px 12px rgba(0,0,0,.08);max-height:85vh;overflow-y:auto; }
+.stg-header { display:flex;align-items:center;justify-content:space-between;padding:24px 28px 0; }
+.stg-header h2 { font-family:var(--font-head);font-size:22px;font-weight:700;color:var(--forest);margin:0; }
+.stg-close { background:none;border:none;font-size:20px;color:var(--ink4);cursor:pointer;padding:4px 8px;border-radius:8px;transition:background .15s;line-height:1; }
+.stg-close:hover { background:var(--cream2); }
+.stg-section { padding:20px 28px; }
+.stg-section + .stg-section { border-top:1.5px solid var(--border); }
+.stg-section-title { font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);margin-bottom:14px; }
+.stg-style-grid { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
+.stg-style-card { border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;cursor:pointer;transition:all .15s; }
+.stg-style-card:hover { border-color:var(--forest);background:rgba(26,51,40,.03); }
+.stg-style-card.sel { border-color:var(--forest);background:rgba(26,51,40,.06); }
+.stg-style-emoji { font-size:18px;display:block;margin-bottom:4px; }
+.stg-style-name { font-size:13px;font-weight:700;color:var(--ink); }
+.stg-style-desc { font-size:11.5px;color:var(--ink3);margin-top:2px;line-height:1.4; }
+.stg-goal-row { display:flex;gap:8px;flex-wrap:wrap; }
+.stg-goal-chip { padding:8px 16px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:13px;font-weight:600;color:var(--ink2);cursor:pointer;transition:all .15s; }
+.stg-goal-chip:hover { border-color:var(--forest);color:var(--forest); }
+.stg-goal-chip.sel { background:var(--forest);color:#fff;border-color:var(--forest); }
+.stg-school-row { display:flex;align-items:center;justify-content:space-between;gap:12px; }
+.stg-school-status { font-size:13.5px;color:var(--ink2); }
+.stg-school-btn { padding:8px 16px;border-radius:10px;border:1.5px solid var(--forest);background:#fff;color:var(--forest);font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;font-family:var(--font-body);white-space:nowrap; }
+.stg-school-btn:hover { background:rgba(26,51,40,.05); }
+.stg-end-btn { width:100%;padding:13px;border-radius:12px;border:1.5px solid var(--border2);background:transparent;color:var(--red);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all .15s; }
+.stg-end-btn:hover { background:var(--red-dim);border-color:var(--red); }
 </style>
 </head>
 <body>
@@ -4566,7 +4594,7 @@ body { background: #FFFFFF; }
       📅 Kalender
     </div>
     <div class="nav-right">
-      <div class="profile-chip" id="profile-chip" onclick="document.getElementById('reset-modal').style.display='flex'">
+      <div class="profile-chip" id="profile-chip" onclick="openSettings()">
         <div class="chip-av" id="chip-av">?</div>
         <span id="chip-name">Student</span>
       </div>
@@ -6977,6 +7005,38 @@ function toggleImgs()  { S.imgsOn = !S.imgsOn; document.getElementById('img-pill
 function toggleDev()   { document.getElementById('dev-col').classList.toggle('hide'); }
 
 // ══════════════════════════════════════════════
+//  SETTINGS
+// ══════════════════════════════════════════════
+function openSettings() {
+  document.querySelectorAll('#stg-style-grid .stg-style-card').forEach(c =>
+    c.classList.toggle('sel', c.dataset.s === S.style));
+  document.querySelectorAll('#stg-goal-row .stg-goal-chip').forEach(c =>
+    c.classList.toggle('sel', c.dataset.g === S.learningGoal));
+  const st = document.getElementById('stg-school-status');
+  if (st) st.textContent = S.schoolConnected ? `✓ Connected to ${S.schoolName}` : 'Not connected';
+  document.getElementById('settings-modal').style.display = 'flex';
+}
+function closeSettings() {
+  document.getElementById('settings-modal').style.display = 'none';
+}
+function stgPickStyle(el) {
+  document.querySelectorAll('#stg-style-grid .stg-style-card').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  S.style = el.dataset.s;
+}
+function stgPickGoal(el) {
+  document.querySelectorAll('#stg-goal-row .stg-goal-chip').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  S.learningGoal = el.dataset.g;
+  const goalMap = { critical:'Build strong critical thinking', homework:'Homework support', curiosity:'Curiosity & love of learning' };
+  S.goal = goalMap[S.learningGoal] || '';
+}
+function stgConnectSchool() {
+  closeSettings();
+  showSchoolConnectModal();
+}
+
+// ══════════════════════════════════════════════
 //  CALENDAR
 // ══════════════════════════════════════════════
 
@@ -8845,5 +8905,53 @@ document.addEventListener('keydown', e => {
 window.addEventListener('beforeunload', () => { if (S.exchanges > 0) saveSession(); });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && S.exchanges > 0) saveSession(); });
 </script>
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║           SETTINGS MODAL               ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<div id="settings-modal" class="stg-modal" style="display:none" onclick="if(event.target===this)closeSettings()">
+  <div class="stg-card">
+    <div class="stg-header">
+      <h2>Settings</h2>
+      <button class="stg-close" onclick="closeSettings()">✕</button>
+    </div>
+
+    <!-- Teaching Style -->
+    <div class="stg-section">
+      <div class="stg-section-title">Teaching Style</div>
+      <div class="stg-style-grid" id="stg-style-grid">
+        <div class="stg-style-card" data-s="socratic"    onclick="stgPickStyle(this)"><span class="stg-style-emoji">🧠</span><div class="stg-style-name">Socratic Guide</div><div class="stg-style-desc">Guides you with questions so you think your way to the answer</div></div>
+        <div class="stg-style-card" data-s="stepbystep" onclick="stgPickStyle(this)"><span class="stg-style-emoji">📐</span><div class="stg-style-name">Step by Step</div><div class="stg-style-desc">Breaks everything down, confirms understanding at each stage</div></div>
+        <div class="stg-style-card" data-s="friendly"   onclick="stgPickStyle(this)"><span class="stg-style-emoji">🌱</span><div class="stg-style-name">Warm &amp; Patient</div><div class="stg-style-desc">Encouraging, everyday analogies, relaxed pace</div></div>
+        <div class="stg-style-card" data-s="challenge"  onclick="stgPickStyle(this)"><span class="stg-style-emoji">🎯</span><div class="stg-style-name">Challenge Mode</div><div class="stg-style-desc">High standards, pushes hard thinking, no hand-holding</div></div>
+      </div>
+    </div>
+
+    <!-- Learning Goal -->
+    <div class="stg-section">
+      <div class="stg-section-title">Learning Goal</div>
+      <div class="stg-goal-row" id="stg-goal-row">
+        <div class="stg-goal-chip" data-g="critical"  onclick="stgPickGoal(this)">🧠 Critical Thinking</div>
+        <div class="stg-goal-chip" data-g="homework"  onclick="stgPickGoal(this)">📚 Homework Help</div>
+        <div class="stg-goal-chip" data-g="curiosity" onclick="stgPickGoal(this)">✨ Curiosity</div>
+      </div>
+    </div>
+
+    <!-- School Connection -->
+    <div class="stg-section">
+      <div class="stg-section-title">School</div>
+      <div class="stg-school-row">
+        <div class="stg-school-status" id="stg-school-status">Not connected</div>
+        <button class="stg-school-btn" onclick="stgConnectSchool()">Connect →</button>
+      </div>
+    </div>
+
+    <!-- End Session -->
+    <div class="stg-section">
+      <button class="stg-end-btn" onclick="closeSettings();document.getElementById('reset-modal').style.display='flex'">End Session</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
