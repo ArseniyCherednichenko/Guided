@@ -4636,6 +4636,9 @@ const S = {
   selectedChannels: [],
   schoolConnected: false,
   schoolName: '',
+  familyMemberId: null,
+  familyCode: null,
+  parentAccountId: null,
 };
 
 // ══════════════════════════════════════════════
@@ -4957,11 +4960,35 @@ function obFamilyBackToChoice() {
   document.getElementById('ob-child-code-screen').style.display = 'none';
   document.getElementById('ob-subchoice').style.display = 'block';
 }
-function submitFamilyCode() {
+async function submitFamilyCode() {
   const entered = document.getElementById('ob-child-code-input').value.trim().toUpperCase();
-  const saved   = localStorage.getItem('guided_family_code');
-  if (!saved) { document.getElementById('ob-child-code-error').style.display = 'block'; document.getElementById('ob-child-code-error').textContent = 'No family account found. Ask your parent to set up Guided first.'; return; }
-  if (entered !== saved) { document.getElementById('ob-child-code-error').style.display = 'block'; document.getElementById('ob-child-code-error').textContent = 'Incorrect code. Ask your parent for the right one.'; return; }
+  const errEl = document.getElementById('ob-child-code-error');
+  errEl.style.display = 'none';
+  if (!entered) { errEl.textContent = 'Please enter the family code.'; errEl.style.display = 'block'; return; }
+
+  let valid = false;
+  let parentAccountId = null;
+
+  if (SB) {
+    try {
+      const { data: account } = await SB.from('guided_accounts').select('id').eq('family_code', entered).single();
+      if (account) { valid = true; parentAccountId = account.id; }
+    } catch(e) { console.warn('Supabase family code check failed, falling back to localStorage:', e); }
+  }
+
+  if (!valid) {
+    const saved = localStorage.getItem('guided_family_code');
+    if (saved && entered === saved) { valid = true; }
+  }
+
+  if (!valid) {
+    errEl.textContent = 'Incorrect code. Ask your parent for the right one.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  S.familyCode = entered;
+  S.parentAccountId = parentAccountId;
   document.getElementById('ob-child-code-screen').style.display = 'none';
   document.getElementById('ob-child-flow').style.display = 'block';
   obChildStep = 1; renderObChild();
@@ -5108,6 +5135,7 @@ function launchParentDashboard() {
     familyCode = Math.random().toString(36).substring(2,8).toUpperCase();
     localStorage.setItem('guided_family_code', familyCode);
   }
+  S.familyCode = familyCode;
   window.parentData = {
     name: parentName,
     familyCode,
@@ -5247,7 +5275,7 @@ function toggleAddChildPanel() {
   if (!showing) panel.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
-function saveNewChild() {
+async function saveNewChild() {
   const name = document.getElementById('pd-c-name').value.trim();
   if (!name) { toast("Enter the child's name", 'err'); return; }
   const age    = document.getElementById('pd-c-age').value;
@@ -5259,8 +5287,16 @@ function saveNewChild() {
   const styleLabels = { socratic:'Socratic Guide', stepbystep:'Step by Step', friendly:'Warm & Patient', challenge:'Challenge Mode' };
   const goalMap     = { critical:'Build strong critical thinking', homework:'Homework support', curiosity:'Curiosity & love of learning' };
   const paceLabels  = { guided:'Guided', balanced:'Balanced', direct:'Direct' };
-  window.parentData.children.push({ name, age, school, style, goal, pace, notes, subjects:[],
-    styleLabel:styleLabels[style], goalLabel:goalMap[goal], paceLabel:paceLabels[pace], addedAt:Date.now() });
+  const newChild = { name, age, school, style, goal, pace, notes, subjects:[],
+    styleLabel:styleLabels[style], goalLabel:goalMap[goal], paceLabel:paceLabels[pace], addedAt:Date.now() };
+  if (SB && S.accountId) {
+    const { data: row } = await SB.from('family_members').insert({
+      account_id: S.accountId, name, age: age || null, school: school || null,
+      style, goal, pace, notes: notes || null, subjects: [], ai_notes: null
+    }).select().single();
+    if (row) newChild.id = row.id;
+  }
+  window.parentData.children.push(newChild);
   document.getElementById('pd-c-name').value = '';
   document.getElementById('pd-c-school').value = '';
   document.getElementById('pd-c-notes').value = '';
@@ -5270,21 +5306,24 @@ function saveNewChild() {
 }
 
 // ── Launch: from Dashboard ──
-function launchFromDashboard(idx) {
+async function launchFromDashboard(idx) {
   const child = window.parentData.children[idx];
   if (!child) return;
-  S.name         = child.name;
-  S.age          = child.age;
-  S.school       = child.school || '';
-  S.notes        = child.notes || '';
-  S.style        = child.style;
-  S.learningGoal = child.goal;
-  S.pace         = child.pace;
-  S.subj         = (child.subjects&&child.subjects.length) ? child.subjects.join(', ') : 'General / Mixed';
-  S.goal         = child.goalLabel || child.goal;
-  S.sessionStart = Date.now();
-  S.userType = 'parent-child';
+  S.name           = child.name;
+  S.age            = child.age;
+  S.school         = child.school || '';
+  S.notes          = child.notes || '';
+  S.style          = child.style;
+  S.learningGoal   = child.goal;
+  S.pace           = child.pace;
+  S.subj           = (child.subjects&&child.subjects.length) ? child.subjects.join(', ') : 'General / Mixed';
+  S.goal           = child.goalLabel || child.goal;
+  S.sessionStart   = Date.now();
+  S.userType       = 'parent-child';
+  S.familyMemberId = child.id || null;
+  S.aiNotes        = child.ai_notes || '';
   document.getElementById('parent-dashboard').style.display = 'none';
+  await loadLearningProfile(null);
   startAppSession();
 }
 
@@ -7520,9 +7559,32 @@ async function unifiedSignIn() {
     S.sessionStart= Date.now();
     S.subjectLog  = S.subjectLog || [];
     document.getElementById('signin-screen').style.display = 'none';
-    // Restore chat history bubbles if any
-    if (S.history.length) restoreHistoryBubbles();
-    startAppSession();
+
+    if (account.user_type === 'family') {
+      S.familyCode = account.family_code || null;
+      const { data: members } = await SB.from('family_members').select('*').eq('account_id', account.id);
+      const goalMap     = { critical:'Build strong critical thinking', homework:'Homework support', curiosity:'Curiosity & love of learning' };
+      const styleLabels = { socratic:'Socratic Guide', stepbystep:'Step by Step', friendly:'Warm & Patient', challenge:'Challenge Mode' };
+      const paceLabels  = { guided:'Guided', balanced:'Balanced', direct:'Direct' };
+      window.parentData = {
+        name: S.name,
+        familyCode: S.familyCode,
+        children: (members || []).map(m => ({
+          id: m.id, name: m.name, age: m.age, school: m.school,
+          style: m.style, goal: m.goal, pace: m.pace, notes: m.notes,
+          subjects: m.subjects || [], ai_notes: m.ai_notes || '',
+          styleLabel: styleLabels[m.style] || m.style,
+          goalLabel:  goalMap[m.goal]      || m.goal,
+          paceLabel:  paceLabels[m.pace]   || m.pace,
+        }))
+      };
+      showParentDashboard();
+    } else {
+      S.aiNotes = account.ai_notes || '';
+      if (S.history.length) restoreHistoryBubbles();
+      await loadLearningProfile(null);
+      startAppSession();
+    }
   } catch(e) {
     errEl.textContent = 'Error: ' + e.message;
     errEl.style.display = 'block';
@@ -7576,7 +7638,8 @@ async function saveAccountFromBanner() {
     };
     const { data, error } = await SB.from('guided_accounts').insert({
       email, password_hash: hash, user_type: S.userType || 'solo',
-      profile, history: S.history || [], events: S.events || []
+      profile, history: S.history || [], events: S.events || [],
+      family_code: S.familyCode || null
     }).select().single();
     if (error) {
       if (error.code === '23505') { toast('Email already registered — please sign in', 'err'); }
@@ -7584,6 +7647,19 @@ async function saveAccountFromBanner() {
       return;
     }
     S.accountId = data.id;
+    if (S.userType === 'family' && window.parentData?.children?.length) {
+      const members = window.parentData.children.map(c => ({
+        account_id: data.id,
+        name: c.name, age: c.age || null, school: c.school || null,
+        style: c.style || 'socratic', goal: c.goal || 'critical',
+        pace: c.pace || 'balanced', notes: c.notes || null,
+        subjects: c.subjects || [], ai_notes: c.ai_notes || null
+      }));
+      const { data: inserted } = await SB.from('family_members').insert(members).select();
+      if (inserted) {
+        inserted.forEach((row, i) => { if (window.parentData.children[i]) window.parentData.children[i].id = row.id; });
+      }
+    }
     document.getElementById('save-account-banner').style.display = 'none';
     toast('Account created! Progress will be saved automatically ✓', 'ok');
   } catch(e) {
@@ -7640,14 +7716,19 @@ function toast(msg, type = '') {
 //  LEARNING PROFILE LOADER
 // ══════════════════════════════════════════════
 async function loadLearningProfile(studentId) {
-  if (!SB || !studentId) return;
+  if (!SB) return;
+  const hasId = studentId || S.familyMemberId || S.accountId;
+  if (!hasId) return;
   try {
-    const { data: sessions } = await SB
+    let query = SB
       .from('sessions')
       .select('subject, style, independence_score, aha_count, hints_used, bloom_data, started_at')
-      .eq('student_id', studentId)
       .order('started_at', { ascending: false })
       .limit(10);
+    if (studentId)          query = query.eq('student_id', studentId);
+    else if (S.familyMemberId) query = query.eq('family_member_id', S.familyMemberId);
+    else                    query = query.eq('account_id', S.accountId);
+    const { data: sessions } = await query;
 
     if (!sessions?.length) return;
 
@@ -7727,6 +7808,8 @@ async function saveSession() {
   try {
     const { data: session, error } = await SB.from('sessions').insert({
       student_id:        S.studentId || null,
+      account_id:        S.accountId || null,
+      family_member_id:  S.familyMemberId || null,
       student_name:      S.name,
       age:               parseInt(S.age) || null,
       school_name:       S.school || null,
@@ -7755,12 +7838,18 @@ async function saveSession() {
       })));
     }
   } catch(e) { console.error('Session save failed:', e); }
-  // Save piggyback tutor notes (last 3 from this session) — zero extra API calls
-  if (SB && S.studentId && S.sessionNotes.length) {
+  // Save tutor notes (last 3 from this session) for all user types
+  if (SB && S.sessionNotes.length) {
     const newNote = `[${new Date().toLocaleDateString('en-GB')}] ${S.sessionNotes.slice(-3).join(' | ')}`;
     const combined = [newNote, S.aiNotes].filter(Boolean).join('\n').slice(0, 500);
-    SB.from('students').update({ ai_notes: combined }).eq('id', S.studentId);
     S.aiNotes = combined;
+    if (S.studentId) {
+      SB.from('students').update({ ai_notes: combined }).eq('id', S.studentId);
+    } else if (S.familyMemberId) {
+      SB.from('family_members').update({ ai_notes: combined }).eq('id', S.familyMemberId);
+    } else if (S.accountId) {
+      SB.from('guided_accounts').update({ ai_notes: combined }).eq('id', S.accountId);
+    }
   }
 }
 
@@ -7768,6 +7857,10 @@ async function saveSession() {
 document.addEventListener('keydown', e => {
   if (e.altKey && e.code === 'KeyD') toggleDev();
 });
+
+// Auto-save session on page close / tab hide
+window.addEventListener('beforeunload', () => { if (S.exchanges > 0) saveSession(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && S.exchanges > 0) saveSession(); });
 </script>
 </body>
 </html>
