@@ -1174,7 +1174,7 @@ input[type=range]::-webkit-slider-thumb:hover {
 }
 .dev-close:hover { color: var(--ink); }
 
-.dev-body { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.dev-body { flex: 1; min-height: 0; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
 .dev-body::-webkit-scrollbar { width: 3px; }
 .dev-body::-webkit-scrollbar-thumb { background: var(--cream3); }
 
@@ -4606,7 +4606,7 @@ function checkDailyLimit() {
   return { allowed: true, remaining: MAX_DAILY_MESSAGES - count, count, warning: false };
 }
 
-const MAX_TOK  = 600;
+const MAX_TOK  = 1000;
 const TEMP     = 0.75;
 const CTX_WIN  = 8000;
 const VOICE_ID = 'EXAVITQu4vr4xnSDxMaL'; // Bella — warm, natural, clear
@@ -4845,9 +4845,10 @@ ${styleInstructions[S.style] || styleInstructions.socratic}
 ━━━━━━━━━━━━━━━━━━━━━━━━
 VISUAL LEARNING
 ━━━━━━━━━━━━━━━━━━━━━━━━
-When a diagram would genuinely help (geometry, processes, anatomy, timelines), generate a simple inline SVG on its own line using this format:
-[SVG: <svg viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="280" fill="#f9f9f9"/>...your shapes, lines, text labels here...</svg>]
+When a diagram would genuinely help (geometry, processes, anatomy, timelines, mathematical graphs), generate a simple inline SVG on its own line using this format:
+[SVG: <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="300" fill="#f9f9f9"/>...your shapes, lines, text labels here...</svg>]
 Rules: use basic shapes only (rect, circle, path, line, text). Label key elements with <text> tags. stroke="#333" for lines. Use color sparingly. No scripts. Keep it simple and clean. Maximum one per response.
+For mathematical graphs: draw explicit coordinate axes with arrows (x-axis: horizontal line with rightward arrowhead; y-axis: vertical line with upward arrowhead). Label axes (x, y) and mark key values on tick marks. Plot curves using <path d="M x0,y0 C ..."> with accurate control points — for exponential y=a^x the curve must start near-flat on the left and rise steeply on the right; for linear y=mx+b draw a straight diagonal line. Always map mathematical coordinates to SVG pixel space explicitly (e.g. origin at pixel 60,240; 1 unit = 30px). Never draw a straight line for a curve or vice versa.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 FORMAT
@@ -5436,7 +5437,7 @@ async function sendMsg(isHint = false, isGotIt = false) {
     // Parse response
     const isAha   = reply.startsWith('[AHA]');
     const withoutAha = reply.replace(/^\[AHA\]\s*/, '');
-    const bloomM  = withoutAha.match(/\[BLOOM:(\w+)\]/i);
+    const bloomM  = withoutAha.match(/\[BLOOM:\s*(\w+)\]/i);
     const bloomLvl = bloomM ? bloomM[1].toLowerCase() : 'understand';
     const { forHistory, forDisplay } = parseTutorNote(withoutAha);
     const { txt, imgP, svgCode } = parseImg(forDisplay);
@@ -5611,8 +5612,11 @@ function parseTutorNote(raw) {
     S.latestTutorNote = note;
     S.sessionNotes.push(note);
   }
-  const forHistory = raw.replace(/\[BLOOM:\w+\]/gi, '').trim();       // keep TUTOR_NOTE
-  const forDisplay = forHistory.replace(/\[TUTOR_NOTE:[\s\S]*?\]/gi, '').trim(); // strip it
+  const forHistory = raw.replace(/\[BLOOM:\s*\w+\]/gi, '').trim();       // keep TUTOR_NOTE
+  const forDisplay = forHistory
+    .replace(/\[TUTOR_NOTE:[\s\S]*?\]/gi, '')   // complete tag
+    .replace(/\[TUTOR_NOTE:[\s\S]*$/gi, '')      // truncated tag (no closing bracket)
+    .trim();
   return { note, forHistory, forDisplay };
 }
 
@@ -7059,7 +7063,7 @@ async function handleVoiceInput(text) {
 
     const isAha   = reply.startsWith('[AHA]');
     const withoutAha = reply.replace(/^\[AHA\]\s*/, '');
-    const bloomM  = withoutAha.match(/\[BLOOM:(\w+)\]/i);
+    const bloomM  = withoutAha.match(/\[BLOOM:\s*(\w+)\]/i);
     const bloomLvl = bloomM ? bloomM[1].toLowerCase() : 'understand';
     const { forHistory, forDisplay } = parseTutorNote(withoutAha);
     const { txt }  = parseImg(forDisplay);
