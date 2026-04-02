@@ -487,72 +487,95 @@ input[type=range]::-webkit-slider-thumb:hover {
 .btn-next:active { transform: translateY(0); box-shadow: 0 2px 10px rgba(26,51,40,.2); }
 
 /* ══════════════════════════════════════════════
-   APP
+   APP — sidebar layout
 ══════════════════════════════════════════════ */
-#app { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+#app { display: none; flex: 1; overflow: hidden; flex-direction: row; }
 #app.show { display: flex; }
 
-/* Top nav */
+/* ─── SIDEBAR ─── */
 .topnav {
-  background: rgba(255,255,255,.95);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(226,218,208,.7);
-  height: 58px;
-  padding: 0 24px;
+  width: 260px;
+  min-width: 260px;
+  height: 100dvh;
+  background: #0D1F17;
   display: flex;
-  align-items: center;
-  gap: 0;
+  flex-direction: column;
+  align-items: stretch;
   flex-shrink: 0;
-  box-shadow: 0 1px 0 rgba(226,218,208,.5), 0 4px 16px rgba(0,0,0,.04);
+  border-right: 1px solid rgba(255,255,255,.07);
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
+/* Logo area */
 .nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 18px 16px;
   font-family: 'Playfair Display', serif;
-  font-size: 21px;
+  font-size: 18px;
   font-weight: 700;
-  color: var(--forest);
-  letter-spacing: -.4px;
-  margin-right: 32px;
+  color: #fff;
+  letter-spacing: -.3px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  flex-shrink: 0;
+  margin-right: 0;
+}
+.nav-logo-icon { width: 32px; height: 32px; flex-shrink: 0; border-radius: 7px; }
+
+/* New Chat button */
+#sidebar-new-chat {
+  margin: 14px 12px 6px;
+  padding: 11px 16px;
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 14px; font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: background .15s, border-color .15s;
+  text-align: left;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#sidebar-new-chat:hover { background: rgba(255,255,255,.17); border-color: rgba(255,255,255,.26); }
+
+/* Section labels */
+.sidebar-section-label {
+  padding: 14px 18px 5px;
+  font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: rgba(255,255,255,.3);
+  flex-shrink: 0;
+}
+
+/* Nav tabs → sidebar items */
+.nav-tab {
+  height: auto;
+  padding: 10px 14px;
+  margin: 2px 8px;
   display: flex;
   align-items: center;
   gap: 9px;
-}
-
-.nav-logo-dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: var(--gold);
-  box-shadow: 0 0 12px var(--gold-glow), 0 0 5px rgba(184,130,42,.5);
-  animation: glow 2.5s ease-in-out infinite;
-}
-
-@keyframes glow {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: .45; transform: scale(.8); }
-}
-
-.nav-tab {
-  height: 58px;
-  padding: 0 18px;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--ink4);
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255,255,255,.55);
   cursor: pointer;
-  border-bottom: 2px solid transparent;
+  border-bottom: none;
+  border-radius: 8px;
   transition: all .15s;
   user-select: none;
-  letter-spacing: -.1px;
+  letter-spacing: 0;
+  flex-shrink: 0;
 }
-
-.nav-tab:hover { color: var(--ink2); }
-.nav-tab.active { color: var(--forest); border-bottom-color: var(--forest); }
+.nav-tab:hover { color: rgba(255,255,255,.9); background: rgba(255,255,255,.06); }
+.nav-tab.active { background: rgba(255,255,255,.11); color: #fff; border-bottom-color: transparent; }
 
 .nav-tab-badge {
-  background: var(--gold-dim);
+  background: rgba(184,130,42,.22);
   color: var(--gold);
   font-size: 10px;
   font-weight: 700;
@@ -561,48 +584,75 @@ input[type=range]::-webkit-slider-thumb:hover {
   opacity: 0;
   transition: opacity .2s;
 }
-
 .nav-tab.has-data .nav-tab-badge { opacity: 1; }
 
-.nav-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+/* Subject list */
+#sidebar-subjects { flex: 1; overflow-y: auto; padding: 4px 0 8px; min-height: 0; }
+.sidebar-subject {
+  display: flex; align-items: center; gap: 9px;
+  padding: 9px 14px; margin: 1px 8px;
+  border-radius: 8px;
+  color: rgba(255,255,255,.5);
+  font-size: 13.5px; font-weight: 500;
+  cursor: pointer; transition: all .15s;
+  font-family: var(--font-body);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sidebar-subject:hover { background: rgba(255,255,255,.06); color: rgba(255,255,255,.88); }
+.sidebar-subject.active { background: rgba(255,255,255,.11); color: #fff; }
+
+/* Profile area (bottom of sidebar) */
+.nav-right {
+  margin-top: auto;
+  margin-left: 0;
+  display: flex;
+  align-items: stretch;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid rgba(255,255,255,.07);
+  flex-shrink: 0;
+}
 
 .profile-chip {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: var(--cream);
-  border: 1px solid var(--border);
-  border-radius: 40px;
-  padding: 5px 14px 5px 6px;
+  gap: 10px;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 10px;
+  padding: 10px 14px;
   cursor: pointer;
   transition: all .2s;
   font-size: 13px;
   font-weight: 600;
-  color: var(--ink2);
+  color: rgba(255,255,255,.8);
+  width: 100%;
+  box-sizing: border-box;
 }
-
-.profile-chip:hover { border-color: var(--forest); color: var(--forest); background: rgba(26,51,40,.03); }
+.profile-chip:hover { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.22); color: #fff; }
 
 .chip-av {
-  width: 26px; height: 26px;
+  width: 28px; height: 28px;
   border-radius: 50%;
-  background: var(--btn-gradient);
+  background: var(--forest2);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   font-family: 'Playfair Display', serif;
-  box-shadow: 0 2px 6px rgba(26,51,40,.3);
+  border: 1.5px solid rgba(255,255,255,.15);
+  flex-shrink: 0;
 }
 
 .nav-pill {
-  background: var(--cream);
-  border: 1px solid var(--border);
-  color: var(--ink3);
-  border-radius: 24px;
-  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.14);
+  color: rgba(255,255,255,.5);
+  border-radius: 10px;
+  padding: 8px 12px;
   font-size: 12px;
   font-weight: 600;
   font-family: 'Plus Jakarta Sans', sans-serif;
@@ -610,12 +660,37 @@ input[type=range]::-webkit-slider-thumb:hover {
   transition: all .2s;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
   letter-spacing: .1px;
+  width: 100%;
+  box-sizing: border-box;
 }
+.nav-pill:hover { border-color: rgba(255,255,255,.3); color: rgba(255,255,255,.8); background: rgba(255,255,255,.05); }
+.nav-pill.on { background: rgba(255,255,255,.08); color: rgba(255,255,255,.82); border-color: rgba(255,255,255,.18); }
 
-.nav-pill:hover { border-color: var(--forest); color: var(--forest); background: rgba(26,51,40,.03); transform: translateY(-1px); }
-.nav-pill.on { background: var(--btn-gradient); color: #fff; border-color: var(--forest); box-shadow: 0 3px 10px rgba(26,51,40,.25); }
+/* Mobile sidebar */
+#sidebar-hamburger {
+  display: none;
+  position: fixed; top: 14px; left: 16px; z-index: 701;
+  background: var(--forest); border: none; color: #fff; border-radius: 8px;
+  padding: 8px 10px; cursor: pointer; font-size: 16px; line-height: 1;
+  box-shadow: 0 2px 10px rgba(0,0,0,.25);
+}
+#sidebar-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 699; background: rgba(0,0,0,.4);
+}
+@media (max-width: 768px) {
+  #sidebar-hamburger { display: block; }
+  .topnav {
+    position: fixed; left: 0; top: 0; bottom: 0; z-index: 700;
+    transform: translateX(-100%); transition: transform .3s ease;
+  }
+  .topnav.open { transform: translateX(0); }
+  #sidebar-overlay.open { display: block; }
+  #v-student, #v-parent, #v-calendar { padding-top: 52px; }
+}
 
 /* ══════════════════════════════════════════════
    VIEWS
@@ -2363,28 +2438,8 @@ body { background: #FFFFFF; }
   border-right: 1px solid #F0EDE8;
 }
 
-/* ── TOP NAV ── */
-.topnav {
-  height: 60px;
-  background: rgba(255,255,255,.97);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid #F0EDE8;
-  box-shadow: none;
-}
-
-.nav-logo {
-  font-family: var(--font-serif);
-  font-size: 21px;
-  letter-spacing: -.5px;
-}
-
-.nav-tab {
-  height: 60px;
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 600;
-}
+/* ── NAV-TAB font (sidebar styles defined in main block) ── */
+.nav-tab { font-family: var(--font-body); }
 
 /* ── MESSAGES ── */
 #msgs {
@@ -2905,6 +2960,60 @@ body { background: #FFFFFF; }
 .stg-school-btn:hover { background:rgba(26,51,40,.05); }
 .stg-end-btn { width:100%;padding:13px;border-radius:12px;border:1.5px solid var(--border2);background:transparent;color:var(--red);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all .15s; }
 .stg-end-btn:hover { background:var(--red-dim);border-color:var(--red); }
+
+/* ══════════════════════════════════════════════
+   EMPTY STATE — Cortex-style
+══════════════════════════════════════════════ */
+.empty-chat {
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: left;
+  padding: 60px 52px 40px;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  gap: 0;
+}
+.empty-icon-ring {
+  width: 64px; height: 64px;
+  border: none;
+  background: none;
+  box-shadow: none;
+  font-size: 0;
+  line-height: 0;
+  margin-bottom: 20px;
+}
+.empty-icon-ring svg { width: 64px; height: 64px; display: block; }
+.empty-title {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -.6px;
+  line-height: 1.15;
+  color: var(--forest);
+  margin-bottom: 10px;
+}
+.empty-sub {
+  font-size: 15px;
+  color: var(--ink3);
+  line-height: 1.65;
+  max-width: 480px;
+  margin-bottom: 0;
+}
+.starter-grid { display: none !important; }
+
+/* Input pill */
+.input-wrap { border-radius: 24px; }
+
+/* Messages area background */
+#msgs { background: #fff; padding: 40px 40px; }
+
+@media (max-width: 768px) {
+  .empty-chat { padding: 36px 22px 32px; }
+  .empty-title { font-size: 26px; }
+  #msgs { padding: 28px 20px; }
+  .input-wrap { border-radius: 20px; }
+}
 </style>
 </head>
 <body>
@@ -4642,19 +4751,45 @@ body { background: #FFFFFF; }
 <div id="app">
 
   <div class="topnav">
-    <div class="nav-logo" style="display:flex;align-items:center;gap:10px">
-      <button onclick="goHome()" style="display:none;background:none;border:none;color:var(--ink4);font-size:13px;cursor:pointer;padding:4px 6px;border-radius:8px;transition:background .15s;line-height:1" title="Back to home">←</button>
-      <div class="nav-logo-dot"></div>
+
+    <!-- Logo -->
+    <div class="nav-logo">
+      <button onclick="goHome()" style="display:none;background:none;border:none;color:rgba(255,255,255,.4);font-size:13px;cursor:pointer;padding:4px 6px;border-radius:8px;transition:background .15s;line-height:1" title="Back to home" id="sidebar-back-btn">←</button>
+      <svg class="nav-logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+        <defs><linearGradient id="sbg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1E3D2F"/><stop offset="100%" stop-color="#2E5C44"/></linearGradient></defs>
+        <rect width="512" height="512" rx="112" fill="url(#sbg)"/>
+        <g transform="translate(256,256)" opacity="0.88">
+          <ellipse cx="0" cy="0" rx="52" ry="104" fill="white" transform="rotate(0)" opacity="0.78"/>
+          <ellipse cx="0" cy="0" rx="52" ry="104" fill="white" transform="rotate(45)" opacity="0.78"/>
+          <ellipse cx="0" cy="0" rx="52" ry="104" fill="white" transform="rotate(90)" opacity="0.78"/>
+          <ellipse cx="0" cy="0" rx="52" ry="104" fill="white" transform="rotate(135)" opacity="0.78"/>
+        </g>
+      </svg>
       Guided
     </div>
-    <div class="nav-tab active" id="tab-s" onclick="switchView('student')">Student</div>
+
+    <!-- New Chat -->
+    <button id="sidebar-new-chat" onclick="clearChat()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Neues Thema
+    </button>
+
+    <!-- Navigation -->
+    <div class="sidebar-section-label">Navigation</div>
+    <div class="nav-tab active" id="tab-s" onclick="switchView('student')">🎓 Student</div>
     <div class="nav-tab" id="tab-p" onclick="switchView('parent')" style="display:none">
-      Parent Dashboard
+      📊 Dashboard
       <span class="nav-tab-badge" id="dash-badge">Live</span>
     </div>
     <div class="nav-tab" id="tab-c" onclick="switchView('calendar')" style="display:none">
       📅 Kalender
     </div>
+
+    <!-- Subject list (populated by JS) -->
+    <div class="sidebar-section-label" id="sidebar-subj-label" style="display:none">Meine Fächer</div>
+    <div id="sidebar-subjects"></div>
+
+    <!-- Profile + settings -->
     <div class="nav-right">
       <div class="profile-chip" id="profile-chip" onclick="openSettings()">
         <div class="chip-av" id="chip-av">?</div>
@@ -4662,7 +4797,10 @@ body { background: #FFFFFF; }
       </div>
       <button class="nav-pill on" id="img-pill" onclick="toggleImgs()">🖼 Images</button>
     </div>
+
   </div>
+  <button id="sidebar-hamburger" onclick="toggleSidebar()">☰</button>
+  <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
   <!-- STUDENT VIEW -->
   <div class="view active" id="v-student">
@@ -4676,7 +4814,18 @@ body { background: #FFFFFF; }
 
       <div id="msgs">
         <div class="empty-chat" id="empty-chat">
-          <div class="empty-icon-ring">🌱</div>
+          <div class="empty-icon-ring">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+              <defs><linearGradient id="ecbg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1E3D2F"/><stop offset="100%" stop-color="#2E5C44"/></linearGradient></defs>
+              <rect width="512" height="512" rx="112" fill="url(#ecbg)"/>
+              <g transform="translate(256,256)" opacity="0.88">
+                <ellipse cx="0" cy="0" rx="52" ry="104" fill="white" transform="rotate(0)" opacity="0.78"/>
+                <ellipse cx="0" cy="0" rx="52" ry="104" fill="white" transform="rotate(45)" opacity="0.78"/>
+                <ellipse cx="0" cy="0" rx="52" ry="104" fill="white" transform="rotate(90)" opacity="0.78"/>
+                <ellipse cx="0" cy="0" rx="52" ry="104" fill="white" transform="rotate(135)" opacity="0.78"/>
+              </g>
+            </svg>
+          </div>
           <div class="empty-title" id="empty-title">Ready to learn!</div>
           <div class="empty-sub" id="empty-sub">Ask anything. I won't just give you the answer — I'll help you think it through.</div>
           <div class="starter-grid" id="starters"></div>
@@ -6385,7 +6534,50 @@ function startAppSession() {
     }
   }, 500);
 
+  updateSidebarSubjects();
   document.getElementById('minput').focus();
+}
+
+// ══════════════════════════════════════════════
+//  SIDEBAR HELPERS
+// ══════════════════════════════════════════════
+function updateSidebarSubjects() {
+  const container = document.getElementById('sidebar-subjects');
+  const label = document.getElementById('sidebar-subj-label');
+  if (!container) return;
+  const all = [...(S.lk||[]), ...(S.gk||[])].filter(Boolean);
+  if (!all.length) {
+    container.innerHTML = '';
+    if (label) label.style.display = 'none';
+    return;
+  }
+  if (label) label.style.display = '';
+  const emojiMap = {
+    'Mathematik':'📐','Mathe':'📐','Physik':'🔬','Chemie':'⚗️','Biologie':'🌿',
+    'Deutsch':'📖','Englisch':'🗣️','Geschichte':'🏛️','Geographie':'🌍','Geografie':'🌍',
+    'Informatik':'💻','Kunst':'🎨','Musik':'🎵','Sport':'⚽','Politik':'🏛️',
+    'Wirtschaft':'📊','Philosophie':'💭','Latein':'📜','Französisch':'🇫🇷','Spanisch':'🇪🇸'
+  };
+  container.innerHTML = all.map(s => {
+    const emoji = emojiMap[s] || '📚';
+    const active = s === (S.currentSubject || S.subj);
+    return `<div class="sidebar-subject${active?' active':''}" data-subject="${s.replace(/"/g,'&quot;')}" onclick="switchSubject('${s.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">${emoji} ${s}</div>`;
+  }).join('');
+}
+
+function switchSubject(subject) {
+  S.currentSubject = subject;
+  S.subj = subject;
+  const dSubj = document.getElementById('d-subj');
+  if (dSubj) dSubj.textContent = subject;
+  clearChat();
+  buildStarters();
+  updateSidebarSubjects();
+}
+
+function toggleSidebar() {
+  document.querySelector('.topnav').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
 }
 
 // ══════════════════════════════════════════════
