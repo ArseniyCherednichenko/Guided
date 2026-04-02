@@ -2782,6 +2782,39 @@ body { background: #FFFFFF; }
   font-family: var(--font-body); transition: background .15s;
 }
 .hiw-cta:hover { background: var(--forest2); }
+
+/* ── Calendar View ── */
+.cal-wrap { max-width: 700px; margin: 0 auto; padding: 24px 16px 40px; }
+.cal-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+.cal-header h2 { font-size: 20px; font-weight: 700; color: var(--ink1); margin: 0; }
+.cal-header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cal-chip { padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--border); background: #fff; font-size: 13px; font-weight: 600; color: var(--ink2); cursor: pointer; transition: all .15s; }
+.cal-chip.sel { background: var(--ink1); color: #fff; border-color: var(--ink1); }
+.cal-chip:hover:not(.sel) { background: var(--bg2); }
+.cal-refresh-btn { padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--border); background: #fff; font-size: 13px; font-weight: 600; color: var(--ink2); cursor: pointer; transition: all .15s; }
+.cal-refresh-btn:hover { background: var(--bg2); }
+.cal-refresh-btn.loading { opacity: .55; pointer-events: none; }
+.cal-group { margin-bottom: 24px; }
+.cal-group-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink3); margin-bottom: 10px; padding: 0 2px; }
+.cal-card { display: flex; align-items: stretch; background: #fff; border: 1.5px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 10px; transition: box-shadow .15s; }
+.cal-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,.08); }
+.cal-card-bar { width: 4px; flex-shrink: 0; }
+.cal-card-bar.homework { background: var(--blue); }
+.cal-card-bar.test { background: var(--red); }
+.cal-card-body { flex: 1; padding: 12px 14px; min-width: 0; }
+.cal-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+.cal-badge { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 6px; }
+.cal-badge.homework { background: color-mix(in srgb, var(--blue) 12%, transparent); color: var(--blue); }
+.cal-badge.test { background: color-mix(in srgb, var(--red) 12%, transparent); color: var(--red); }
+.cal-badge-subject { font-size: 12px; font-weight: 600; color: var(--ink2); }
+.cal-card-text { font-size: 14px; color: var(--ink1); line-height: 1.45; margin-bottom: 6px; word-break: break-word; }
+.cal-card-meta { font-size: 12px; color: var(--ink3); }
+.cal-done-btn { flex-shrink: 0; width: 36px; display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; font-size: 18px; color: var(--ink4); transition: color .15s; padding: 0 10px; }
+.cal-done-btn.checked { color: var(--forest); }
+.cal-empty { text-align: center; padding: 60px 20px; }
+.cal-empty-icon { font-size: 40px; margin-bottom: 12px; }
+.cal-empty-title { font-size: 17px; font-weight: 700; color: var(--ink2); margin-bottom: 6px; }
+.cal-empty-sub { font-size: 14px; color: var(--ink3); max-width: 340px; margin: 0 auto; }
 </style>
 </head>
 <body>
@@ -4527,6 +4560,9 @@ body { background: #FFFFFF; }
       Parent Dashboard
       <span class="nav-tab-badge" id="dash-badge">Live</span>
     </div>
+    <div class="nav-tab" id="tab-c" onclick="switchView('calendar')" style="display:none">
+      📅 Kalender
+    </div>
     <div class="nav-right">
       <div class="profile-chip" id="profile-chip" onclick="document.getElementById('reset-modal').style.display='flex'">
         <div class="chip-av" id="chip-av">?</div>
@@ -4698,6 +4734,21 @@ body { background: #FFFFFF; }
     </div>
   </div>
 
+  <div class="view" id="v-calendar">
+    <div class="cal-wrap">
+      <div class="cal-header">
+        <h2>Kalender</h2>
+        <div class="cal-header-right">
+          <button class="cal-chip sel" id="cal-chip-all" onclick="setCalFilter('all')">Alle</button>
+          <button class="cal-chip" id="cal-chip-homework" onclick="setCalFilter('homework')">Hausaufgaben</button>
+          <button class="cal-chip" id="cal-chip-test" onclick="setCalFilter('test')">Tests</button>
+          <button class="cal-refresh-btn" id="cal-refresh-btn" onclick="refreshCalendar()">↺ Refresh</button>
+        </div>
+      </div>
+      <div class="cal-list" id="cal-list"></div>
+    </div>
+  </div>
+
 </div>
 
 <!-- ╔══════════════════════════════════════════╗ -->
@@ -4863,6 +4914,8 @@ const S = {
   selectedChannels: [],
   schoolConnected: false,
   schoolName: '',
+  slackRawMessages: [],
+  calendarEvents: [],
   familyMemberId: null,
   familyCode: null,
   parentAccountId: null,
@@ -5317,7 +5370,7 @@ function renderChildOnboarding() {
   document.getElementById('ob-co-back').style.display = childOnboardingStep>1 ? 'block' : 'none';
   const nextBtn = document.getElementById('ob-co-next');
   nextBtn.textContent = childOnboardingStep===4 ? 'Start Learning →' : 'Continue →';
-  nextBtn.style.display = childOnboardingStep===4 ? 'none' : 'block';
+  nextBtn.style.display = 'block';
 }
 
 function pickSubjectCO(el) { el.classList.toggle('sel'); }
@@ -5714,6 +5767,7 @@ document.addEventListener('keydown', e => {
 document.getElementById('ob').addEventListener('keydown', e => {
   if (!_enterGuard(e)) return;
   if (document.getElementById('ob-parent-flow').style.display !== 'none') { obParentNext(); return; }
+  if (document.getElementById('ob-child-onboarding').style.display !== 'none') { obChildOnboardingNext(); return; }
   if (document.getElementById('ob-child-flow').style.display !== 'none')  { obChildNext();  return; }
   if (document.getElementById('ob-child-code-screen').style.display !== 'none') { submitFamilyCode(); return; }
 });
@@ -6042,6 +6096,8 @@ function startAppSession() {
   } else if (S.userType === 'parent-child' || S.userType === 'school') {
     tabP.style.display = 'none';
   }
+  const tabC = document.getElementById('tab-c');
+  if (tabC) tabC.style.display = S.selectedChannels.length > 0 ? '' : 'none';
 
   buildStarters();
   if (S.abitur && S.bundesland && S.bundesland !== 'Other') {
@@ -6892,10 +6948,212 @@ function switchView(v) {
   document.getElementById(`v-${v}`).classList.add('active');
   document.getElementById(`tab-${v.charAt(0)}`).classList.add('active');
   if (v === 'parent') buildDashboard();
+  if (v === 'calendar') renderCalendar(S._calFilter || 'all');
 }
 
 function toggleImgs()  { S.imgsOn = !S.imgsOn; document.getElementById('img-pill').classList.toggle('on', S.imgsOn); toast(S.imgsOn ? 'Images ON' : 'Images OFF'); }
 function toggleDev()   { document.getElementById('dev-col').classList.toggle('hide'); }
+
+// ══════════════════════════════════════════════
+//  CALENDAR
+// ══════════════════════════════════════════════
+
+function _calMsgId(msg) {
+  const raw = `${msg.channel}|${msg.author}|${msg.date}|${(msg.text||'').slice(0,40)}`;
+  try { return btoa(encodeURIComponent(raw)).replace(/=/g,''); }
+  catch(e) { return Math.random().toString(36).slice(2); }
+}
+
+function _detectCalType(text) {
+  const t = text.toLowerCase();
+  if (/hausaufgabe[n]?|^ha:|aufgabe[n]?|seite\s+\d+|homework/.test(t)) return 'homework';
+  if (/\btest\b|klausur|prüfung|klassenarbeit|schularbeit|\bexam\b|\bquiz\b|\barbeit\b/.test(t)) return 'test';
+  return null;
+}
+
+function _extractDueDate(text, postedDateStr) {
+  const t = text.toLowerCase();
+  // Parse posted date
+  let base;
+  if (postedDateStr) {
+    const parts = postedDateStr.split('.');
+    if (parts.length === 3) base = new Date(+parts[2], +parts[1]-1, +parts[0]);
+  }
+  if (!base || isNaN(base)) base = new Date();
+
+  // (1) DD.MM explicit date
+  const ddmm = text.match(/(\d{1,2})\.(\d{1,2})\.?(\d{4})?/);
+  if (ddmm) {
+    const year = ddmm[3] ? +ddmm[3] : base.getFullYear();
+    const d = new Date(year, +ddmm[2]-1, +ddmm[1]);
+    if (!isNaN(d)) return _calFmt(d);
+  }
+
+  const dayMap = { montag:1, dienstag:2, mittwoch:3, donnerstag:4, freitag:5, samstag:6, sonntag:0,
+                   monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6, sunday:0 };
+
+  function nextWeekday(name, fromDate, addWeeks) {
+    const target = dayMap[name];
+    if (target === undefined) return null;
+    const d = new Date(fromDate);
+    d.setDate(d.getDate() + (addWeeks||0)*7);
+    const diff = (target - d.getDay() + 7) % 7 || 7;
+    d.setDate(d.getDate() + diff);
+    return _calFmt(d);
+  }
+
+  // (2) morgen / tomorrow
+  if (/\bmorgen\b|\btomorrow\b/.test(t)) {
+    const d = new Date(base); d.setDate(d.getDate()+1); return _calFmt(d);
+  }
+  // (3) übermorgen
+  if (/übermorgen|day after tomorrow/.test(t)) {
+    const d = new Date(base); d.setDate(d.getDate()+2); return _calFmt(d);
+  }
+  // (4) nächste Woche [Wochentag]
+  const nw = t.match(/nächste[nr]?\s+woche\s+(montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag|monday|tuesday|wednesday|thursday|friday|saturday|sunday)/);
+  if (nw) return nextWeekday(nw[1], base, 1);
+
+  // (5) bis/für/am/for/by [Wochentag]
+  const bw = t.match(/(?:bis|für|am|for|by)\s+(montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag|monday|tuesday|wednesday|thursday|friday|saturday|sunday)/);
+  if (bw) return nextWeekday(bw[1], base, 0);
+
+  // (6) Fallback: tomorrow
+  const d = new Date(base); d.setDate(d.getDate()+1); return _calFmt(d);
+}
+
+function _calFmt(d) {
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+function _calDateLabel(dateStr) {
+  const today = _calFmt(new Date());
+  const tomorrow = (() => { const d=new Date(); d.setDate(d.getDate()+1); return _calFmt(d); })();
+  const yesterday = (() => { const d=new Date(); d.setDate(d.getDate()-1); return _calFmt(d); })();
+  if (dateStr === today) return 'Heute';
+  if (dateStr === tomorrow) return 'Morgen';
+  if (dateStr === yesterday) return 'Gestern';
+  const parts = dateStr.split('-');
+  const d = new Date(+parts[0], +parts[1]-1, +parts[2]);
+  if (d < new Date() && dateStr !== today) {
+    const days = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+    const months = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+    return `Überfällig — ${days[d.getDay()]}, ${d.getDate()}. ${months[d.getMonth()]}`;
+  }
+  const days = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+  const months = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  return `${days[d.getDay()]}, ${d.getDate()}. ${months[d.getMonth()]}`;
+}
+
+function parseSlackForCalendar(allContent) {
+  if (!Array.isArray(allContent)) return;
+  const seen = new Set((S.calendarEvents||[]).map(e => e.id));
+  const newEvents = [];
+  for (const msg of allContent) {
+    const type = _detectCalType(msg.text || '');
+    if (!type) continue;
+    const id = _calMsgId(msg);
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const dueDate = _extractDueDate(msg.text, msg.date);
+    newEvents.push({
+      id,
+      dueDate,
+      type,
+      subject: msg.subject || 'Allgemein',
+      text: msg.text || '',
+      author: msg.author || '',
+      channel: msg.channel || '',
+      postedDate: msg.date || ''
+    });
+  }
+  S.calendarEvents = [...(S.calendarEvents||[]), ...newEvents].sort((a,b) => a.dueDate.localeCompare(b.dueDate));
+}
+
+function _calGetDone() {
+  try { return JSON.parse(localStorage.getItem('guided_cal_done') || '[]'); } catch(e) { return []; }
+}
+
+function toggleCalDone(id) {
+  const done = _calGetDone();
+  const idx = done.indexOf(id);
+  if (idx >= 0) done.splice(idx, 1); else done.push(id);
+  localStorage.setItem('guided_cal_done', JSON.stringify(done));
+  const btn = document.querySelector(`[data-cal-done="${id}"]`);
+  if (btn) {
+    const isDone = done.includes(id);
+    btn.classList.toggle('checked', isDone);
+    btn.textContent = isDone ? '✓' : '○';
+    btn.closest('.cal-card').style.opacity = isDone ? '.5' : '';
+  }
+}
+
+function renderCalendar(filter) {
+  S._calFilter = filter || 'all';
+  // Update chip states
+  ['all','homework','test'].forEach(f => {
+    const chip = document.getElementById(`cal-chip-${f}`);
+    if (chip) chip.classList.toggle('sel', f === S._calFilter);
+  });
+
+  const list = document.getElementById('cal-list');
+  if (!list) return;
+
+  const events = (S.calendarEvents || []).filter(ev => filter === 'all' || ev.type === filter);
+  if (!events.length) {
+    list.innerHTML = `<div class="cal-empty"><div class="cal-empty-icon">📅</div><div class="cal-empty-title">Keine Einträge</div><div class="cal-empty-sub">Wenn Lehrer Hausaufgaben oder Tests in Slack posten, erscheinen sie hier automatisch.</div></div>`;
+    return;
+  }
+
+  const done = _calGetDone();
+  // Group by dueDate
+  const groups = {};
+  events.forEach(ev => {
+    if (!groups[ev.dueDate]) groups[ev.dueDate] = [];
+    groups[ev.dueDate].push(ev);
+  });
+
+  const escape = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  let html = '';
+  for (const date of Object.keys(groups).sort()) {
+    const label = _calDateLabel(date);
+    html += `<div class="cal-group"><div class="cal-group-label">${escape(label)}</div>`;
+    for (const ev of groups[date]) {
+      const isDone = done.includes(ev.id);
+      html += `<div class="cal-card" style="${isDone ? 'opacity:.5' : ''}">
+        <div class="cal-card-bar ${ev.type}"></div>
+        <div class="cal-card-body">
+          <div class="cal-card-top">
+            <span class="cal-badge ${ev.type}">${ev.type === 'homework' ? 'Hausaufgabe' : 'Test'}</span>
+            <span class="cal-badge-subject">${escape(ev.subject)}</span>
+          </div>
+          <div class="cal-card-text">${escape(ev.text)}</div>
+          <div class="cal-card-meta">von ${escape(ev.author)} · #${escape(ev.channel)} · gepostet ${escape(ev.postedDate)}</div>
+        </div>
+        <button class="cal-done-btn${isDone ? ' checked' : ''}" data-cal-done="${escape(ev.id)}" onclick="toggleCalDone('${escape(ev.id)}')" title="Als erledigt markieren">${isDone ? '✓' : '○'}</button>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+  list.innerHTML = html;
+}
+
+function setCalFilter(f) {
+  renderCalendar(f);
+}
+
+async function refreshCalendar() {
+  const btn = document.getElementById('cal-refresh-btn');
+  if (btn) btn.classList.add('loading');
+  try {
+    const ctx = await fetchSlackClassContent();
+    if (ctx) S.lessonContext = ctx;
+  } catch(e) {}
+  renderCalendar(S._calFilter || 'all');
+  if (btn) btn.classList.remove('loading');
+}
 
 // ══════════════════════════════════════════════
 //  LOGIN SYSTEM
@@ -7955,6 +8213,8 @@ async function fetchSlackClassContent() {
       }
     } catch(e) { console.warn('Slack channel fetch:', chId, e); }
   }
+  S.slackRawMessages = allContent;
+  parseSlackForCalendar(allContent);
   if (!allContent.length) return '';
   let ctx = '\n━━━━━━━━━━━━━━━━━━━━━━━━\nSCHOOL CONTENT (from Slack — last 7 days)\n━━━━━━━━━━━━━━━━━━━━━━━━\n';
   const bySubject = {};
