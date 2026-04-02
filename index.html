@@ -6147,7 +6147,7 @@ function startAppSession() {
     tabP.style.display = 'none';
   }
   const tabC = document.getElementById('tab-c');
-  if (tabC) tabC.style.display = S.selectedChannels.length > 0 ? '' : 'none';
+  if (tabC) tabC.style.display = (S.selectedChannels.length > 0 || !!S.studentId) ? '' : 'none';
 
   buildStarters();
   if (S.abitur && S.bundesland && S.bundesland !== 'Other') {
