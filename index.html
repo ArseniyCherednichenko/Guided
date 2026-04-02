@@ -3137,7 +3137,7 @@ body { background: #FFFFFF; }
 <!-- ╔══════════════════════════════════════════╗ -->
 <!-- ║           SCHOOL LOGIN SCREEN           ║ -->
 <!-- ╚══════════════════════════════════════════╝ -->
-<div id="school-screen">
+<div id="school-screen" style="display:none">
   <div class="ob-container">
     <div class="ob-brand">
       <div class="ob-brand-mark">
@@ -3286,7 +3286,7 @@ body { background: #FFFFFF; }
 <!-- ╔══════════════════════════════════════════╗ -->
 <!-- ║           ADMIN DASHBOARD               ║ -->
 <!-- ╚══════════════════════════════════════════╝ -->
-<div id="admin-screen">
+<div id="admin-screen" style="display:none">
   <div class="admin-wrap">
     <div class="admin-header">
       <div>
@@ -3580,39 +3580,202 @@ body { background: #FFFFFF; }
       </div>
     </div>
 
+    <!-- Child picker (shown when family has 2+ children) -->
+    <div id="ob-child-picker" style="display:none">
+      <div class="ob-card" style="padding:32px 36px">
+        <div class="ob-step-eyebrow" style="text-align:center;margin-bottom:8px">Family</div>
+        <div class="ob-step-title" style="text-align:center;font-size:22px;margin-bottom:8px">Who are you?</div>
+        <div class="ob-step-desc" style="text-align:center;margin-bottom:24px">Tap your name to continue.</div>
+        <div class="child-picker-grid" id="child-picker-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px"></div>
+        <div style="text-align:center;margin-top:20px">
+          <button onclick="obFamilyBackToChoice()" style="background:none;border:none;color:var(--ink4);font-size:13px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">← Back</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Child mini-onboarding (first time only, 4 steps) -->
+    <div id="ob-child-onboarding" style="display:none">
+      <div class="ob-card">
+        <div class="ob-progress-track">
+          <div class="ob-progress-fill" id="ob-co-prog" style="width:25%"></div>
+        </div>
+
+        <!-- CO1: Subjects -->
+        <div class="ob-step active" id="ob-co1">
+          <div class="ob-step-eyebrow">Step 1 of 4</div>
+          <div class="ob-step-title" id="ob-co1-title">What do you study?</div>
+          <div class="ob-step-desc">Pick the subjects you're learning — your tutor will focus on what matters to you.</div>
+          <div class="fgroup">
+            <label>Your subjects <span style="color:var(--ink4);font-weight:400">(pick all that apply)</span></label>
+            <div class="subject-chips" id="child-ob-subjects">
+              <div class="subject-chip" data-s="Mathe" onclick="pickSubjectCO(this)">Mathe</div>
+              <div class="subject-chip" data-s="Physik" onclick="pickSubjectCO(this)">Physik</div>
+              <div class="subject-chip" data-s="Chemie" onclick="pickSubjectCO(this)">Chemie</div>
+              <div class="subject-chip" data-s="Biologie" onclick="pickSubjectCO(this)">Biologie</div>
+              <div class="subject-chip" data-s="Deutsch" onclick="pickSubjectCO(this)">Deutsch</div>
+              <div class="subject-chip" data-s="Englisch" onclick="pickSubjectCO(this)">Englisch</div>
+              <div class="subject-chip" data-s="Geschichte" onclick="pickSubjectCO(this)">Geschichte</div>
+              <div class="subject-chip" data-s="Geographie" onclick="pickSubjectCO(this)">Geographie</div>
+              <div class="subject-chip" data-s="Informatik" onclick="pickSubjectCO(this)">Informatik</div>
+              <div class="subject-chip" data-s="Wirtschaft" onclick="pickSubjectCO(this)">Wirtschaft</div>
+              <div class="subject-chip" data-s="Kunst" onclick="pickSubjectCO(this)">Kunst</div>
+              <div class="subject-chip" data-s="Musik" onclick="pickSubjectCO(this)">Musik</div>
+              <div class="subject-chip" data-s="Sport" onclick="pickSubjectCO(this)">Sport</div>
+              <div class="subject-chip" data-s="Philosophie" onclick="pickSubjectCO(this)">Philosophie</div>
+              <div class="subject-chip" data-s="Französisch" onclick="pickSubjectCO(this)">Französisch</div>
+              <div class="subject-chip" data-s="Latein" onclick="pickSubjectCO(this)">Latein</div>
+              <div class="subject-chip" data-s="Spanisch" onclick="pickSubjectCO(this)">Spanisch</div>
+              <div class="subject-chip" data-s="Math" onclick="pickSubjectCO(this)">Math</div>
+              <div class="subject-chip" data-s="Science" onclick="pickSubjectCO(this)">Science</div>
+              <div class="subject-chip" data-s="English" onclick="pickSubjectCO(this)">English</div>
+              <div class="subject-chip" data-s="History" onclick="pickSubjectCO(this)">History</div>
+              <div class="subject-chip" data-s="Biology" onclick="pickSubjectCO(this)">Biology</div>
+              <div class="subject-chip" data-s="Chemistry" onclick="pickSubjectCO(this)">Chemistry</div>
+              <div class="subject-chip" data-s="Physics" onclick="pickSubjectCO(this)">Physics</div>
+            </div>
+          </div>
+          <div class="fgroup">
+            <label>Which is your favourite? <span style="color:var(--ink4);font-weight:400">(optional)</span></label>
+            <input class="fi" id="child-ob-fav-subject" placeholder="e.g. Mathe"/>
+          </div>
+          <div class="fgroup">
+            <label>Which is hardest for you? <span style="color:var(--ink4);font-weight:400">(optional)</span></label>
+            <input class="fi" id="child-ob-hard-subject" placeholder="e.g. Chemie"/>
+          </div>
+        </div>
+
+        <!-- CO2: About you -->
+        <div class="ob-step" id="ob-co2">
+          <div class="ob-step-eyebrow">Step 2 of 4</div>
+          <div class="ob-step-title">Tell us about you 😊</div>
+          <div class="ob-step-desc">The more you share, the better your tutor will know you.</div>
+          <div class="fgroup">
+            <label>Hobbies &amp; interests</label>
+            <input class="fi" id="child-ob-hobbies" placeholder="Gaming, football, drawing, reading..."/>
+          </div>
+          <div class="fgroup">
+            <label>Languages you speak</label>
+            <input class="fi" id="child-ob-languages" placeholder="German, English, French..."/>
+          </div>
+          <div class="fgroup">
+            <label>What are you curious about? <span style="color:var(--ink4);font-weight:400">(optional)</span></label>
+            <input class="fi" id="child-ob-curiosity" placeholder="How rockets work, why the sky is blue..."/>
+          </div>
+        </div>
+
+        <!-- CO3: How you learn -->
+        <div class="ob-step" id="ob-co3">
+          <div class="ob-step-eyebrow">Step 3 of 4</div>
+          <div class="ob-step-title">How do you like to learn? 🧠</div>
+          <div class="ob-step-desc">Your tutor will use your style to explain things in a way that clicks for you.</div>
+          <div class="fgroup">
+            <label>I learn best by...</label>
+            <div class="learn-style-grid" id="child-ob-learn-style">
+              <div class="learn-style-card sel" data-ls="visual" onclick="pickLearnStyleCO(this)">
+                <div class="learn-style-emoji">👁️</div>
+                <div class="learn-style-name">Visual</div>
+                <div class="learn-style-desc">Pictures, diagrams, videos</div>
+              </div>
+              <div class="learn-style-card" data-ls="reading" onclick="pickLearnStyleCO(this)">
+                <div class="learn-style-emoji">📖</div>
+                <div class="learn-style-name">Reading</div>
+                <div class="learn-style-desc">Text, articles, taking notes</div>
+              </div>
+              <div class="learn-style-card" data-ls="doing" onclick="pickLearnStyleCO(this)">
+                <div class="learn-style-emoji">✋</div>
+                <div class="learn-style-name">Hands-on</div>
+                <div class="learn-style-desc">Try it, build it, experiment</div>
+              </div>
+              <div class="learn-style-card" data-ls="talking" onclick="pickLearnStyleCO(this)">
+                <div class="learn-style-emoji">💬</div>
+                <div class="learn-style-name">Discussion</div>
+                <div class="learn-style-desc">Talk it through, debate, ask questions</div>
+              </div>
+            </div>
+          </div>
+          <div class="fgroup" style="margin-top:4px">
+            <label>When I'm stuck, it helps most to...</label>
+            <div class="subject-chips" id="child-ob-stuck" style="margin-top:8px">
+              <div class="subject-chip sel" data-val="hint" onclick="pickSingleChipCO(this,'child-ob-stuck')">Get a small hint</div>
+              <div class="subject-chip" data-val="example" onclick="pickSingleChipCO(this,'child-ob-stuck')">See an example</div>
+              <div class="subject-chip" data-val="step" onclick="pickSingleChipCO(this,'child-ob-stuck')">Walk me through it</div>
+              <div class="subject-chip" data-val="angle" onclick="pickSingleChipCO(this,'child-ob-stuck')">Try a different angle</div>
+            </div>
+          </div>
+          <div class="fgroup" style="margin-top:4px">
+            <label>Hard problems make me feel...</label>
+            <div class="subject-chips" id="child-ob-challenge" style="margin-top:8px">
+              <div class="subject-chip sel" data-val="love" onclick="pickSingleChipCO(this,'child-ob-challenge')">I love a challenge 💪</div>
+              <div class="subject-chip" data-val="gentle" onclick="pickSingleChipCO(this,'child-ob-challenge')">Start gentle, then push me</div>
+              <div class="subject-chip" data-val="comfortable" onclick="pickSingleChipCO(this,'child-ob-challenge')">Keep it comfortable</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CO4: Connect school -->
+        <div class="ob-step" id="ob-co4">
+          <div class="ob-step-eyebrow">Step 4 of 4</div>
+          <div class="ob-step-title">Connect your school 🏫</div>
+          <div class="ob-step-desc">Does your school use Guided? Enter the code your teacher gave you — your tutor will know what's being taught in class.</div>
+          <div class="fgroup">
+            <label>School code <span style="color:var(--ink4);font-weight:400">(from your teacher)</span></label>
+            <input class="fi" id="child-ob-school-code" placeholder="e.g. GOETHE01" style="text-transform:uppercase;letter-spacing:2px"/>
+            <div id="child-ob-school-status" style="font-size:12px;margin-top:6px;display:none"></div>
+          </div>
+          <button class="btn-back" onclick="finishChildOnboarding()" style="width:100%;text-align:center;margin-top:-4px;background:none;border:1.5px solid var(--border);color:var(--ink3)">Skip — I'll do this later</button>
+        </div>
+
+        <!-- Nav -->
+        <div class="ob-nav">
+          <div class="step-dots">
+            <div class="sdot cur" id="co-s1"></div>
+            <div class="sdot" id="co-s2"></div>
+            <div class="sdot" id="co-s3"></div>
+            <div class="sdot" id="co-s4"></div>
+          </div>
+          <button class="btn-back" id="ob-co-back" onclick="obChildOnboardingBack()" style="display:none">← Back</button>
+          <button class="btn-next" id="ob-co-next" onclick="obChildOnboardingNext()">Continue →</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Parent onboarding flow -->
     <div id="ob-parent-flow" style="display:none">
       <div class="ob-card">
         <div class="ob-progress-track">
-          <div class="ob-progress-fill" id="ob-p-prog" style="width:33%"></div>
+          <div class="ob-progress-fill" id="ob-p-prog" style="width:25%"></div>
         </div>
 
-        <!-- P1: Parent info -->
+        <!-- P1: Create account -->
         <div class="ob-step active" id="ob-p1">
-          <div class="ob-step-eyebrow">Step 1 of 3</div>
-          <div class="ob-step-title">Your account</div>
-          <div class="ob-step-desc">Just your name to get started — we'll add your child's details next.</div>
+          <div class="ob-step-eyebrow">Step 1 of 4</div>
+          <div class="ob-step-title">Create your account</div>
+          <div class="ob-step-desc">Your account keeps everything saved and lets your child log in with a family code.</div>
           <div class="fgroup">
             <label>Your name</label>
             <input class="fi" id="ob-p-name" placeholder="e.g. Sarah"/>
           </div>
           <div class="fgroup">
-            <label>Your email <span style="color:var(--ink4);font-weight:400">(optional for now)</span></label>
-            <input class="fi" id="ob-p-email" type="email" placeholder="sarah@example.com"/>
+            <label>Email</label>
+            <input class="fi" id="ob-p-email" type="email" placeholder="sarah@example.com" autocomplete="email"/>
+          </div>
+          <div class="fgroup">
+            <label>Password <span style="color:var(--ink4);font-weight:400">(min. 6 characters)</span></label>
+            <input class="fi" id="ob-p-pw" type="password" placeholder="Choose a password" autocomplete="new-password"/>
           </div>
         </div>
 
         <!-- P2: Child profile -->
         <div class="ob-step" id="ob-p2">
-          <div class="ob-step-eyebrow">Step 2 of 3</div>
-          <div class="ob-step-title">Tell us about your child</div>
+          <div class="ob-step-eyebrow">Step 2 of 4</div>
+          <div class="ob-step-title">Add your child</div>
           <div class="ob-step-desc">We'll personalise every response — vocabulary, examples, and difficulty all adapt to them.</div>
           <div class="fgroup">
             <label>Your child's name</label>
             <input class="fi" id="ob-p-child-name" placeholder="e.g. Max"/>
           </div>
           <div class="fgroup">
-            <label>How old is your child?</label>
+            <label>How old are they?</label>
             <div class="age-slider-wrap">
               <div class="age-display">
                 <span class="age-num" id="ob-p-age-display">12</span>
@@ -3623,23 +3786,20 @@ body { background: #FFFFFF; }
             </div>
           </div>
           <div class="fgroup">
-            <label>Which school does your child go to? <span style="color:var(--ink4);font-weight:400">(optional)</span></label>
-            <div class="school-wrap">
-              <input class="fi" id="ob-p-school" placeholder="e.g. Goethe-Gymnasium Berlin, St Mary's London..." oninput="debounceSchoolP(this.value)"/>
-              <div class="school-status" id="ob-p-school-status"></div>
-            </div>
+            <label>Grade / Klasse <span style="color:var(--ink4);font-weight:400">(optional)</span></label>
+            <input class="fi" id="ob-p-grade" placeholder="e.g. Year 8, Klasse 9, 7th Grade"/>
           </div>
           <div class="fgroup">
-            <label>Anything the tutor should know? <span style="color:var(--ink4);font-weight:400">(optional)</span></label>
-            <textarea class="fta" id="ob-p-notes" placeholder="e.g. Gets frustrated quickly, loves football analogies, dyslexic, prefers short answers..."></textarea>
+            <label>School name <span style="color:var(--ink4);font-weight:400">(optional)</span></label>
+            <input class="fi" id="ob-p-school" placeholder="e.g. Goethe-Gymnasium, St Mary's..."/>
           </div>
         </div>
 
-        <!-- P3: Goals + Style + Pace -->
+        <!-- P3: Goals + Style + Pace + Notes -->
         <div class="ob-step" id="ob-p3">
-          <div class="ob-step-eyebrow">Step 3 of 3</div>
-          <div class="ob-step-title">Tutor settings</div>
-          <div class="ob-step-desc">Shape how the tutor teaches your child. You can always change this later.</div>
+          <div class="ob-step-eyebrow">Step 3 of 4</div>
+          <div class="ob-step-title" id="ob-p3-title">Your goals for your child</div>
+          <div class="ob-step-desc">Shape how the tutor teaches. You can always change this later.</div>
           <div class="fgroup">
             <label>Learning Goal</label>
             <div class="goal-chips" id="p-goal-chips">
@@ -3672,7 +3832,7 @@ body { background: #FFFFFF; }
               <div class="style-card sel" data-s="socratic" onclick="pickStyleP(this)">
                 <span class="style-emoji">🧠</span>
                 <div class="style-name">Socratic Guide</div>
-                <div class="style-desc">Explains then asks questions — the student thinks their way to the answer</div>
+                <div class="style-desc">Guides with questions — the student thinks their way to the answer</div>
               </div>
               <div class="style-card" data-s="stepbystep" onclick="pickStyleP(this)">
                 <span class="style-emoji">📐</span>
@@ -3717,6 +3877,26 @@ body { background: #FFFFFF; }
               </div>
             </div>
           </div>
+          <div class="fgroup" style="margin-top:4px">
+            <label>Anything we should know? <span style="color:var(--ink4);font-weight:400">(optional)</span></label>
+            <textarea class="fta" id="ob-p-notes" placeholder="e.g. Gets frustrated quickly, loves football analogies, dyslexic, prefers short answers..."></textarea>
+          </div>
+        </div>
+
+        <!-- P4: Connect to school -->
+        <div class="ob-step" id="ob-p4">
+          <div class="ob-step-eyebrow">Step 4 of 4</div>
+          <div class="ob-step-title" id="ob-p4-title">Connect to school</div>
+          <div class="ob-step-desc">If your child's school uses Guided, enter their code. This lets the tutor know what's being taught in class.</div>
+          <div style="background:var(--cream2);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;font-size:13px;color:var(--ink3);line-height:1.6;margin-bottom:16px">
+            <strong style="color:var(--forest)">Optional —</strong> you can always add this later from the dashboard.
+          </div>
+          <div class="fgroup">
+            <label>School code <span style="color:var(--ink4);font-weight:400">(ask your child's teacher)</span></label>
+            <input class="fi" id="ob-p-school-code" placeholder="e.g. GOETHE01" style="text-transform:uppercase;letter-spacing:2px"/>
+            <div id="ob-p-school-code-status" style="font-size:12px;margin-top:6px;display:none"></div>
+          </div>
+          <button class="btn-back" onclick="obParentSkipSchool()" style="width:100%;text-align:center;margin-top:-4px;background:none;border:1.5px solid var(--border);color:var(--ink3)">Skip for now →</button>
         </div>
 
         <!-- Nav -->
@@ -3725,6 +3905,7 @@ body { background: #FFFFFF; }
             <div class="sdot cur" id="pd1"></div>
             <div class="sdot" id="pd2"></div>
             <div class="sdot" id="pd3"></div>
+            <div class="sdot" id="pd4"></div>
           </div>
           <button class="btn-back" id="ob-p-back" onclick="obParentBack()" style="display:none">← Back</button>
           <button class="btn-next" id="ob-p-next" onclick="obParentNext()">Continue →</button>
@@ -4958,40 +5139,314 @@ function obFamilyChooseChild() {
 }
 function obFamilyBackToChoice() {
   document.getElementById('ob-child-code-screen').style.display = 'none';
+  document.getElementById('ob-child-picker').style.display = 'none';
+  document.getElementById('ob-child-onboarding').style.display = 'none';
   document.getElementById('ob-subchoice').style.display = 'block';
+}
+
+// ── Finish parent onboarding — creates account + child in Supabase ──
+async function finishParentOnboarding() {
+  if (!SB) { toast('Backend not connected — check API keys in setup', 'err'); return; }
+  const btn = document.getElementById('ob-p-next');
+  const origText = btn ? btn.textContent : '';
+  if (btn) { btn.textContent = 'Creating account…'; btn.disabled = true; }
+
+  try {
+    const email = document.getElementById('ob-p-email').value.trim().toLowerCase();
+    const pw = document.getElementById('ob-p-pw').value;
+    const parentName = document.getElementById('ob-p-name').value.trim();
+    const childName = document.getElementById('ob-p-child-name').value.trim();
+    const childAge = document.getElementById('ob-p-age').value;
+    const childGrade = document.getElementById('ob-p-grade')?.value?.trim() || '';
+    const childSchool = document.getElementById('ob-p-school').value.trim();
+    const childNotes = document.getElementById('ob-p-notes')?.value?.trim() || '';
+    const selGoal = document.querySelector('#p-goal-chips .goal-chip.sel');
+    const selStyle = document.querySelector('#p-style-grid .style-card.sel');
+    const selPace = document.querySelector('#p-pace-options .pace-opt.sel');
+    const goal = selGoal?.dataset?.g || 'critical';
+    const style = selStyle?.dataset?.s || 'socratic';
+    const pace = selPace?.dataset?.p || 'balanced';
+
+    const hash = await sha256(pw);
+    const familyCode = Math.random().toString(36).substring(2,8).toUpperCase();
+
+    const { data: account, error } = await SB.from('guided_accounts').insert({
+      email, password_hash: hash, user_type: 'family',
+      family_code: familyCode,
+      profile: { name: parentName }
+    }).select().single();
+
+    if (error) {
+      if (error.code === '23505') toast('Email already registered — please sign in', 'err');
+      else toast('Error: ' + error.message, 'err');
+      return;
+    }
+
+    S.accountId = account.id;
+    S.userType = 'family';
+    S.familyCode = familyCode;
+    localStorage.setItem('guided_family_code', familyCode);
+
+    // Handle optional school code
+    let studentId = null;
+    const schoolCode = document.getElementById('ob-p-school-code')?.value?.trim()?.toUpperCase();
+    let resolvedSchoolName = childSchool;
+    if (schoolCode) {
+      const { data: school } = await SB.from('schools').select('id,name').eq('code', schoolCode).single();
+      if (school) {
+        const pin = String(Math.floor(1000 + Math.random() * 9000));
+        const { data: student } = await SB.from('students').insert({
+          school_id: school.id, name: childName, age: parseInt(childAge) || 12,
+          style, goal, notes: childNotes, pin_hash: pin
+        }).select().single();
+        if (student) studentId = student.id;
+        resolvedSchoolName = school.name;
+        toast(`Connected to ${school.name} ✓`, 'ok');
+      } else {
+        toast('School code not found — skipping school connection', 'err');
+      }
+    }
+
+    const goalMap = { critical:'Build strong critical thinking', homework:'Homework support', curiosity:'Curiosity & love of learning' };
+    const styleLabels = { socratic:'Socratic Guide', stepbystep:'Step by Step', friendly:'Warm & Patient', challenge:'Challenge Mode' };
+    const paceLabels = { guided:'Guided', balanced:'Balanced', direct:'Direct' };
+
+    const { data: fm } = await SB.from('family_members').insert({
+      account_id: account.id, name: childName, age: parseInt(childAge) || 12,
+      school: resolvedSchoolName || '', style, goal, pace,
+      notes: [childNotes, childGrade && 'Grade: ' + childGrade].filter(Boolean).join('. '),
+      student_id: studentId, subjects: [], child_profile: {}
+    }).select().single();
+
+    window.parentData = {
+      name: parentName, familyCode,
+      children: [{
+        id: fm?.id, name: childName, age: childAge, school: resolvedSchoolName || '',
+        style, goal, pace,
+        notes: [childNotes, childGrade && 'Grade: ' + childGrade].filter(Boolean).join('. '),
+        subjects: [], child_profile: {}, student_id: studentId, ai_notes: '',
+        styleLabel: styleLabels[style], goalLabel: goalMap[goal], paceLabel: paceLabels[pace]
+      }]
+    };
+
+    document.getElementById('ob').style.display = 'none';
+    showParentDashboard();
+    toast(`Account created! Family code: ${familyCode}`, 'ok');
+  } catch(e) {
+    toast('Error: ' + e.message, 'err');
+  } finally {
+    if (btn) { btn.textContent = origText; btn.disabled = false; }
+  }
+}
+
+// ── Child mini-onboarding ──
+let childOnboardingStep = 1;
+
+function startChildOnboarding(child) {
+  childOnboardingStep = 1;
+  document.getElementById('ob-child-onboarding').style.display = 'block';
+  const title = document.getElementById('ob-co1-title');
+  if (title && child.name) title.textContent = `What do you study, ${child.name}?`;
+  renderChildOnboarding();
+}
+
+function obChildOnboardingBack() {
+  if (childOnboardingStep < 2) return;
+  childOnboardingStep--; renderChildOnboarding();
+}
+function obChildOnboardingNext() {
+  if (childOnboardingStep === 4) { finishChildOnboarding(); return; }
+  childOnboardingStep++; renderChildOnboarding();
+}
+function renderChildOnboarding() {
+  ['ob-co1','ob-co2','ob-co3','ob-co4'].forEach((id,i) => {
+    document.getElementById(id).classList.toggle('active', i+1===childOnboardingStep);
+    const dot = document.getElementById(`co-s${i+1}`);
+    dot.classList.toggle('cur', i+1===childOnboardingStep);
+    dot.classList.toggle('done', i+1<childOnboardingStep);
+  });
+  document.getElementById('ob-co-prog').style.width = (childOnboardingStep/4*100)+'%';
+  document.getElementById('ob-co-back').style.display = childOnboardingStep>1 ? 'block' : 'none';
+  const nextBtn = document.getElementById('ob-co-next');
+  nextBtn.textContent = childOnboardingStep===4 ? 'Start Learning →' : 'Continue →';
+  nextBtn.style.display = childOnboardingStep===4 ? 'none' : 'block';
+}
+
+function pickSubjectCO(el) { el.classList.toggle('sel'); }
+function pickLearnStyleCO(el) {
+  document.querySelectorAll('#child-ob-learn-style .learn-style-card').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+}
+function pickSingleChipCO(el, containerId) {
+  document.querySelectorAll(`#${containerId} .subject-chip`).forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+async function finishChildOnboarding() {
+  const child = window.selectedFamilyChild;
+  if (!child) return;
+  const btn = document.getElementById('ob-co-next');
+  if (btn) { btn.textContent = 'Saving…'; btn.disabled = true; }
+  try {
+    const subjects = [...document.querySelectorAll('#child-ob-subjects .subject-chip.sel')].map(el => el.dataset.s);
+    const favSubject = document.getElementById('child-ob-fav-subject')?.value?.trim() || '';
+    const hardSubject = document.getElementById('child-ob-hard-subject')?.value?.trim() || '';
+    const hobbies = document.getElementById('child-ob-hobbies')?.value?.trim() || '';
+    const languages = document.getElementById('child-ob-languages')?.value?.trim() || '';
+    const curiosity = document.getElementById('child-ob-curiosity')?.value?.trim() || '';
+    const learnStyle = document.querySelector('#child-ob-learn-style .learn-style-card.sel')?.dataset?.ls || 'visual';
+    const whenStuck = document.querySelector('#child-ob-stuck .subject-chip.sel')?.dataset?.val || 'hint';
+    const challengePref = document.querySelector('#child-ob-challenge .subject-chip.sel')?.dataset?.val || 'gentle';
+
+    const childProfile = {
+      subjects, favorite_subject: favSubject, hardest_subject: hardSubject,
+      hobbies, languages, curiosity,
+      learn_style: learnStyle, when_stuck: whenStuck,
+      challenge_preference: challengePref,
+      onboarded: true
+    };
+
+    let studentId = child.student_id || null;
+    const schoolCode = document.getElementById('child-ob-school-code')?.value?.trim()?.toUpperCase();
+    if (schoolCode && !studentId && SB) {
+      const { data: school } = await SB.from('schools').select('id,name').eq('code', schoolCode).single();
+      if (school) {
+        const pin = String(Math.floor(1000 + Math.random() * 9000));
+        const { data: student } = await SB.from('students').insert({
+          school_id: school.id, name: child.name, age: child.age || 12,
+          style: child.style || 'socratic', goal: child.goal || 'critical',
+          notes: child.notes || '', pin_hash: pin
+        }).select().single();
+        if (student) studentId = student.id;
+        toast(`Connected to ${school.name} ✓`, 'ok');
+      }
+    }
+
+    if (SB) {
+      await SB.from('family_members').update({
+        child_profile: childProfile, subjects, student_id: studentId
+      }).eq('id', child.id);
+    }
+
+    child.child_profile = childProfile;
+    child.subjects = subjects;
+    child.student_id = studentId;
+
+    launchFamilyChild(child);
+  } catch(e) {
+    toast('Error: ' + e.message, 'err');
+    if (btn) { btn.textContent = 'Start Learning →'; btn.disabled = false; }
+  }
+}
+
+// ── Launch family child (new or returning) ──
+async function launchFamilyChild(child) {
+  ['ob','ob-child-picker','ob-child-onboarding','ob-child-code-screen','ob-child-flow'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+
+  const cp = child.child_profile || {};
+  S.name           = child.name;
+  S.age            = child.age || '12';
+  S.school         = child.school || '';
+  S.style          = child.style || 'socratic';
+  S.learningGoal   = child.goal || 'critical';
+  S.pace           = child.pace || 'balanced';
+  S.familyMemberId = child.id || null;
+  S.studentId      = child.student_id || null;
+  S.aiNotes        = child.ai_notes || '';
+  S.userType       = 'parent-child';
+  S.sessionStart   = Date.now();
+  S.subj           = (cp.subjects?.length) ? cp.subjects.join(', ') : (child.subjects?.length ? child.subjects.join(', ') : 'General / Mixed');
+  S.notes = [
+    child.notes,
+    cp.hobbies     && 'Hobbies: '             + cp.hobbies,
+    cp.languages   && 'Languages: '           + cp.languages,
+    cp.curiosity   && 'Curious about: '       + cp.curiosity,
+    cp.favorite_subject && 'Favourite subject: '  + cp.favorite_subject,
+    cp.hardest_subject  && 'Finds hardest: '      + cp.hardest_subject,
+    cp.learn_style      && 'Learns best by: '     + cp.learn_style,
+    cp.when_stuck       && 'When stuck prefers: ' + cp.when_stuck,
+    cp.challenge_preference && 'Challenge pref: ' + cp.challenge_preference
+  ].filter(Boolean).join('. ');
+  const goalMap = { critical:'Build strong critical thinking', homework:'Homework support', curiosity:'Curiosity & love of learning' };
+  S.goal = goalMap[S.learningGoal] || '';
+
+  if (S.studentId) {
+    try { S.lessonContext = await fetchTodaysLessonContext(); } catch(e) { S.lessonContext = ''; }
+  }
+  await loadLearningProfile(null);
+  startAppSession();
 }
 async function submitFamilyCode() {
   const entered = document.getElementById('ob-child-code-input').value.trim().toUpperCase();
   const errEl = document.getElementById('ob-child-code-error');
   errEl.style.display = 'none';
-  if (!entered) { errEl.textContent = 'Please enter the family code.'; errEl.style.display = 'block'; return; }
+  if (!entered) { errEl.textContent = 'Please enter your family code.'; errEl.style.display = 'block'; return; }
+  if (!SB) { errEl.textContent = 'Not connected. Ask a parent for help.'; errEl.style.display = 'block'; return; }
 
-  let valid = false;
-  let parentAccountId = null;
+  const { data: account } = await SB.from('guided_accounts')
+    .select('id, family_code, profile')
+    .eq('family_code', entered).single();
 
-  if (SB) {
-    try {
-      const { data: account } = await SB.from('guided_accounts').select('id').eq('family_code', entered).single();
-      if (account) { valid = true; parentAccountId = account.id; }
-    } catch(e) { console.warn('Supabase family code check failed, falling back to localStorage:', e); }
-  }
-
-  if (!valid) {
-    const saved = localStorage.getItem('guided_family_code');
-    if (saved && entered === saved) { valid = true; }
-  }
-
-  if (!valid) {
-    errEl.textContent = 'Incorrect code. Ask your parent for the right one.';
+  if (!account) {
+    errEl.textContent = 'Code not found. Check with your parent.';
     errEl.style.display = 'block';
     return;
   }
 
-  S.familyCode = entered;
-  S.parentAccountId = parentAccountId;
+  const { data: children } = await SB.from('family_members')
+    .select('*').eq('account_id', account.id).order('created_at');
+
+  if (!children || !children.length) {
+    errEl.textContent = 'No profiles found. Ask your parent to add you first.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  S.parentAccountId = account.id;
+  window._familyChildren = children;
+
+  if (children.length === 1) {
+    window.selectedFamilyChild = children[0];
+    proceedAfterChildSelection();
+  } else {
+    showChildPicker(children);
+  }
+}
+
+function showChildPicker(children) {
   document.getElementById('ob-child-code-screen').style.display = 'none';
-  document.getElementById('ob-child-flow').style.display = 'block';
-  obChildStep = 1; renderObChild();
+  const panel = document.getElementById('ob-child-picker');
+  panel.style.display = 'block';
+  const grid = document.getElementById('child-picker-grid');
+  grid.innerHTML = children.map(c => `
+    <div onclick="selectFamilyChild('${c.id}')" style="cursor:pointer;background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:24px 16px;text-align:center;transition:all .15s" onmouseover="this.style.borderColor='var(--forest)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(145deg,#1a3328,#2d6a4f);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;margin:0 auto 12px">${c.name[0].toUpperCase()}</div>
+      <div style="font-size:16px;font-weight:700;color:var(--ink)">${c.name}</div>
+      <div style="font-size:12px;color:var(--ink3);margin-top:4px">${c.age || ''} ${c.age ? 'years old' : ''}</div>
+    </div>
+  `).join('');
+}
+
+function selectFamilyChild(id) {
+  const child = window._familyChildren.find(c => String(c.id) === String(id));
+  if (!child) return;
+  window.selectedFamilyChild = child;
+  proceedAfterChildSelection();
+}
+
+function proceedAfterChildSelection() {
+  const child = window.selectedFamilyChild;
+  if (!child) return;
+  document.getElementById('ob-child-picker').style.display = 'none';
+  document.getElementById('ob-child-code-screen').style.display = 'none';
+  if (child.child_profile?.onboarded) {
+    launchFamilyChild(child);
+  } else {
+    startChildOnboarding(child);
+  }
 }
 
 // ── Parent flow ──
@@ -5000,21 +5455,45 @@ function obParentBack() {
   obParentStep--; renderObParent();
 }
 function obParentNext() {
-  if (obParentStep === 1 && !document.getElementById('ob-p-name').value.trim()) { toast('Enter your name', 'err'); return; }
+  if (obParentStep === 1) {
+    const name = document.getElementById('ob-p-name').value.trim();
+    const email = document.getElementById('ob-p-email').value.trim();
+    const pw = document.getElementById('ob-p-pw').value;
+    if (!name) { toast('Enter your name', 'err'); return; }
+    if (!email || !email.includes('@')) { toast('Enter a valid email', 'err'); return; }
+    if (!pw || pw.length < 6) { toast('Password must be at least 6 characters', 'err'); return; }
+  }
   if (obParentStep === 2 && !document.getElementById('ob-p-child-name').value.trim()) { toast("Enter your child's name", 'err'); return; }
-  if (obParentStep === 3) { launchParentDashboard(); return; }
+  if (obParentStep === 3) {
+    // Update title with child name
+    const childName = document.getElementById('ob-p-child-name').value.trim();
+    const p4title = document.getElementById('ob-p4-title');
+    if (p4title && childName) p4title.textContent = `Connect ${childName} to school`;
+  }
+  if (obParentStep === 4) { finishParentOnboarding(); return; }
   obParentStep++; renderObParent();
 }
+function obParentSkipSchool() {
+  document.getElementById('ob-p-school-code').value = '';
+  finishParentOnboarding();
+}
 function renderObParent() {
-  ['ob-p1','ob-p2','ob-p3'].forEach((id,i) => {
+  ['ob-p1','ob-p2','ob-p3','ob-p4'].forEach((id,i) => {
     document.getElementById(id).classList.toggle('active', i+1===obParentStep);
     const dot = document.getElementById(`pd${i+1}`);
     dot.classList.toggle('cur', i+1===obParentStep);
     dot.classList.toggle('done', i+1<obParentStep);
   });
-  document.getElementById('ob-p-prog').style.width = (obParentStep/3*100)+'%';
+  document.getElementById('ob-p-prog').style.width = (obParentStep/4*100)+'%';
   document.getElementById('ob-p-back').style.display = obParentStep>1 ? 'block' : 'none';
-  document.getElementById('ob-p-next').textContent = obParentStep===3 ? 'Go to Dashboard →' : 'Continue →';
+  document.getElementById('ob-p-next').style.display = obParentStep===4 ? 'none' : 'block';
+  document.getElementById('ob-p-next').textContent = obParentStep===3 ? 'Continue →' : 'Continue →';
+  // Update step 3 title with child name
+  if (obParentStep >= 3) {
+    const childName = document.getElementById('ob-p-child-name').value.trim();
+    const el = document.getElementById('ob-p3-title');
+    if (el && childName) el.textContent = `Your goals for ${childName}`;
+  }
 }
 
 // ── Child flow ──
@@ -5193,7 +5672,8 @@ function renderParentDashboard() {
         ${c.notes?`<div class="child-setting-row"><span class="child-setting-label">Notes</span><span class="child-setting-val" style="font-size:11px;max-width:160px;text-align:right;color:var(--ink3)">${c.notes.slice(0,40)}${c.notes.length>40?'...':''}</span></div>`:''}
       </div>
       <div class="child-card-btns">
-        <button class="btn-start-child" onclick="showChildDashboard(${i})">Dashboard →</button>
+        <button class="btn-start-child" onclick="launchFromDashboard(${i})">Start Learning →</button>
+        <button class="btn-edit-child" onclick="showChildDashboard(${i})">Dashboard</button>
       </div>
     </div>`;
   }).join('');
@@ -5309,22 +5789,10 @@ async function saveNewChild() {
 async function launchFromDashboard(idx) {
   const child = window.parentData.children[idx];
   if (!child) return;
-  S.name           = child.name;
-  S.age            = child.age;
-  S.school         = child.school || '';
-  S.notes          = child.notes || '';
-  S.style          = child.style;
-  S.learningGoal   = child.goal;
-  S.pace           = child.pace;
-  S.subj           = (child.subjects&&child.subjects.length) ? child.subjects.join(', ') : 'General / Mixed';
-  S.goal           = child.goalLabel || child.goal;
-  S.sessionStart   = Date.now();
-  S.userType       = 'parent-child';
-  S.familyMemberId = child.id || null;
-  S.aiNotes        = child.ai_notes || '';
   document.getElementById('parent-dashboard').style.display = 'none';
-  await loadLearningProfile(null);
-  startAppSession();
+  const cdEl = document.getElementById('child-dashboard');
+  if (cdEl) cdEl.style.display = 'none';
+  await launchFamilyChild(child);
 }
 
 // ── Launch: Child onboarding ──
@@ -7573,6 +8041,7 @@ async function unifiedSignIn() {
           id: m.id, name: m.name, age: m.age, school: m.school,
           style: m.style, goal: m.goal, pace: m.pace, notes: m.notes,
           subjects: m.subjects || [], ai_notes: m.ai_notes || '',
+          child_profile: m.child_profile || null,
           styleLabel: styleLabels[m.style] || m.style,
           goalLabel:  goalMap[m.goal]      || m.goal,
           paceLabel:  paceLabels[m.pace]   || m.pace,
