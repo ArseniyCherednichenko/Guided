@@ -5038,9 +5038,9 @@ function _enterGuard(e) {
   return true;
 }
 
-document.getElementById('ob-student').addEventListener('keydown', e => {
+document.addEventListener('keydown', e => {
   if (!_enterGuard(e)) return;
-  obStudentNext();
+  if (document.getElementById('ob-student').style.display !== 'none') obStudentNext();
 });
 
 document.getElementById('ob').addEventListener('keydown', e => {
