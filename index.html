@@ -489,34 +489,40 @@ input[type=range]::-webkit-slider-thumb:hover {
 /* ══════════════════════════════════════════════
    APP
 ══════════════════════════════════════════════ */
-#app { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+#app { display: none; flex: 1; overflow: hidden; flex-direction: row; }
 #app.show { display: flex; }
 
-/* Top nav */
+/* ── SIDEBAR (was: Top nav) ── */
 .topnav {
-  background: rgba(255,255,255,.95);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(226,218,208,.7);
-  height: 58px;
-  padding: 0 24px;
+  flex-direction: column;
+  width: 260px; min-width: 260px;
+  height: 100dvh;
+  background: #0D1F17;
+  border-bottom: none;
+  border-right: 1px solid rgba(255,255,255,.07);
+  padding: 0;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 0;
   flex-shrink: 0;
-  box-shadow: 0 1px 0 rgba(226,218,208,.5), 0 4px 16px rgba(0,0,0,.04);
+  box-shadow: none;
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  overflow-y: auto; overflow-x: hidden;
 }
 
 .nav-logo {
   font-family: 'Playfair Display', serif;
-  font-size: 21px;
+  font-size: 18px;
   font-weight: 700;
-  color: var(--forest);
-  letter-spacing: -.4px;
-  margin-right: 32px;
+  color: #fff;
+  letter-spacing: -.3px;
+  margin-right: 0;
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
+  padding: 20px 18px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  flex-shrink: 0;
 }
 
 .nav-logo-dot {
@@ -532,27 +538,53 @@ input[type=range]::-webkit-slider-thumb:hover {
   50% { opacity: .45; transform: scale(.8); }
 }
 
-.nav-tab {
-  height: 58px;
-  padding: 0 18px;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--ink4);
+#sidebar-new-chat {
+  margin: 12px 10px 6px;
+  padding: 9px 14px;
+  background: rgba(255,255,255,.09);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 10px;
+  color: rgba(255,255,255,.85);
+  font-size: 13.5px; font-weight: 600;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
+  font-family: var(--font-body);
   transition: all .15s;
-  user-select: none;
-  letter-spacing: -.1px;
+  text-align: left;
+  flex-shrink: 0;
+}
+#sidebar-new-chat:hover { background: rgba(255,255,255,.15); border-color: rgba(255,255,255,.24); color: #fff; }
+
+.sidebar-section-label {
+  padding: 10px 18px 4px;
+  font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: rgba(255,255,255,.3);
+  flex-shrink: 0;
 }
 
-.nav-tab:hover { color: var(--ink2); }
-.nav-tab.active { color: var(--forest); border-bottom-color: var(--forest); }
+.nav-tab {
+  height: auto;
+  padding: 10px 14px;
+  margin: 2px 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: rgba(255,255,255,.55);
+  cursor: pointer;
+  border-bottom: none;
+  border-radius: 8px;
+  transition: all .15s;
+  user-select: none;
+  letter-spacing: 0;
+  flex-shrink: 0;
+}
+
+.nav-tab:hover { color: rgba(255,255,255,.88); background: rgba(255,255,255,.05); }
+.nav-tab.active { background: rgba(255,255,255,.1); color: #fff; border-bottom-color: transparent; }
 
 .nav-tab-badge {
-  background: var(--gold-dim);
+  background: rgba(184,130,42,.2);
   color: var(--gold);
   font-size: 10px;
   font-weight: 700;
@@ -564,29 +596,44 @@ input[type=range]::-webkit-slider-thumb:hover {
 
 .nav-tab.has-data .nav-tab-badge { opacity: 1; }
 
-.nav-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+#sidebar-subjects { flex: 1; overflow-y: auto; padding: 4px 0 8px; min-height: 0; }
+.sidebar-subject {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 14px; margin: 1px 8px;
+  border-radius: 8px;
+  color: rgba(255,255,255,.55);
+  font-size: 13.5px; font-weight: 500;
+  cursor: pointer; transition: all .15s;
+  font-family: var(--font-body);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sidebar-subject:hover { background: rgba(255,255,255,.05); color: rgba(255,255,255,.88); }
+.sidebar-subject.active { background: rgba(255,255,255,.1); color: #fff; }
+
+.nav-right { margin-top: auto; display: flex; align-items: stretch; gap: 8px; flex-direction: column; padding: 12px 10px; border-top: 1px solid rgba(255,255,255,.07); flex-shrink: 0; }
 
 .profile-chip {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--cream);
-  border: 1px solid var(--border);
-  border-radius: 40px;
-  padding: 5px 14px 5px 6px;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 10px;
+  padding: 10px 14px;
   cursor: pointer;
   transition: all .2s;
   font-size: 13px;
   font-weight: 600;
-  color: var(--ink2);
+  color: rgba(255,255,255,.8);
+  width: 100%; box-sizing: border-box;
 }
 
-.profile-chip:hover { border-color: var(--forest); color: var(--forest); background: rgba(26,51,40,.03); }
+.profile-chip:hover { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.2); color: #fff; }
 
 .chip-av {
   width: 26px; height: 26px;
   border-radius: 50%;
-  background: var(--btn-gradient);
+  background: var(--forest2);
   color: #fff;
   display: flex;
   align-items: center;
@@ -594,15 +641,16 @@ input[type=range]::-webkit-slider-thumb:hover {
   font-size: 11px;
   font-weight: 700;
   font-family: 'Playfair Display', serif;
-  box-shadow: 0 2px 6px rgba(26,51,40,.3);
+  border: 1.5px solid rgba(255,255,255,.15);
+  flex-shrink: 0;
 }
 
 .nav-pill {
-  background: var(--cream);
-  border: 1px solid var(--border);
-  color: var(--ink3);
-  border-radius: 24px;
-  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.15);
+  color: rgba(255,255,255,.5);
+  border-radius: 10px;
+  padding: 7px 12px;
   font-size: 12px;
   font-weight: 600;
   font-family: 'Plus Jakarta Sans', sans-serif;
@@ -610,12 +658,60 @@ input[type=range]::-webkit-slider-thumb:hover {
   transition: all .2s;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
   letter-spacing: .1px;
+  width: 100%; box-sizing: border-box;
 }
 
-.nav-pill:hover { border-color: var(--forest); color: var(--forest); background: rgba(26,51,40,.03); transform: translateY(-1px); }
-.nav-pill.on { background: var(--btn-gradient); color: #fff; border-color: var(--forest); box-shadow: 0 3px 10px rgba(26,51,40,.25); }
+.nav-pill:hover { border-color: rgba(255,255,255,.3); color: rgba(255,255,255,.85); background: rgba(255,255,255,.05); }
+.nav-pill.on { background: rgba(255,255,255,.08); color: rgba(255,255,255,.85); border-color: rgba(255,255,255,.2); }
+
+/* Mobile sidebar */
+#sidebar-hamburger {
+  display: none; position: fixed; top: 14px; left: 16px; z-index: 701;
+  background: var(--forest); border: none; color: #fff; border-radius: 8px;
+  padding: 8px 10px; cursor: pointer; font-size: 16px; line-height: 1;
+  box-shadow: 0 2px 10px rgba(0,0,0,.25);
+}
+#sidebar-overlay {
+  display: none; position: fixed; inset: 0; z-index: 699; background: rgba(0,0,0,.4);
+}
+@media (max-width: 768px) {
+  #sidebar-hamburger { display: block; }
+  .topnav {
+    position: fixed; left: 0; top: 0; bottom: 0; z-index: 700;
+    transform: translateX(-100%); transition: transform .3s ease;
+  }
+  .topnav.open { transform: translateX(0); }
+  #sidebar-overlay.open { display: block; }
+  #v-student, #v-parent, #v-calendar { padding-top: 52px; }
+}
+
+/* Empty state — left-aligned */
+.empty-chat {
+  align-items: flex-start; justify-content: flex-start;
+  text-align: left; padding: 64px 52px 40px;
+  max-width: 780px; margin: 0 auto; width: 100%; box-sizing: border-box;
+  gap: 8px;
+}
+.empty-icon-ring { display: none; }
+.empty-title { font-size: 30px; letter-spacing: -.5px; margin-bottom: 2px; }
+.empty-sub { font-size: 15px; max-width: 500px; }
+.starter-grid {
+  flex-direction: row; flex-wrap: wrap; gap: 12px;
+  justify-content: flex-start; max-width: 100%; margin-top: 28px;
+}
+.starter {
+  border-radius: 14px; padding: 16px 18px; font-size: 13px;
+  text-align: left; flex: 1 1 180px; max-width: 240px; min-width: 140px; line-height: 1.45;
+}
+.input-wrap { border-radius: 24px; }
+@media (max-width: 768px) {
+  .empty-chat { padding: 40px 20px 32px; }
+  .starter { flex: 1 1 130px; max-width: 100%; }
+  .input-wrap { border-radius: 20px; }
+}
 
 /* ══════════════════════════════════════════════
    VIEWS
@@ -4642,19 +4738,23 @@ body { background: #FFFFFF; }
 <div id="app">
 
   <div class="topnav">
-    <div class="nav-logo" style="display:flex;align-items:center;gap:10px">
-      <button onclick="goHome()" style="display:none;background:none;border:none;color:var(--ink4);font-size:13px;cursor:pointer;padding:4px 6px;border-radius:8px;transition:background .15s;line-height:1" title="Back to home">←</button>
+    <div class="nav-logo">
+      <button onclick="goHome()" style="display:none;background:none;border:none;color:rgba(255,255,255,.4);font-size:13px;cursor:pointer;padding:4px 6px;border-radius:8px;transition:background .15s;line-height:1" title="Back to home">←</button>
       <div class="nav-logo-dot"></div>
       Guided
     </div>
-    <div class="nav-tab active" id="tab-s" onclick="switchView('student')">Student</div>
+    <button id="sidebar-new-chat" onclick="clearChat()">+ Neues Thema</button>
+    <div class="sidebar-section-label">Ansichten</div>
+    <div class="nav-tab active" id="tab-s" onclick="switchView('student')">🎓 Student</div>
     <div class="nav-tab" id="tab-p" onclick="switchView('parent')" style="display:none">
-      Parent Dashboard
+      📊 Dashboard
       <span class="nav-tab-badge" id="dash-badge">Live</span>
     </div>
     <div class="nav-tab" id="tab-c" onclick="switchView('calendar')" style="display:none">
       📅 Kalender
     </div>
+    <div class="sidebar-section-label" id="sidebar-subj-label" style="display:none">Fächer</div>
+    <div id="sidebar-subjects"></div>
     <div class="nav-right">
       <div class="profile-chip" id="profile-chip" onclick="openSettings()">
         <div class="chip-av" id="chip-av">?</div>
@@ -4663,6 +4763,8 @@ body { background: #FFFFFF; }
       <button class="nav-pill on" id="img-pill" onclick="toggleImgs()">🖼 Images</button>
     </div>
   </div>
+  <button id="sidebar-hamburger" onclick="toggleSidebar()">☰</button>
+  <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
   <!-- STUDENT VIEW -->
   <div class="view active" id="v-student">
@@ -6386,6 +6488,46 @@ function startAppSession() {
   }, 500);
 
   document.getElementById('minput').focus();
+  updateSidebarSubjects();
+}
+
+function updateSidebarSubjects() {
+  const container = document.getElementById('sidebar-subjects');
+  const label = document.getElementById('sidebar-subj-label');
+  if (!container) return;
+  const allSubjects = [...(S.lk||[]), ...(S.gk||[])].filter(Boolean);
+  if (!allSubjects.length) {
+    container.innerHTML = '';
+    if (label) label.style.display = 'none';
+    return;
+  }
+  if (label) label.style.display = '';
+  const emojiMap = {
+    'Mathematik':'📐','Mathe':'📐','Physik':'🔬','Chemie':'⚗️','Biologie':'🌿',
+    'Deutsch':'📖','Englisch':'🗣️','Geschichte':'🏛️','Geographie':'🌍','Geografie':'🌍',
+    'Informatik':'💻','Kunst':'🎨','Musik':'🎵','Sport':'⚽','Politik':'🏛️',
+    'Wirtschaft':'📊','Philosophie':'💭','Latein':'📜','Französisch':'🇫🇷','Spanisch':'🇪🇸'
+  };
+  container.innerHTML = allSubjects.map(s => {
+    const emoji = emojiMap[s] || '📚';
+    const isActive = s === (S.currentSubject || S.subj);
+    return `<div class="sidebar-subject${isActive?' active':''}" data-subject="${s.replace(/"/g,'&quot;')}" onclick="switchSubject('${s.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">${emoji} ${s}</div>`;
+  }).join('');
+}
+
+function switchSubject(subject) {
+  S.currentSubject = subject;
+  S.subj = subject;
+  const dSubj = document.getElementById('d-subj');
+  if (dSubj) dSubj.textContent = subject;
+  clearChat();
+  buildStarters();
+  updateSidebarSubjects();
+}
+
+function toggleSidebar() {
+  document.querySelector('.topnav').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
 }
 
 // ══════════════════════════════════════════════
