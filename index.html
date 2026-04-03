@@ -3372,6 +3372,76 @@ body { background: #FFFFFF; }
   box-shadow: 0 0 0 3px rgba(26,51,40,.07), 0 2px 20px rgba(0,0,0,.055);
 }
 
+/* ── Border Glow (proximity-based) ── */
+.glow-wrapper {
+  position: relative;
+  max-width: 800px;
+  margin: 0 auto;
+  border-radius: 22px;
+}
+
+.glow-wrapper .input-wrap {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  max-width: none;
+}
+
+.glow-border {
+  position: absolute;
+  inset: -2px;
+  border-radius: 22px;
+  opacity: 0;
+  transition: opacity .4s ease;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(
+    300px 80px at var(--glow-x, 50%) var(--glow-y, 50%),
+    #22C55E 0%,
+    rgba(34,197,94,.7) 25%,
+    rgba(34,197,94,.3) 50%,
+    transparent 80%
+  );
+}
+
+/* White cutout so glow only shows on border */
+.glow-border::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 20px;
+  background: #FEFEFE;
+  z-index: 2;
+}
+
+.glow-wrapper.glow-active .glow-border {
+  opacity: 1;
+}
+
+.glow-wrapper.glow-active .input-wrap {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+/* Soft outer glow aura */
+.glow-wrapper::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 28px;
+  opacity: 0;
+  transition: opacity .35s ease;
+  pointer-events: none;
+  z-index: 0;
+  box-shadow:
+    0 0 25px rgba(34,197,94,.25),
+    0 0 50px rgba(34,197,94,.1);
+}
+
+.glow-wrapper.glow-active::after {
+  opacity: 1;
+}
+
 #minput {
   font-size: 15px;
   line-height: 1.65;
@@ -4085,10 +4155,11 @@ body { background: #FFFFFF; }
         <div class="fgroup">
           <label>Learning Style</label>
           <select class="fs" id="new-s-style">
-            <option value="socratic">Socratic</option>
-            <option value="stepbystep">Step by Step</option>
-            <option value="friendly">Warm &amp; Patient</option>
-            <option value="challenge">Challenge Mode</option>
+            <option value="calm">Calm &amp; Empathetic</option>
+            <option value="direct">Clear &amp; Direct</option>
+            <option value="structured">Structured &amp; Methodical</option>
+            <option value="motivating">Energetic &amp; Motivating</option>
+            <option value="rigorous">Demanding &amp; Rigorous</option>
           </select>
         </div>
         <div class="fgroup">
@@ -4462,7 +4533,7 @@ body { background: #FFFFFF; }
         <!-- CO3: How you learn -->
         <div class="ob-step" id="ob-co3">
           <div class="ob-step-eyebrow">Step 3 of 4</div>
-          <div class="ob-step-title">How do you like to learn? 🧠</div>
+          <div class="ob-step-title">How do you like to learn?</div>
           <div class="ob-step-desc">Your tutor will use your style to explain things in a way that clicks for you.</div>
           <div class="fgroup">
             <label>I learn best by...</label>
@@ -4501,9 +4572,34 @@ body { background: #FFFFFF; }
           <div class="fgroup" style="margin-top:4px">
             <label>Hard problems make me feel...</label>
             <div class="subject-chips" id="child-ob-challenge" style="margin-top:8px">
-              <div class="subject-chip sel" data-val="love" onclick="pickSingleChipCO(this,'child-ob-challenge')">I love a challenge 💪</div>
+              <div class="subject-chip sel" data-val="love" onclick="pickSingleChipCO(this,'child-ob-challenge')">I love a challenge</div>
               <div class="subject-chip" data-val="gentle" onclick="pickSingleChipCO(this,'child-ob-challenge')">Start gentle, then push me</div>
               <div class="subject-chip" data-val="comfortable" onclick="pickSingleChipCO(this,'child-ob-challenge')">Keep it comfortable</div>
+            </div>
+          </div>
+          <div class="fgroup" style="margin-top:4px">
+            <label>How should your tutor talk to you?</label>
+            <div class="style-grid" id="co-style-grid">
+              <div class="style-card sel" data-s="calm" onclick="pickStyleCO(this)">
+                <div class="style-name">Calm &amp; Empathetic</div>
+                <div class="style-desc">Patient, no pressure — every question is a good question</div>
+              </div>
+              <div class="style-card" data-s="direct" onclick="pickStyleCO(this)">
+                <div class="style-name">Clear &amp; Direct</div>
+                <div class="style-desc">Gets straight to the point — efficient and no-nonsense</div>
+              </div>
+              <div class="style-card" data-s="structured" onclick="pickStyleCO(this)">
+                <div class="style-name">Structured &amp; Methodical</div>
+                <div class="style-desc">Step by step, confirms understanding at every stage</div>
+              </div>
+              <div class="style-card" data-s="motivating" onclick="pickStyleCO(this)">
+                <div class="style-name">Energetic &amp; Motivating</div>
+                <div class="style-desc">Celebrates your progress and keeps the energy high</div>
+              </div>
+              <div class="style-card" data-s="rigorous" onclick="pickStyleCO(this)">
+                <div class="style-name">Demanding &amp; Rigorous</div>
+                <div class="style-desc">High standards — pushes until your answer is truly precise</div>
+              </div>
             </div>
           </div>
         </div>
@@ -4593,59 +4689,34 @@ body { background: #FFFFFF; }
           </div>
         </div>
 
-        <!-- P3: Goals + Style + Pace + Notes -->
+        <!-- P3: Goals + Pace + Notes -->
         <div class="ob-step" id="ob-p3">
           <div class="ob-step-eyebrow">Step 3 of 4</div>
-          <div class="ob-step-title" id="ob-p3-title">Your goals for your child</div>
-          <div class="ob-step-desc">Shape how the tutor teaches. You can always change this later.</div>
+          <div class="ob-step-title" id="ob-p3-title">Shape how the tutor works</div>
+          <div class="ob-step-desc">Set the learning goal and pace. Your child will choose their own communication style when they first log in.</div>
           <div class="fgroup">
             <label>Learning Goal</label>
             <div class="goal-chips" id="p-goal-chips">
               <div class="goal-chip sel" data-g="critical" onclick="pickGoalP(this)">
                 <div class="goal-chip-check"></div>
                 <div class="goal-chip-body">
-                  <div class="goal-chip-name">🧠 Strong critical thinking</div>
+                  <div class="goal-chip-name">Strong critical thinking</div>
                   <div class="goal-chip-desc">Build the ability to reason, analyze, and solve problems independently</div>
                 </div>
               </div>
               <div class="goal-chip" data-g="homework" onclick="pickGoalP(this)">
                 <div class="goal-chip-check"></div>
                 <div class="goal-chip-body">
-                  <div class="goal-chip-name">📚 Homework support</div>
+                  <div class="goal-chip-name">Homework support</div>
                   <div class="goal-chip-desc">Get unstuck on assignments and understand the material well enough to work alone next time</div>
                 </div>
               </div>
               <div class="goal-chip" data-g="curiosity" onclick="pickGoalP(this)">
                 <div class="goal-chip-check"></div>
                 <div class="goal-chip-body">
-                  <div class="goal-chip-name">✨ Curiosity &amp; love of learning</div>
+                  <div class="goal-chip-name">Curiosity &amp; love of learning</div>
                   <div class="goal-chip-desc">Spark genuine wonder and keep the child naturally curious</div>
                 </div>
-              </div>
-            </div>
-          </div>
-          <div class="fgroup" style="margin-top:4px">
-            <label>Teaching Style</label>
-            <div class="style-grid" id="p-style-grid">
-              <div class="style-card sel" data-s="socratic" onclick="pickStyleP(this)">
-                <span class="style-emoji">🧠</span>
-                <div class="style-name">Socratic Guide</div>
-                <div class="style-desc">Guides with questions — the student thinks their way to the answer</div>
-              </div>
-              <div class="style-card" data-s="stepbystep" onclick="pickStyleP(this)">
-                <span class="style-emoji">📐</span>
-                <div class="style-name">Step by Step</div>
-                <div class="style-desc">Breaks everything into tiny pieces, confirms understanding at each stage</div>
-              </div>
-              <div class="style-card" data-s="friendly" onclick="pickStyleP(this)">
-                <span class="style-emoji">🌱</span>
-                <div class="style-name">Warm &amp; Patient</div>
-                <div class="style-desc">Very encouraging, everyday analogies, perfect for anxious learners</div>
-              </div>
-              <div class="style-card" data-s="challenge" onclick="pickStyleP(this)">
-                <span class="style-emoji">🎯</span>
-                <div class="style-name">Challenge Mode</div>
-                <div class="style-desc">High standards, no hand-holding, pushes hard thinking</div>
               </div>
             </div>
           </div>
@@ -4969,27 +5040,27 @@ body { background: #FFFFFF; }
         <div class="ob-step-title">Build your tutor</div>
         <div class="ob-step-desc">Choose how your AI tutor should teach you. You can change this anytime.</div>
         <div class="fgroup">
-          <label>Teaching Style</label>
+          <label>Tutor Style</label>
           <div class="style-grid" id="s-style-grid">
-            <div class="style-card sel" data-s="socratic" onclick="pickStyleS(this)">
-              <span class="style-emoji">🧠</span>
-              <div class="style-name">Socratic Guide</div>
-              <div class="style-desc">Guides you with questions so you think your way to the answer</div>
+            <div class="style-card sel" data-s="calm" onclick="pickStyleS(this)">
+              <div class="style-name">Calm &amp; Empathetic</div>
+              <div class="style-desc">Patient, no pressure — every question is a good question</div>
             </div>
-            <div class="style-card" data-s="stepbystep" onclick="pickStyleS(this)">
-              <span class="style-emoji">📐</span>
-              <div class="style-name">Step by Step</div>
-              <div class="style-desc">Breaks everything down, confirms understanding at each stage</div>
+            <div class="style-card" data-s="direct" onclick="pickStyleS(this)">
+              <div class="style-name">Clear &amp; Direct</div>
+              <div class="style-desc">Gets straight to the point — efficient and no-nonsense</div>
             </div>
-            <div class="style-card" data-s="friendly" onclick="pickStyleS(this)">
-              <span class="style-emoji">🌱</span>
-              <div class="style-name">Warm &amp; Patient</div>
-              <div class="style-desc">Encouraging, everyday analogies, relaxed pace</div>
+            <div class="style-card" data-s="structured" onclick="pickStyleS(this)">
+              <div class="style-name">Structured &amp; Methodical</div>
+              <div class="style-desc">Step by step, confirms understanding at every stage</div>
             </div>
-            <div class="style-card" data-s="challenge" onclick="pickStyleS(this)">
-              <span class="style-emoji">🎯</span>
-              <div class="style-name">Challenge Mode</div>
-              <div class="style-desc">High standards, pushes hard thinking, no hand-holding</div>
+            <div class="style-card" data-s="motivating" onclick="pickStyleS(this)">
+              <div class="style-name">Energetic &amp; Motivating</div>
+              <div class="style-desc">Celebrates your progress and keeps the energy high</div>
+            </div>
+            <div class="style-card" data-s="rigorous" onclick="pickStyleS(this)">
+              <div class="style-name">Demanding &amp; Rigorous</div>
+              <div class="style-desc">High standards — pushes until your answer is truly precise</div>
             </div>
           </div>
         </div>
@@ -5082,20 +5153,9 @@ body { background: #FFFFFF; }
           </div>
         </div>
       </div>
-      <div class="frow">
-        <div class="fgroup">
-          <label>School <span style="color:var(--ink4);font-weight:400">(optional)</span></label>
-          <input class="fi" id="pd-c-school" placeholder="e.g. Lincoln High School"/>
-        </div>
-        <div class="fgroup">
-          <label>Teaching Style</label>
-          <select class="fs" id="pd-c-style">
-            <option value="socratic">Socratic Guide</option>
-            <option value="stepbystep">Step by Step</option>
-            <option value="friendly">Warm &amp; Patient</option>
-            <option value="challenge">Challenge Mode</option>
-          </select>
-        </div>
+      <div class="fgroup">
+        <label>School <span style="color:var(--ink4);font-weight:400">(optional)</span></label>
+        <input class="fi" id="pd-c-school" placeholder="e.g. Lincoln High School"/>
       </div>
       <div class="frow">
         <div class="fgroup">
@@ -5186,7 +5246,7 @@ body { background: #FFFFFF; }
       <!-- Read view -->
       <div id="cd-settings-view" style="display:flex;flex-direction:column;gap:8px">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
-          <span style="font-size:13px;font-weight:600;color:var(--ink3)">Teaching style</span>
+          <span style="font-size:13px;font-weight:600;color:var(--ink3)">Tutor style</span>
           <span id="cd-style" style="font-size:13px;font-weight:700;color:var(--ink)"></span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
@@ -5201,24 +5261,13 @@ body { background: #FFFFFF; }
 
       <!-- Edit form -->
       <div id="cd-settings-edit" style="display:none;flex-direction:column;gap:14px">
-        <div class="frow">
-          <div class="fgroup">
-            <label>Teaching Style</label>
-            <select class="fs" id="cd-edit-style">
-              <option value="socratic">Socratic Guide</option>
-              <option value="stepbystep">Step by Step</option>
-              <option value="friendly">Warm &amp; Patient</option>
-              <option value="challenge">Challenge Mode</option>
-            </select>
-          </div>
-          <div class="fgroup">
-            <label>Learning Goal</label>
-            <select class="fs" id="cd-edit-goal">
-              <option value="critical">Critical Thinking</option>
-              <option value="homework">Homework Help</option>
-              <option value="curiosity">Curiosity &amp; Fun</option>
-            </select>
-          </div>
+        <div class="fgroup">
+          <label>Learning Goal</label>
+          <select class="fs" id="cd-edit-goal">
+            <option value="critical">Critical Thinking</option>
+            <option value="homework">Homework Help</option>
+            <option value="curiosity">Curiosity &amp; Fun</option>
+          </select>
         </div>
         <div class="fgroup">
           <label>Answer Pace</label>
@@ -5378,31 +5427,34 @@ body { background: #FFFFFF; }
           </div>
         </div>
 
-        <div class="input-wrap">
-          <!-- Hidden file inputs -->
-          <input type="file" id="img-cam-input" accept="image/*" capture="environment" style="display:none" onchange="handleImgPick(this)">
-          <input type="file" id="img-file-input" accept="image/*,application/pdf,.doc,.docx,.txt" style="display:none" onchange="handleImgPick(this)">
+        <div class="glow-wrapper" id="glow-wrapper">
+          <div class="glow-border"></div>
+          <div class="input-wrap">
+            <!-- Hidden file inputs -->
+            <input type="file" id="img-cam-input" accept="image/*" capture="environment" style="display:none" onchange="handleImgPick(this)">
+            <input type="file" id="img-file-input" accept="image/*,application/pdf,.doc,.docx,.txt" style="display:none" onchange="handleImgPick(this)">
 
-          <button class="btn-attach" id="btn-attach" onclick="toggleAttachMenu(event)" title="Add image / file">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-            </svg>
-          </button>
+            <button class="btn-attach" id="btn-attach" onclick="toggleAttachMenu(event)" title="Add image / file">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+              </svg>
+            </button>
 
-          <textarea id="minput" placeholder="Ask a question or describe what you're stuck on..."
-            rows="1" oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
-          <button class="btn-voice" id="btn-voice" onclick="openVoiceMode()" title="Voice Mode">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-              <line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
-            </svg>
-          </button>
-          <button id="sbtn" onclick="sendMsg()" disabled>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-            </svg>
-          </button>
+            <textarea id="minput" placeholder="Ask a question or describe what you're stuck on..."
+              rows="1" oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
+            <button class="btn-voice" id="btn-voice" onclick="openVoiceMode()" title="Voice Mode">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                <line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
+              </svg>
+            </button>
+            <button id="sbtn" onclick="sendMsg()" disabled>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
       <div class="chat-disclaimer"><span class="chat-powered">✦ Powered by Anthropic</span> · Guided can make mistakes. <button class="chat-disclaimer-link" onclick="openLegal()">Learn more</button></div>
@@ -5650,7 +5702,7 @@ const VOICE_ID = 'EXAVITQu4vr4xnSDxMaL'; // Bella — warm, natural, clear
 //  STATE
 // ══════════════════════════════════════════════
 const S = {
-  name:'', age:'12', subj:'', goal:'', notes:'', style:'socratic',
+  name:'', age:'12', subj:'', goal:'', notes:'', style:'calm',
   school:'', schoolCurriculum:'', learningGoal:'critical', parentUpdates:'monthly',
   studentId: null,
   history: [],
@@ -5891,40 +5943,45 @@ Match the language ${S.name} writes in (German or English).`;
   }
 
   const styleInstructions = {
-    socratic: `
-TEACHING METHOD — SOCRATIC:
-Your pattern for every response:
-① Explain the core concept in 2 sentences — clear, no jargon, age-appropriate
-② Give ONE killer analogy or example from everyday life that a ${S.age}-year-old would actually relate to
-③ Ask ONE probing question that forces the student to apply the concept themselves
-④ NEVER complete the thought for them — leave the question open
+    calm: `
+COMMUNICATION STYLE — CALM & EMPATHETIC:
+① Before asking your question, acknowledge that the topic is genuinely tricky — normalize the struggle
+② Use a warm, unhurried tone: short sentences, no pressure, no urgency
+③ When the student is confused, lower the step size — find the smallest possible foothold
+④ Check in constantly: "Does that feel clearer?" before moving forward
+⑤ Celebrate every small step specifically: "You just identified the key part" not "great job"`,
 
-Example of wrong response: "Density is mass divided by volume. Ice is less dense than water because water expands when it freezes, so it floats."
-Example of right response: "Density is basically how much stuff is packed into a space. Imagine squishing the same amount of clay into different sizes of box — same mass, different volume. Now here's what's interesting: when most things cool down, they shrink and get denser. But water does the opposite. Why do you think that might be?"`,
+    direct: `
+COMMUNICATION STYLE — CLEAR & DIRECT:
+① Skip preamble — ask the essential question in the first sentence
+② No filler phrases ("Great question!", "Of course!", "Absolutely!") — they waste time and feel hollow
+③ Keep responses tight: one concise framing, one sharp question
+④ Trust the student's intelligence — don't over-explain
+⑤ Reserve praise for genuinely precise answers; acknowledge effort without overstating it`,
 
-    stepbystep: `
-TEACHING METHOD — STEP BY STEP:
-① Break the concept into the smallest possible numbered steps
-② After each step, ask: "Does that part make sense?" before continuing
-③ Only move forward when the student signals understanding
-④ After completing all steps, ask the student to explain it back in their own words
-⑤ If they explain it wrong, don't correct directly — ask "What do you mean by X?"`,
+    structured: `
+COMMUNICATION STYLE — STRUCTURED & METHODICAL:
+① Number every step explicitly so the student knows exactly where they are
+② After each numbered step, ask: "Does that part make sense?" — do not continue until they confirm
+③ Begin each response with a one-line recap of what was established so far
+④ After completing all steps, ask the student to explain the whole thing back in their own words
+⑤ If their recap is wrong, don't correct — ask "What do you mean by X?" to surface the gap`,
 
-    friendly: `
-TEACHING METHOD — WARM & PATIENT:
-① Start by validating that the topic IS genuinely confusing — normalize the struggle
-② Use only analogies from a ${S.age}-year-old's world: games, sports, food, TikTok, whatever fits
-③ Be enthusiastically encouraging but SPECIFIC — "you just identified the most important part" not "great job"
-④ Go slow, use short sentences, check in constantly
-⑤ Celebrate every small step like it actually matters — because it does`,
+    motivating: `
+COMMUNICATION STYLE — ENERGETIC & MOTIVATING:
+① Name progress specifically: "You just cracked the hardest part of this" — never vague praise
+② Keep energy high: dynamic, engaged language — make thinking feel exciting, not like a chore
+③ Acknowledge genuine effort before asking the next question
+④ When they get close to the answer, raise the stakes: "You're one step away — what's the last piece?"
+⑤ Celebrate breakthroughs loudly and specifically, then immediately challenge one level higher`,
 
-    challenge: `
-TEACHING METHOD — CHALLENGE MODE:
-① Give only the minimal hint that points toward the concept — don't explain
-② Ask a hard question that requires real analysis
-③ When they struggle, ask a slightly simpler version — don't rescue
-④ Push back if their answer is vague: "What exactly do you mean by that?"
-⑤ Reserve genuine praise for when they truly earn it`,
+    rigorous: `
+COMMUNICATION STYLE — DEMANDING & RIGOROUS:
+① Push back on vague answers immediately: "What exactly do you mean by that?"
+② Do not accept surface-level responses — ask for precision and evidence
+③ When they struggle, give the absolute minimum nudge — never rescue
+④ Reserve praise exclusively for answers that are genuinely precise and complete
+⑤ After a correct answer, raise the bar: "Good — now explain why that's true, not just that it is"`,
   };
 
   const abiturContext = S.abitur ? `
@@ -6005,7 +6062,7 @@ PERSONALIZATION RULES
 • If notes say the student loves a topic/sport/interest: use it in every analogy you can
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
-${styleInstructions[S.style] || styleInstructions.socratic}
+${styleInstructions[S.style] || styleInstructions.calm}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 VISUAL LEARNING
@@ -6096,8 +6153,9 @@ async function lookupSchoolGeneric(name, statusElId) {
 function pickStyleP(el) { document.querySelectorAll('#p-style-grid .style-card').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
 function pickGoalP(el)  { document.querySelectorAll('#p-goal-chips .goal-chip').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
 function pickPaceP(el)  { document.querySelectorAll('#p-pace-options .pace-opt').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
-function pickStyleS(el) { document.querySelectorAll('#s-style-grid .style-card').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
-function pickGoalS(el)  { document.querySelectorAll('#s-goal-chips .goal-chip').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
+function pickStyleS(el)  { document.querySelectorAll('#s-style-grid .style-card').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
+function pickStyleCO(el) { document.querySelectorAll('#co-style-grid .style-card').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
+function pickGoalS(el)   { document.querySelectorAll('#s-goal-chips .goal-chip').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
 function pickSubjectC(el) { el.classList.toggle('sel'); }
 function pickSubjectS(el) { el.classList.toggle('sel'); }
 function pickLearnStyleC(el) { document.querySelectorAll('#ob-c2 .learn-style-card').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
@@ -6144,10 +6202,9 @@ async function finishParentOnboarding() {
     const childSchool = document.getElementById('ob-p-school').value.trim();
     const childNotes = document.getElementById('ob-p-notes')?.value?.trim() || '';
     const selGoal = document.querySelector('#p-goal-chips .goal-chip.sel');
-    const selStyle = document.querySelector('#p-style-grid .style-card.sel');
     const selPace = document.querySelector('#p-pace-options .pace-opt.sel');
     const goal = selGoal?.dataset?.g || 'critical';
-    const style = selStyle?.dataset?.s || 'socratic';
+    const style = 'calm';
     const pace = selPace?.dataset?.p || 'balanced';
 
     const hash = await sha256(pw);
@@ -6191,7 +6248,6 @@ async function finishParentOnboarding() {
     }
 
     const goalMap = { critical:'Build strong critical thinking', homework:'Homework support', curiosity:'Curiosity & love of learning' };
-    const styleLabels = { socratic:'Socratic Guide', stepbystep:'Step by Step', friendly:'Warm & Patient', challenge:'Challenge Mode' };
     const paceLabels = { guided:'Guided', balanced:'Balanced', direct:'Direct' };
 
     const { data: fm } = await SB.from('family_members').insert({
@@ -6208,7 +6264,7 @@ async function finishParentOnboarding() {
         style, goal, pace,
         notes: [childNotes, childGrade && 'Grade: ' + childGrade].filter(Boolean).join('. '),
         subjects: [], child_profile: {}, student_id: studentId, ai_notes: '',
-        styleLabel: styleLabels[style], goalLabel: goalMap[goal], paceLabel: paceLabels[pace]
+        goalLabel: goalMap[goal], paceLabel: paceLabels[pace]
       }]
     };
 
@@ -6280,12 +6336,14 @@ async function finishChildOnboarding() {
     const learnStyle = document.querySelector('#child-ob-learn-style .learn-style-card.sel')?.dataset?.ls || 'visual';
     const whenStuck = document.querySelector('#child-ob-stuck .subject-chip.sel')?.dataset?.val || 'hint';
     const challengePref = document.querySelector('#child-ob-challenge .subject-chip.sel')?.dataset?.val || 'gentle';
+    const childStyle = document.querySelector('#co-style-grid .style-card.sel')?.dataset?.s || 'calm';
 
     const childProfile = {
       subjects, favorite_subject: favSubject, hardest_subject: hardSubject,
       hobbies, languages, curiosity,
       learn_style: learnStyle, when_stuck: whenStuck,
       challenge_preference: challengePref,
+      style: childStyle,
       onboarded: true
     };
 
@@ -6297,7 +6355,7 @@ async function finishChildOnboarding() {
         const pin = String(Math.floor(1000 + Math.random() * 9000));
         const { data: student } = await SB.from('students').insert({
           school_id: school.id, name: child.name, age: child.age || 12,
-          style: child.style || 'socratic', goal: child.goal || 'critical',
+          style: child.style || 'calm', goal: child.goal || 'critical',
           notes: child.notes || '', pin_hash: pin
         }).select().single();
         if (student) studentId = student.id;
@@ -6307,13 +6365,14 @@ async function finishChildOnboarding() {
 
     if (SB) {
       await SB.from('family_members').update({
-        child_profile: childProfile, subjects, student_id: studentId
+        child_profile: childProfile, subjects, student_id: studentId, style: childStyle
       }).eq('id', child.id);
     }
 
     child.child_profile = childProfile;
     child.subjects = subjects;
     child.student_id = studentId;
+    child.style = childStyle;
 
     launchFamilyChild(child);
   } catch(e) {
@@ -6333,7 +6392,7 @@ async function launchFamilyChild(child) {
   S.name           = child.name;
   S.age            = child.age || '12';
   S.school         = child.school || '';
-  S.style          = child.style || 'socratic';
+  S.style          = cp.style || child.style || 'calm';
   S.learningGoal   = child.goal || 'critical';
   S.pace           = child.pace || 'balanced';
   S.familyMemberId = child.id || null;
@@ -6730,14 +6789,12 @@ function launchParentDashboard() {
   const childSchool = document.getElementById('ob-p-school').value.trim();
   const childNotes  = document.getElementById('ob-p-notes').value.trim();
   const selGoal  = document.querySelector('#p-goal-chips .goal-chip.sel');
-  const selStyle = document.querySelector('#p-style-grid .style-card.sel');
   const selPace  = document.querySelector('#p-pace-options .pace-opt.sel');
-  const goalMap     = { critical:'Build strong critical thinking', homework:'Homework support', curiosity:'Curiosity & love of learning' };
-  const styleLabels = { socratic:'Socratic Guide', stepbystep:'Step by Step', friendly:'Warm & Patient', challenge:'Challenge Mode' };
-  const paceLabels  = { guided:'Guided', balanced:'Balanced', direct:'Direct' };
-  const goal  = selGoal  ? selGoal.dataset.g  : 'critical';
-  const style = selStyle ? selStyle.dataset.s : 'socratic';
-  const pace  = selPace  ? selPace.dataset.p  : 'balanced';
+  const goalMap  = { critical:'Build strong critical thinking', homework:'Homework support', curiosity:'Curiosity & love of learning' };
+  const paceLabels = { guided:'Guided', balanced:'Balanced', direct:'Direct' };
+  const goal  = selGoal ? selGoal.dataset.g : 'critical';
+  const style = 'calm';
+  const pace  = selPace ? selPace.dataset.p : 'balanced';
   // Generate family code if not already set
   let familyCode = localStorage.getItem('guided_family_code');
   if (!familyCode) {
@@ -6749,7 +6806,7 @@ function launchParentDashboard() {
     name: parentName,
     familyCode,
     children: [{ name:childName, age:childAge, school:childSchool, notes:childNotes, goal, style, pace, subjects:[],
-      goalLabel:goalMap[goal], styleLabel:styleLabels[style], paceLabel:paceLabels[pace], addedAt:Date.now() }]
+      goalLabel:goalMap[goal], paceLabel:paceLabels[pace], addedAt:Date.now() }]
   };
   document.getElementById('ob').style.display = 'none';
   showParentDashboard();
@@ -6815,7 +6872,7 @@ function showChildDashboard(idx) {
   const child = window.parentData.children[idx];
   if (!child) return;
   currentChildIdx = idx;
-  const styleLabels = { socratic:'Socratic Guide', stepbystep:'Step by Step', friendly:'Warm & Patient', challenge:'Challenge Mode' };
+  const styleLabels = { calm:'Calm & Empathetic', direct:'Clear & Direct', structured:'Structured & Methodical', motivating:'Energetic & Motivating', rigorous:'Demanding & Rigorous' };
   const goalLabels  = { critical:'Build strong critical thinking', homework:'Homework support', curiosity:'Curiosity & love of learning' };
   const paceLabels  = { guided:'Guided', balanced:'Balanced', direct:'Direct' };
   document.getElementById('cd-av').textContent   = child.name[0].toUpperCase();
@@ -6823,13 +6880,12 @@ function showChildDashboard(idx) {
   document.getElementById('cd-meta').textContent = `${child.age} years old${child.school ? ' · ' + child.school : ''}`;
   document.getElementById('cd-school').textContent = child.school || 'Not set';
   document.getElementById('cd-notes').textContent  = child.notes  || 'Nothing added yet';
-  document.getElementById('cd-style').textContent  = styleLabels[child.style] || child.style;
+  document.getElementById('cd-style').textContent  = styleLabels[child.style] || child.style || 'Calm & Empathetic';
   document.getElementById('cd-goal').textContent   = goalLabels[child.goal]   || child.goal;
   document.getElementById('cd-pace').textContent   = paceLabels[child.pace]   || child.pace;
   const subjects = child.subjects && child.subjects.length ? child.subjects : ['General'];
   document.getElementById('cd-subjects').innerHTML = subjects.map(s => `<span class="child-subj-tag" style="font-size:12px;padding:4px 12px">${s}</span>`).join('');
   // Pre-fill edit form
-  document.getElementById('cd-edit-style').value = child.style || 'socratic';
   document.getElementById('cd-edit-goal').value  = child.goal  || 'critical';
   document.getElementById('cd-edit-pace').value  = child.pace  || 'balanced';
   document.getElementById('cd-edit-notes').value = child.notes || '';
@@ -6857,18 +6913,16 @@ function toggleChildEdit() {
 function saveChildSettings() {
   if (currentChildIdx === null) return;
   const child = window.parentData.children[currentChildIdx];
-  const styleLabels = { socratic:'Socratic Guide', stepbystep:'Step by Step', friendly:'Warm & Patient', challenge:'Challenge Mode' };
+  const styleLabels = { calm:'Calm & Empathetic', direct:'Clear & Direct', structured:'Structured & Methodical', motivating:'Energetic & Motivating', rigorous:'Demanding & Rigorous' };
   const goalLabels  = { critical:'Build strong critical thinking', homework:'Homework support', curiosity:'Curiosity & love of learning' };
   const paceLabels  = { guided:'Guided', balanced:'Balanced', direct:'Direct' };
-  child.style      = document.getElementById('cd-edit-style').value;
   child.goal       = document.getElementById('cd-edit-goal').value;
   child.pace       = document.getElementById('cd-edit-pace').value;
   child.notes      = document.getElementById('cd-edit-notes').value.trim();
-  child.styleLabel = styleLabels[child.style];
   child.goalLabel  = goalLabels[child.goal];
   child.paceLabel  = paceLabels[child.pace];
   // Refresh view
-  document.getElementById('cd-style').textContent = child.styleLabel;
+  document.getElementById('cd-style').textContent = styleLabels[child.style] || child.style || 'Calm & Empathetic';
   document.getElementById('cd-goal').textContent  = child.goalLabel;
   document.getElementById('cd-pace').textContent  = child.paceLabel;
   document.getElementById('cd-notes').textContent = child.notes || 'Nothing added yet';
@@ -6889,15 +6943,14 @@ async function saveNewChild() {
   if (!name) { toast("Enter the child's name", 'err'); return; }
   const age    = document.getElementById('pd-c-age').value;
   const school = document.getElementById('pd-c-school').value.trim();
-  const style  = document.getElementById('pd-c-style').value;
+  const style  = 'calm';
   const goal   = document.getElementById('pd-c-goal').value;
   const pace   = document.getElementById('pd-c-pace').value;
   const notes  = document.getElementById('pd-c-notes').value.trim();
-  const styleLabels = { socratic:'Socratic Guide', stepbystep:'Step by Step', friendly:'Warm & Patient', challenge:'Challenge Mode' };
-  const goalMap     = { critical:'Build strong critical thinking', homework:'Homework support', curiosity:'Curiosity & love of learning' };
-  const paceLabels  = { guided:'Guided', balanced:'Balanced', direct:'Direct' };
+  const goalMap    = { critical:'Build strong critical thinking', homework:'Homework support', curiosity:'Curiosity & love of learning' };
+  const paceLabels = { guided:'Guided', balanced:'Balanced', direct:'Direct' };
   const newChild = { name, age, school, style, goal, pace, notes, subjects:[],
-    styleLabel:styleLabels[style], goalLabel:goalMap[goal], paceLabel:paceLabels[pace], addedAt:Date.now() };
+    goalLabel:goalMap[goal], paceLabel:paceLabels[pace], addedAt:Date.now() };
   if (SB && S.accountId) {
     const { data: row } = await SB.from('family_members').insert({
       account_id: S.accountId, name, age: age || null, school: school || null,
@@ -6935,7 +6988,7 @@ function launchChild() {
   S.age          = 12;
   S.subj         = subjects.length ? subjects.join(', ') : 'General / Mixed';
   S.notes        = [langs&&'Speaks: '+langs, hobbies&&'Hobbies: '+hobbies, 'Learns best by: '+(selLS?selLS.dataset.ls:'visual')].filter(Boolean).join('. ');
-  S.style        = 'socratic';
+  S.style        = 'calm';
   S.learningGoal = 'critical';
   S.goal         = 'Build strong critical thinking';
   S.sessionStart = Date.now();
@@ -6967,7 +7020,7 @@ function launchStudent() {
   S.age          = age;
   S.school       = school;
   S.subj         = subjects.length ? subjects.join(', ') : 'General / Mixed';
-  S.style        = selStyle ? selStyle.dataset.s : 'socratic';
+  S.style        = selStyle ? selStyle.dataset.s : 'calm';
   S.learningGoal = selGoal  ? selGoal.dataset.g  : 'critical';
   S.goal         = goalMap[S.learningGoal];
   S.notes        = [langs&&'Languages: '+langs, hobbies&&'Hobbies: '+hobbies, 'Learns best by: '+(selLS?selLS.dataset.ls:'visual'), struggles&&'Struggles with: '+struggles].filter(Boolean).join('. ');
@@ -7000,7 +7053,7 @@ function startAppSession() {
   document.getElementById('d-conf').textContent    = `${TEMP} / ${MAX_TOK}`;
   document.getElementById('d-model').textContent   = `Claude · Smart Routing`;
   document.getElementById('d-updates').textContent = S.parentUpdates || '—';
-  const styleLabels = { socratic:'Socratic Guide', stepbystep:'Step by Step', friendly:'Warm & Patient', challenge:'Challenge Mode' };
+  const styleLabels = { calm:'Calm & Empathetic', direct:'Clear & Direct', structured:'Structured & Methodical', motivating:'Energetic & Motivating', rigorous:'Demanding & Rigorous' };
   document.getElementById('d-style').textContent = styleLabels[S.style] || S.style || '—';
   // Tab visibility based on user type
   const tabP = document.getElementById('tab-p');
@@ -8610,7 +8663,7 @@ async function renderStudentList() {
 }
 
 function styleLabel(s) {
-  return {socratic:'Socratic',stepbystep:'Step by Step',friendly:'Warm',challenge:'Challenge'}[s] || s;
+  return {calm:'Calm & Empathetic',direct:'Clear & Direct',structured:'Structured & Methodical',motivating:'Energetic & Motivating',rigorous:'Demanding & Rigorous'}[s] || s;
 }
 function goalLabel(g) {
   return {critical:'Crit. Thinking',homework:'Homework',curiosity:'Curiosity'}[g] || g;
@@ -9060,7 +9113,7 @@ async function launchAsSchoolStudent(student) {
   S.subj   = 'General / Mixed';
   S.notes  = student.notes || '';
   S.school = student.schoolName || student.school || '';
-  S.style  = student.style || 'socratic';
+  S.style  = student.style || 'calm';
   S.learningGoal  = student.goal || 'critical';
   S.parentUpdates = 'monthly';
   S.userType      = 'school';
@@ -9096,7 +9149,7 @@ async function launchAsSchoolStudent(student) {
   document.getElementById('d-model').textContent   = `Claude · Smart Routing`;
   document.getElementById('d-updates').textContent = S.parentUpdates;
 
-  const styleLabels = {socratic:'Socratic Guide',stepbystep:'Step by Step',friendly:'Warm & Patient',challenge:'Challenge Mode'};
+  const styleLabels = {calm:'Calm & Empathetic',direct:'Clear & Direct',structured:'Structured & Methodical',motivating:'Energetic & Motivating',rigorous:'Demanding & Rigorous'};
   document.getElementById('d-style').textContent = styleLabels[S.style] || S.style;
 
   buildStarters();
@@ -9769,7 +9822,7 @@ async function unifiedSignIn() {
     document.getElementById('signin-screen').style.display = 'none';
 
     const goalMap     = { critical:'Build strong critical thinking', homework:'Homework support', curiosity:'Curiosity & love of learning' };
-    const styleLabels = { socratic:'Socratic Guide', stepbystep:'Step by Step', friendly:'Warm & Patient', challenge:'Challenge Mode' };
+    const styleLabels = { calm:'Calm & Empathetic', direct:'Clear & Direct', structured:'Structured & Methodical', motivating:'Energetic & Motivating', rigorous:'Demanding & Rigorous' };
     const paceLabels  = { guided:'Guided', balanced:'Balanced', direct:'Direct' };
 
     if (account.user_type === 'family') {
@@ -9895,7 +9948,7 @@ async function saveAccountFromBanner() {
       const members = window.parentData.children.map(c => ({
         account_id: data.id,
         name: c.name, age: c.age || null, school: c.school || null,
-        style: c.style || 'socratic', goal: c.goal || 'critical',
+        style: c.style || 'calm', goal: c.goal || 'critical',
         pace: c.pace || 'balanced', notes: c.notes || null,
         subjects: c.subjects || [], ai_notes: c.ai_notes || null
       }));
@@ -10040,7 +10093,7 @@ async function loadLearningProfile(studentId) {
       byStyle[s.style].scores.push(s.independence_score || 0);
       byStyle[s.style].ahas += s.aha_count || 0;
     });
-    const styleNames = { socratic:'Socratic', stepbystep:'Step-by-Step', friendly:'Warm & Patient', challenge:'Challenge Mode' };
+    const styleNames = { calm:'Calm & Empathetic', direct:'Clear & Direct', structured:'Structured & Methodical', motivating:'Energetic & Motivating', rigorous:'Demanding & Rigorous' };
     const bestStyle = Object.entries(byStyle)
       .map(([st, d]) => ({ st, score: Math.round(d.scores.reduce((a,b)=>a+b,0)/d.scores.length) + d.ahas * 5 }))
       .sort((a,b) => b.score - a.score)[0]?.st;
@@ -10172,6 +10225,68 @@ document.addEventListener('keydown', e => {
 // Auto-save session on page close / tab hide
 window.addEventListener('beforeunload', () => { if (S.exchanges > 0) saveSession(); });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && S.exchanges > 0) saveSession(); });
+
+// ══════════════════════════════════════════════
+//  BORDER GLOW — proximity-based mouse tracking
+// ══════════════════════════════════════════════
+(function initBorderGlow() {
+  const wrapper = document.getElementById('glow-wrapper');
+  if (!wrapper) return;
+  const glowBorder = wrapper.querySelector('.glow-border');
+  const PROXIMITY = 120; // px — glow activates within this distance
+  let active = false;
+  let rafId = null;
+
+  document.addEventListener('mousemove', (e) => {
+    if (rafId) return;
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      const rect = wrapper.getBoundingClientRect();
+
+      // Distance from cursor to nearest edge of the wrapper
+      const dx = Math.max(rect.left - e.clientX, 0, e.clientX - rect.right);
+      const dy = Math.max(rect.top - e.clientY, 0, e.clientY - rect.bottom);
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      // Is cursor inside or within proximity?
+      const isNear = dist < PROXIMITY;
+      const isInside = e.clientX >= rect.left && e.clientX <= rect.right &&
+                       e.clientY >= rect.top && e.clientY <= rect.bottom;
+
+      if (isNear || isInside) {
+        if (!active) { wrapper.classList.add('glow-active'); active = true; }
+
+        // Map cursor position to percentage within the wrapper
+        const px = ((e.clientX - rect.left) / rect.width) * 100;
+        const py = ((e.clientY - rect.top) / rect.height) * 100;
+
+        // Calculate angle from center for the conic gradient
+        const cx = e.clientX - (rect.left + rect.width / 2);
+        const cy = e.clientY - (rect.top + rect.height / 2);
+        const angle = Math.atan2(cy, cx) * (180 / Math.PI) + 90;
+
+        glowBorder.style.setProperty('--glow-x', Math.min(100, Math.max(0, px)) + '%');
+        glowBorder.style.setProperty('--glow-y', Math.min(100, Math.max(0, py)) + '%');
+        glowBorder.style.setProperty('--glow-angle', angle + 'deg');
+
+        // Fade opacity based on distance (closer = stronger)
+        if (!isInside) {
+          const strength = 1 - (dist / PROXIMITY);
+          glowBorder.style.opacity = Math.max(0.2, strength).toFixed(2);
+        } else {
+          glowBorder.style.opacity = '1';
+        }
+      } else {
+        if (active) { wrapper.classList.remove('glow-active'); active = false; glowBorder.style.opacity = '0'; }
+      }
+    });
+  });
+
+  // Hide glow when mouse leaves the window entirely
+  document.addEventListener('mouseleave', () => {
+    if (active) { wrapper.classList.remove('glow-active'); active = false; glowBorder.style.opacity = '0'; }
+  });
+})();
 </script>
 
 <!-- ╔══════════════════════════════════════════╗ -->
@@ -10238,14 +10353,15 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
       <button class="stg-close" onclick="closeSettings()">✕</button>
     </div>
 
-    <!-- Teaching Style -->
+    <!-- Tutor Style -->
     <div class="stg-section">
-      <div class="stg-section-title">Teaching Style</div>
+      <div class="stg-section-title">Tutor Style</div>
       <div class="stg-style-grid" id="stg-style-grid">
-        <div class="stg-style-card" data-s="socratic"    onclick="stgPickStyle(this)"><span class="stg-style-emoji">🧠</span><div class="stg-style-name">Socratic Guide</div><div class="stg-style-desc">Guides you with questions so you think your way to the answer</div></div>
-        <div class="stg-style-card" data-s="stepbystep" onclick="stgPickStyle(this)"><span class="stg-style-emoji">📐</span><div class="stg-style-name">Step by Step</div><div class="stg-style-desc">Breaks everything down, confirms understanding at each stage</div></div>
-        <div class="stg-style-card" data-s="friendly"   onclick="stgPickStyle(this)"><span class="stg-style-emoji">🌱</span><div class="stg-style-name">Warm &amp; Patient</div><div class="stg-style-desc">Encouraging, everyday analogies, relaxed pace</div></div>
-        <div class="stg-style-card" data-s="challenge"  onclick="stgPickStyle(this)"><span class="stg-style-emoji">🎯</span><div class="stg-style-name">Challenge Mode</div><div class="stg-style-desc">High standards, pushes hard thinking, no hand-holding</div></div>
+        <div class="stg-style-card" data-s="calm"       onclick="stgPickStyle(this)"><div class="stg-style-name">Calm &amp; Empathetic</div><div class="stg-style-desc">Patient, no pressure — every question is a good question</div></div>
+        <div class="stg-style-card" data-s="direct"     onclick="stgPickStyle(this)"><div class="stg-style-name">Clear &amp; Direct</div><div class="stg-style-desc">Gets straight to the point — efficient and no-nonsense</div></div>
+        <div class="stg-style-card" data-s="structured" onclick="stgPickStyle(this)"><div class="stg-style-name">Structured &amp; Methodical</div><div class="stg-style-desc">Step by step, confirms understanding at every stage</div></div>
+        <div class="stg-style-card" data-s="motivating" onclick="stgPickStyle(this)"><div class="stg-style-name">Energetic &amp; Motivating</div><div class="stg-style-desc">Celebrates your progress and keeps the energy high</div></div>
+        <div class="stg-style-card" data-s="rigorous"   onclick="stgPickStyle(this)"><div class="stg-style-name">Demanding &amp; Rigorous</div><div class="stg-style-desc">High standards — pushes until your answer is truly precise</div></div>
       </div>
     </div>
 
