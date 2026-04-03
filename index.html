@@ -3923,39 +3923,33 @@ body { background: #FFFFFF; }
           <div class="fgroup">
             <label>Your subjects <span style="color:var(--ink4);font-weight:400">(pick all that apply)</span></label>
             <div class="subject-chips" id="child-ob-subjects">
-              <div class="subject-chip" data-s="Mathe" onclick="pickSubjectCO(this)">Mathe</div>
-              <div class="subject-chip" data-s="Physik" onclick="pickSubjectCO(this)">Physik</div>
-              <div class="subject-chip" data-s="Chemie" onclick="pickSubjectCO(this)">Chemie</div>
-              <div class="subject-chip" data-s="Biologie" onclick="pickSubjectCO(this)">Biologie</div>
-              <div class="subject-chip" data-s="Deutsch" onclick="pickSubjectCO(this)">Deutsch</div>
-              <div class="subject-chip" data-s="Englisch" onclick="pickSubjectCO(this)">Englisch</div>
-              <div class="subject-chip" data-s="Geschichte" onclick="pickSubjectCO(this)">Geschichte</div>
-              <div class="subject-chip" data-s="Geographie" onclick="pickSubjectCO(this)">Geographie</div>
-              <div class="subject-chip" data-s="Informatik" onclick="pickSubjectCO(this)">Informatik</div>
-              <div class="subject-chip" data-s="Wirtschaft" onclick="pickSubjectCO(this)">Wirtschaft</div>
-              <div class="subject-chip" data-s="Kunst" onclick="pickSubjectCO(this)">Kunst</div>
-              <div class="subject-chip" data-s="Musik" onclick="pickSubjectCO(this)">Musik</div>
-              <div class="subject-chip" data-s="Sport" onclick="pickSubjectCO(this)">Sport</div>
-              <div class="subject-chip" data-s="Philosophie" onclick="pickSubjectCO(this)">Philosophie</div>
-              <div class="subject-chip" data-s="Französisch" onclick="pickSubjectCO(this)">Französisch</div>
-              <div class="subject-chip" data-s="Latein" onclick="pickSubjectCO(this)">Latein</div>
-              <div class="subject-chip" data-s="Spanisch" onclick="pickSubjectCO(this)">Spanisch</div>
               <div class="subject-chip" data-s="Math" onclick="pickSubjectCO(this)">Math</div>
-              <div class="subject-chip" data-s="Science" onclick="pickSubjectCO(this)">Science</div>
+              <div class="subject-chip" data-s="Physics" onclick="pickSubjectCO(this)">Physics</div>
+              <div class="subject-chip" data-s="Chemistry" onclick="pickSubjectCO(this)">Chemistry</div>
+              <div class="subject-chip" data-s="Biology" onclick="pickSubjectCO(this)">Biology</div>
+              <div class="subject-chip" data-s="German" onclick="pickSubjectCO(this)">German</div>
               <div class="subject-chip" data-s="English" onclick="pickSubjectCO(this)">English</div>
               <div class="subject-chip" data-s="History" onclick="pickSubjectCO(this)">History</div>
-              <div class="subject-chip" data-s="Biology" onclick="pickSubjectCO(this)">Biology</div>
-              <div class="subject-chip" data-s="Chemistry" onclick="pickSubjectCO(this)">Chemistry</div>
-              <div class="subject-chip" data-s="Physics" onclick="pickSubjectCO(this)">Physics</div>
+              <div class="subject-chip" data-s="Geography" onclick="pickSubjectCO(this)">Geography</div>
+              <div class="subject-chip" data-s="Computer Science" onclick="pickSubjectCO(this)">Computer Science</div>
+              <div class="subject-chip" data-s="Economics" onclick="pickSubjectCO(this)">Economics</div>
+              <div class="subject-chip" data-s="Art" onclick="pickSubjectCO(this)">Art</div>
+              <div class="subject-chip" data-s="Music" onclick="pickSubjectCO(this)">Music</div>
+              <div class="subject-chip" data-s="P.E." onclick="pickSubjectCO(this)">P.E.</div>
+              <div class="subject-chip" data-s="Philosophy" onclick="pickSubjectCO(this)">Philosophy</div>
+              <div class="subject-chip" data-s="French" onclick="pickSubjectCO(this)">French</div>
+              <div class="subject-chip" data-s="Latin" onclick="pickSubjectCO(this)">Latin</div>
+              <div class="subject-chip" data-s="Spanish" onclick="pickSubjectCO(this)">Spanish</div>
+              <div class="subject-chip" data-s="Science" onclick="pickSubjectCO(this)">Science</div>
             </div>
           </div>
           <div class="fgroup">
             <label>Which is your favourite? <span style="color:var(--ink4);font-weight:400">(optional)</span></label>
-            <input class="fi" id="child-ob-fav-subject" placeholder="e.g. Mathe"/>
+            <input class="fi" id="child-ob-fav-subject" placeholder="e.g. Math"/>
           </div>
           <div class="fgroup">
             <label>Which is hardest for you? <span style="color:var(--ink4);font-weight:400">(optional)</span></label>
-            <input class="fi" id="child-ob-hard-subject" placeholder="e.g. Chemie"/>
+            <input class="fi" id="child-ob-hard-subject" placeholder="e.g. Chemistry"/>
           </div>
         </div>
 
@@ -4808,24 +4802,24 @@ body { background: #FFFFFF; }
     </div>
 
     <!-- New Chat -->
-    <button id="sidebar-new-chat" onclick="clearChat()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Neues Thema
+    <button id="sidebar-new-chat" onclick="openGeneralChat()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      General Chat
     </button>
 
     <!-- Navigation (Student tab hidden — entry via subject click) -->
     <div class="nav-tab active" id="tab-s" onclick="switchView('student')" style="display:none">🎓 Student</div>
-    <div class="sidebar-section-label">Übersicht</div>
+    <div class="sidebar-section-label">Overview</div>
     <div class="nav-tab" id="tab-p" onclick="switchView('parent')" style="display:none">
       📊 My Progress
       <span class="nav-tab-badge" id="dash-badge">Live</span>
     </div>
     <div class="nav-tab" id="tab-c" onclick="switchView('calendar')" style="display:none">
-      📅 Kalender
+      📅 Calendar
     </div>
 
     <!-- Subject list (populated by JS) -->
-    <div class="sidebar-section-label" id="sidebar-subj-label" style="display:none">Meine Fächer</div>
+    <div class="sidebar-section-label" id="sidebar-subj-label" style="display:none">My Subjects</div>
     <div id="sidebar-subjects"></div>
 
     <!-- Profile + settings -->
@@ -5013,10 +5007,10 @@ body { background: #FFFFFF; }
   <div class="view" id="v-calendar">
     <div class="cal-wrap">
       <div class="cal-header">
-        <h2>Kalender</h2>
+        <h2>Calendar</h2>
         <div class="cal-header-right">
-          <button class="cal-chip sel" id="cal-chip-all" onclick="setCalFilter('all')">Alle</button>
-          <button class="cal-chip" id="cal-chip-homework" onclick="setCalFilter('homework')">Hausaufgaben</button>
+          <button class="cal-chip sel" id="cal-chip-all" onclick="setCalFilter('all')">All</button>
+          <button class="cal-chip" id="cal-chip-homework" onclick="setCalFilter('homework')">Homework</button>
           <button class="cal-chip" id="cal-chip-test" onclick="setCalFilter('test')">Tests</button>
           <button class="cal-refresh-btn" id="cal-refresh-btn" onclick="refreshCalendar()">↺ Refresh</button>
         </div>
@@ -5207,6 +5201,7 @@ const S = {
   testConfidenceLog: [],
   testSessionCount: 0,
   testInterleaveQueue: [],
+  generalMode: false,
 };
 
 // ══════════════════════════════════════════════
@@ -5398,6 +5393,16 @@ TAG RULES — YOU MUST FOLLOW THESE:
 }
 
 function buildPrompt(ndCtx) {
+  if (S.generalMode) {
+    return `You are Guided, a friendly and knowledgeable AI assistant for ${S.name}${S.age ? `, aged ${S.age}` : ''}.
+${S.notes ? `About ${S.name}: ${S.notes}` : ''}
+
+You're in free-chat mode — no specific subject, no tutoring format. Just be genuinely helpful, direct, and conversational.
+Answer questions clearly and honestly. No need to withhold answers or force the Socratic method.
+Be warm, curious, and concise. If something is complex, explain it well. If it's simple, keep it short.
+Match the language ${S.name} writes in (German or English).`;
+  }
+
   const styleInstructions = {
     socratic: `
 TEACHING METHOD — SOCRATIC:
@@ -6556,10 +6561,8 @@ function startAppSession() {
       const phaseLabels = { diagnose:'Diagnose', build:'Build', simulate:'Simulate' };
       updateTestPrepUI();
       addBubble('ai', `👋 Welcome back, ${S.name}! Test prep for **${S.testSubject}** is still active — ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left, currently in the **${phaseLabels[S.testPhase]}** phase. Ready to continue?`);
-    } else {
-      const goalLine = S.goal ? ` Your goal: ${S.goal}.` : '';
-      addBubble('ai', `Hi ${S.name}! 👋 I'm your personal tutor.${goalLine} Ask me anything — I won't just give you answers, I'll help you actually think through them so you understand them for good. What's on your mind?`);
     }
+    // No auto-greeting for normal sessions — user starts the conversation
   }, 500);
 
   updateSidebarSubjects();
@@ -6573,7 +6576,16 @@ function updateSidebarSubjects() {
   const container = document.getElementById('sidebar-subjects');
   const label = document.getElementById('sidebar-subj-label');
   if (!container) return;
-  const all = [...(S.lk||[]), ...(S.gk||[])].filter(Boolean);
+  let all = [...(S.lk||[]), ...(S.gk||[])].filter(Boolean);
+  if (!all.length && S.subj && S.subj !== 'General / Mixed') {
+    all = S.subj.split(',').map(s => s.trim()).filter(Boolean);
+  }
+  if (!all.length && S.selectedChannels?.length && S.slackChannels?.length) {
+    const selectedSet = new Set(S.selectedChannels);
+    all = S.slackChannels
+      .filter(ch => selectedSet.has(ch.id))
+      .map(ch => ch.subject || ch.name.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()));
+  }
   if (!all.length) {
     container.innerHTML = '';
     if (label) label.style.display = 'none';
@@ -6581,19 +6593,34 @@ function updateSidebarSubjects() {
   }
   if (label) label.style.display = '';
   const emojiMap = {
-    'Mathematik':'📐','Mathe':'📐','Physik':'🔬','Chemie':'⚗️','Biologie':'🌿',
-    'Deutsch':'📖','Englisch':'🗣️','Geschichte':'🏛️','Geographie':'🌍','Geografie':'🌍',
-    'Informatik':'💻','Kunst':'🎨','Musik':'🎵','Sport':'⚽','Politik':'🏛️',
-    'Wirtschaft':'📊','Philosophie':'💭','Latein':'📜','Französisch':'🇫🇷','Spanisch':'🇪🇸'
+    'Math':'📐','Mathematics':'📐','Mathematik':'📐','Mathe':'📐',
+    'Physics':'🔬','Physik':'🔬',
+    'Chemistry':'⚗️','Chemie':'⚗️',
+    'Biology':'🌿','Biologie':'🌿',
+    'German':'📖','Deutsch':'📖',
+    'English':'🗣️','Englisch':'🗣️',
+    'History':'🏛️','Geschichte':'🏛️',
+    'Geography':'🌍','Geographie':'🌍','Geografie':'🌍',
+    'Computer Science':'💻','Informatik':'💻',
+    'Economics':'📊','Wirtschaft':'📊',
+    'Art':'🎨','Kunst':'🎨',
+    'Music':'🎵','Musik':'🎵',
+    'P.E.':'⚽','Sport':'⚽',
+    'Philosophy':'💭','Philosophie':'💭',
+    'French':'🇫🇷','Französisch':'🇫🇷',
+    'Latin':'📜','Latein':'📜',
+    'Spanish':'🇪🇸','Spanisch':'🇪🇸',
+    'Science':'🔭','Politik':'🏛️',
   };
   container.innerHTML = all.map(s => {
     const emoji = emojiMap[s] || '📚';
-    const active = s === (S.currentSubject || S.subj);
+    const active = !S.generalMode && s === (S.currentSubject || S.subj);
     return `<div class="sidebar-subject${active?' active':''}" data-subject="${s.replace(/"/g,'&quot;')}" onclick="switchSubject('${s.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">${emoji} ${s}</div>`;
   }).join('');
 }
 
 function switchSubject(subject) {
+  S.generalMode = false;
   S.currentSubject = subject;
   S.subj = subject;
   const dSubj = document.getElementById('d-subj');
@@ -6616,7 +6643,7 @@ async function sendMsg(isHint = false, isGotIt = false) {
   if (S.loading) return;
   const userMsgCount = S.events.filter(e => e.who === 'student' && e.type === 'message').length;
   if (userMsgCount >= 100) {
-    toast('Du hast das Limit von 100 Nachrichten für diese Session erreicht.', 'err');
+    toast('You\'ve reached the 100-message limit for this session.', 'err');
     document.getElementById('sbtn').disabled = true;
     document.getElementById('minput').disabled = true;
     return;
@@ -6711,7 +6738,7 @@ async function sendMsg(isHint = false, isGotIt = false) {
   } catch(e) {
     removeTyping(tid);
     if (e.message === 'daily_limit_reached') {
-      addBubble('ai', `Das war's für heute! Du hast alle ${MAX_DAILY_MESSAGES} Nachrichten aufgebraucht 💪\n\nKomm morgen wieder!`);
+      addBubble('ai', `That's all for today! You've used all ${MAX_DAILY_MESSAGES} messages 💪\n\nSee you tomorrow!`);
       document.getElementById('sbtn').disabled = true;
       document.getElementById('minput').disabled = true;
     } else {
@@ -6839,7 +6866,7 @@ async function callLLM(ndCtx, isHint = false) {
   if (!limit.allowed) throw new Error('daily_limit_reached');
   const model = pickModel(isHint);
   document.getElementById('d-model').textContent = `Claude · ${MODEL_LABELS[model] || model}`;
-  if (limit.warning) toast(`Noch ${limit.remaining} Nachrichten heute — nutz sie gut!`, 'ok');
+  if (limit.warning) toast(`${limit.remaining} messages left today — make them count!`, 'ok');
   const result = await callClaude(ndCtx, model);
   const newCount = incrementDailyMessageCount();
   const remEl = document.getElementById('msg-remaining');
@@ -7426,6 +7453,36 @@ function clearChat() {
   toast('Session cleared', 'ok');
 }
 
+function openGeneralChat() {
+  S.history = []; S.events = [];
+  S.totTok = 0; S.pTok = 0; S.cTok = 0; S.calls = 0;
+  S.imgs = 0; S.ndSearches = 0;
+  S.hintsLeft = 3; S.hintsUsed = 0; S.exchanges = 0; S.ahas = 0;
+  S.bloom = { remember:0, understand:0, apply:0, analyze:0, evaluate:0, create:0 };
+  S.bloomTotal = 0; S.sessionStart = Date.now();
+  S.generalMode = true;
+  S.currentSubject = null;
+  const generalStarters = [
+    "What's on your mind?",
+    'Tell me something interesting',
+    'Help me make a decision',
+    'I have a question about…',
+  ];
+  const starterCards = generalStarters.map(t =>
+    `<div class="starter" onclick="fillInput(${JSON.stringify(t)})">${t}</div>`
+  ).join('');
+  document.getElementById('msgs').innerHTML = `<div class="empty-chat" id="empty-chat">
+    <div class="empty-icon-ring">💬</div>
+    <div class="empty-title" id="empty-title">Hey, ${S.name || 'there'}</div>
+    <div class="empty-sub" id="empty-sub">No topic, no pressure — ask me anything.</div>
+    <div class="starter-grid" id="starters">${starterCards}</div>
+  </div>`;
+  document.getElementById('btn-hint').disabled = true;
+  document.getElementById('hcount').textContent = '—';
+  updateDev({}, 0);
+  updateSidebarSubjects();
+}
+
 function switchView(v) {
   document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(x => x.classList.remove('active'));
@@ -7547,19 +7604,17 @@ function _calDateLabel(dateStr) {
   const today = _calFmt(new Date());
   const tomorrow = (() => { const d=new Date(); d.setDate(d.getDate()+1); return _calFmt(d); })();
   const yesterday = (() => { const d=new Date(); d.setDate(d.getDate()-1); return _calFmt(d); })();
-  if (dateStr === today) return 'Heute';
-  if (dateStr === tomorrow) return 'Morgen';
-  if (dateStr === yesterday) return 'Gestern';
+  if (dateStr === today) return 'Today';
+  if (dateStr === tomorrow) return 'Tomorrow';
+  if (dateStr === yesterday) return 'Yesterday';
   const parts = dateStr.split('-');
   const d = new Date(+parts[0], +parts[1]-1, +parts[2]);
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   if (d < new Date() && dateStr !== today) {
-    const days = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-    const months = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
-    return `Überfällig — ${days[d.getDay()]}, ${d.getDate()}. ${months[d.getMonth()]}`;
+    return `Overdue — ${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
   }
-  const days = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-  const months = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
-  return `${days[d.getDay()]}, ${d.getDate()}. ${months[d.getMonth()]}`;
+  return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
 }
 
 function parseSlackForCalendar(allContent) {
@@ -7577,7 +7632,7 @@ function parseSlackForCalendar(allContent) {
       id,
       dueDate,
       type,
-      subject: msg.subject || 'Allgemein',
+      subject: msg.subject || 'General',
       text: msg.text || '',
       author: msg.author || '',
       channel: msg.channel || '',
@@ -7618,7 +7673,7 @@ function renderCalendar(filter) {
 
   const events = (S.calendarEvents || []).filter(ev => filter === 'all' || ev.type === filter);
   if (!events.length) {
-    list.innerHTML = `<div class="cal-empty"><div class="cal-empty-icon">📅</div><div class="cal-empty-title">Keine Einträge</div><div class="cal-empty-sub">Wenn Lehrer Hausaufgaben oder Tests in Slack posten, erscheinen sie hier automatisch.</div></div>`;
+    list.innerHTML = `<div class="cal-empty"><div class="cal-empty-icon">📅</div><div class="cal-empty-title">Nothing here yet</div><div class="cal-empty-sub">When teachers post homework or tests in Slack, they'll appear here automatically.</div></div>`;
     return;
   }
 
@@ -8563,11 +8618,6 @@ async function launchAsSchoolStudent(student) {
   // Auto-load curriculum if school is known
   if (S.school) lookupSchoolGeneric(S.school, 'obs-school-status');
 
-  setTimeout(() => {
-    const goalLine = S.goal ? ` Your goal today: ${goalMap[S.learningGoal]}.` : '';
-    addBubble('ai', `Hi ${S.name}! 👋 I'm your personal tutor.${goalLine} Ask me anything on your mind — I won't just give you answers, but help you truly understand. What are we working on today?`);
-  }, 500);
-
   document.getElementById('minput').focus();
 }
 
@@ -9057,6 +9107,7 @@ function confirmClassSelection() {
   toast(`Connected to ${S.schoolName} — ${selected.length} classes`, 'ok');
   obStudentStep++;
   renderObStudent();
+  updateSidebarSubjects();
 }
 
 function skipSchoolConnect() {
