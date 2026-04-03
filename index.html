@@ -3372,6 +3372,76 @@ body { background: #FFFFFF; }
   box-shadow: 0 0 0 3px rgba(26,51,40,.07), 0 2px 20px rgba(0,0,0,.055);
 }
 
+/* ── Border Glow (proximity-based) ── */
+.glow-wrapper {
+  position: relative;
+  max-width: 800px;
+  margin: 0 auto;
+  border-radius: 22px;
+}
+
+.glow-wrapper .input-wrap {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  max-width: none;
+}
+
+.glow-border {
+  position: absolute;
+  inset: -2px;
+  border-radius: 22px;
+  opacity: 0;
+  transition: opacity .4s ease;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(
+    300px 80px at var(--glow-x, 50%) var(--glow-y, 50%),
+    #22C55E 0%,
+    rgba(34,197,94,.7) 25%,
+    rgba(34,197,94,.3) 50%,
+    transparent 80%
+  );
+}
+
+/* White cutout so glow only shows on border */
+.glow-border::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 20px;
+  background: #FEFEFE;
+  z-index: 2;
+}
+
+.glow-wrapper.glow-active .glow-border {
+  opacity: 1;
+}
+
+.glow-wrapper.glow-active .input-wrap {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+/* Soft outer glow aura */
+.glow-wrapper::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 28px;
+  opacity: 0;
+  transition: opacity .35s ease;
+  pointer-events: none;
+  z-index: 0;
+  box-shadow:
+    0 0 25px rgba(34,197,94,.25),
+    0 0 50px rgba(34,197,94,.1);
+}
+
+.glow-wrapper.glow-active::after {
+  opacity: 1;
+}
+
 #minput {
   font-size: 15px;
   line-height: 1.65;
@@ -5357,31 +5427,34 @@ body { background: #FFFFFF; }
           </div>
         </div>
 
-        <div class="input-wrap">
-          <!-- Hidden file inputs -->
-          <input type="file" id="img-cam-input" accept="image/*" capture="environment" style="display:none" onchange="handleImgPick(this)">
-          <input type="file" id="img-file-input" accept="image/*,application/pdf,.doc,.docx,.txt" style="display:none" onchange="handleImgPick(this)">
+        <div class="glow-wrapper" id="glow-wrapper">
+          <div class="glow-border"></div>
+          <div class="input-wrap">
+            <!-- Hidden file inputs -->
+            <input type="file" id="img-cam-input" accept="image/*" capture="environment" style="display:none" onchange="handleImgPick(this)">
+            <input type="file" id="img-file-input" accept="image/*,application/pdf,.doc,.docx,.txt" style="display:none" onchange="handleImgPick(this)">
 
-          <button class="btn-attach" id="btn-attach" onclick="toggleAttachMenu(event)" title="Add image / file">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-            </svg>
-          </button>
+            <button class="btn-attach" id="btn-attach" onclick="toggleAttachMenu(event)" title="Add image / file">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+              </svg>
+            </button>
 
-          <textarea id="minput" placeholder="Ask a question or describe what you're stuck on..."
-            rows="1" oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
-          <button class="btn-voice" id="btn-voice" onclick="openVoiceMode()" title="Voice Mode">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-              <line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
-            </svg>
-          </button>
-          <button id="sbtn" onclick="sendMsg()" disabled>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-            </svg>
-          </button>
+            <textarea id="minput" placeholder="Ask a question or describe what you're stuck on..."
+              rows="1" oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
+            <button class="btn-voice" id="btn-voice" onclick="openVoiceMode()" title="Voice Mode">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                <line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
+              </svg>
+            </button>
+            <button id="sbtn" onclick="sendMsg()" disabled>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
       <div class="chat-disclaimer"><span class="chat-powered">✦ Powered by Anthropic</span> · Guided can make mistakes. <button class="chat-disclaimer-link" onclick="openLegal()">Learn more</button></div>
@@ -10152,6 +10225,68 @@ document.addEventListener('keydown', e => {
 // Auto-save session on page close / tab hide
 window.addEventListener('beforeunload', () => { if (S.exchanges > 0) saveSession(); });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && S.exchanges > 0) saveSession(); });
+
+// ══════════════════════════════════════════════
+//  BORDER GLOW — proximity-based mouse tracking
+// ══════════════════════════════════════════════
+(function initBorderGlow() {
+  const wrapper = document.getElementById('glow-wrapper');
+  if (!wrapper) return;
+  const glowBorder = wrapper.querySelector('.glow-border');
+  const PROXIMITY = 120; // px — glow activates within this distance
+  let active = false;
+  let rafId = null;
+
+  document.addEventListener('mousemove', (e) => {
+    if (rafId) return;
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      const rect = wrapper.getBoundingClientRect();
+
+      // Distance from cursor to nearest edge of the wrapper
+      const dx = Math.max(rect.left - e.clientX, 0, e.clientX - rect.right);
+      const dy = Math.max(rect.top - e.clientY, 0, e.clientY - rect.bottom);
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      // Is cursor inside or within proximity?
+      const isNear = dist < PROXIMITY;
+      const isInside = e.clientX >= rect.left && e.clientX <= rect.right &&
+                       e.clientY >= rect.top && e.clientY <= rect.bottom;
+
+      if (isNear || isInside) {
+        if (!active) { wrapper.classList.add('glow-active'); active = true; }
+
+        // Map cursor position to percentage within the wrapper
+        const px = ((e.clientX - rect.left) / rect.width) * 100;
+        const py = ((e.clientY - rect.top) / rect.height) * 100;
+
+        // Calculate angle from center for the conic gradient
+        const cx = e.clientX - (rect.left + rect.width / 2);
+        const cy = e.clientY - (rect.top + rect.height / 2);
+        const angle = Math.atan2(cy, cx) * (180 / Math.PI) + 90;
+
+        glowBorder.style.setProperty('--glow-x', Math.min(100, Math.max(0, px)) + '%');
+        glowBorder.style.setProperty('--glow-y', Math.min(100, Math.max(0, py)) + '%');
+        glowBorder.style.setProperty('--glow-angle', angle + 'deg');
+
+        // Fade opacity based on distance (closer = stronger)
+        if (!isInside) {
+          const strength = 1 - (dist / PROXIMITY);
+          glowBorder.style.opacity = Math.max(0.2, strength).toFixed(2);
+        } else {
+          glowBorder.style.opacity = '1';
+        }
+      } else {
+        if (active) { wrapper.classList.remove('glow-active'); active = false; glowBorder.style.opacity = '0'; }
+      }
+    });
+  });
+
+  // Hide glow when mouse leaves the window entirely
+  document.addEventListener('mouseleave', () => {
+    if (active) { wrapper.classList.remove('glow-active'); active = false; glowBorder.style.opacity = '0'; }
+  });
+})();
 </script>
 
 <!-- ╔══════════════════════════════════════════╗ -->
