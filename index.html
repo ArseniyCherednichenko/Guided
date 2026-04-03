@@ -487,72 +487,95 @@ input[type=range]::-webkit-slider-thumb:hover {
 .btn-next:active { transform: translateY(0); box-shadow: 0 2px 10px rgba(26,51,40,.2); }
 
 /* ══════════════════════════════════════════════
-   APP
+   APP — sidebar layout
 ══════════════════════════════════════════════ */
-#app { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+#app { display: none; flex: 1; overflow: hidden; flex-direction: row; }
 #app.show { display: flex; }
 
-/* Top nav */
+/* ─── SIDEBAR (light theme) ─── */
 .topnav {
-  background: rgba(255,255,255,.95);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(226,218,208,.7);
-  height: 58px;
-  padding: 0 24px;
+  width: 240px;
+  min-width: 240px;
+  height: 100dvh;
+  background: #FAFAF8;
   display: flex;
-  align-items: center;
-  gap: 0;
+  flex-direction: column;
+  align-items: stretch;
   flex-shrink: 0;
-  box-shadow: 0 1px 0 rgba(226,218,208,.5), 0 4px 16px rgba(0,0,0,.04);
+  border-right: 1px solid #E8E4DE;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
+/* Logo area */
 .nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 18px 16px;
   font-family: 'Playfair Display', serif;
-  font-size: 21px;
+  font-size: 20px;
   font-weight: 700;
-  color: var(--forest);
+  color: #1A3328;
   letter-spacing: -.4px;
-  margin-right: 32px;
+  border-bottom: 1px solid #EBE7E1;
+  flex-shrink: 0;
+  margin-right: 0;
+}
+.nav-logo-icon { width: 30px; height: 30px; flex-shrink: 0; border-radius: 7px; }
+
+/* New Chat button */
+#sidebar-new-chat {
+  margin: 14px 12px 6px;
+  padding: 10px 16px;
+  background: #FFFFFF;
+  border: 1.5px solid #E2DAD0;
+  border-radius: 10px;
+  color: #1C1C1C;
+  font-size: 13.5px; font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: background .15s, border-color .15s;
+  text-align: left;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#sidebar-new-chat:hover { background: #F0EDE8; border-color: #C8C3BC; }
+
+/* Section labels */
+.sidebar-section-label {
+  padding: 18px 16px 6px;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  color: #9E9790;
+  flex-shrink: 0;
+}
+
+/* Nav tabs → sidebar items */
+.nav-tab {
+  height: auto;
+  padding: 9px 14px;
+  margin: 2px 6px;
   display: flex;
   align-items: center;
   gap: 9px;
-}
-
-.nav-logo-dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: var(--gold);
-  box-shadow: 0 0 12px var(--gold-glow), 0 0 5px rgba(184,130,42,.5);
-  animation: glow 2.5s ease-in-out infinite;
-}
-
-@keyframes glow {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: .45; transform: scale(.8); }
-}
-
-.nav-tab {
-  height: 58px;
-  padding: 0 18px;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--ink4);
+  font-size: 14px;
+  font-weight: 500;
+  color: #2E2E2E;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
+  border-bottom: none;
+  border-radius: 8px;
   transition: all .15s;
   user-select: none;
-  letter-spacing: -.1px;
+  letter-spacing: 0;
+  flex-shrink: 0;
 }
-
-.nav-tab:hover { color: var(--ink2); }
-.nav-tab.active { color: var(--forest); border-bottom-color: var(--forest); }
+.nav-tab:hover { background: rgba(0,0,0,.04); color: #1A3328; }
+.nav-tab.active { background: rgba(38,77,58,.08); color: #1A3328; font-weight: 600; border-bottom-color: transparent; }
 
 .nav-tab-badge {
-  background: var(--gold-dim);
+  background: rgba(184,130,42,.15);
   color: var(--gold);
   font-size: 10px;
   font-weight: 700;
@@ -561,61 +584,93 @@ input[type=range]::-webkit-slider-thumb:hover {
   opacity: 0;
   transition: opacity .2s;
 }
-
 .nav-tab.has-data .nav-tab-badge { opacity: 1; }
 
-.nav-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+/* Subject list */
+#sidebar-subjects { flex: 1; overflow-y: auto; padding: 4px 0 8px; min-height: 0; }
+.sidebar-subject {
+  display: flex; align-items: center; gap: 9px;
+  padding: 9px 14px; margin: 1px 6px;
+  border-radius: 8px;
+  color: #4A4A4A;
+  font-size: 13.5px; font-weight: 500;
+  cursor: pointer; transition: all .15s;
+  font-family: var(--font-body);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sidebar-subject:hover { background: rgba(0,0,0,.04); color: #1A3328; }
+.sidebar-subject.active { background: rgba(38,77,58,.08); color: #1A3328; font-weight: 600; }
+
+/* Profile area (bottom of sidebar) */
+.nav-right {
+  margin-top: auto;
+  margin-left: 0;
+  display: flex;
+  align-items: stretch;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  border-top: 1px solid #E8E4DE;
+  flex-shrink: 0;
+}
 
 .profile-chip {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: var(--cream);
-  border: 1px solid var(--border);
-  border-radius: 40px;
-  padding: 5px 14px 5px 6px;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 14px 16px;
   cursor: pointer;
-  transition: all .2s;
+  transition: background .15s;
   font-size: 13px;
   font-weight: 600;
-  color: var(--ink2);
+  color: #1C1C1C;
+  width: 100%;
+  box-sizing: border-box;
 }
-
-.profile-chip:hover { border-color: var(--forest); color: var(--forest); background: rgba(26,51,40,.03); }
+.profile-chip:hover { background: rgba(0,0,0,.04); }
 
 .chip-av {
-  width: 26px; height: 26px;
+  width: 30px; height: 30px;
   border-radius: 50%;
-  background: var(--btn-gradient);
+  background: #264D3A;
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   font-family: 'Playfair Display', serif;
-  box-shadow: 0 2px 6px rgba(26,51,40,.3);
+  flex-shrink: 0;
 }
 
-.nav-pill {
-  background: var(--cream);
-  border: 1px solid var(--border);
-  color: var(--ink3);
-  border-radius: 24px;
-  padding: 6px 14px;
-  font-size: 12px;
-  font-weight: 600;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  cursor: pointer;
-  transition: all .2s;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  letter-spacing: .1px;
-}
+/* Images pill — moved into chat area, hidden in sidebar */
+.nav-pill { display: none; }
 
-.nav-pill:hover { border-color: var(--forest); color: var(--forest); background: rgba(26,51,40,.03); transform: translateY(-1px); }
-.nav-pill.on { background: var(--btn-gradient); color: #fff; border-color: var(--forest); box-shadow: 0 3px 10px rgba(26,51,40,.25); }
+/* Mobile sidebar */
+#sidebar-hamburger {
+  display: none;
+  position: fixed; top: 14px; left: 16px; z-index: 701;
+  background: #264D3A; border: none; color: #fff; border-radius: 8px;
+  padding: 8px 10px; cursor: pointer; font-size: 16px; line-height: 1;
+  box-shadow: 0 2px 10px rgba(0,0,0,.2);
+}
+#sidebar-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 699; background: rgba(0,0,0,.35);
+}
+@media (max-width: 768px) {
+  #sidebar-hamburger { display: block; }
+  .topnav {
+    position: fixed; left: 0; top: 0; bottom: 0; z-index: 700;
+    transform: translateX(-100%); transition: transform .3s ease;
+  }
+  .topnav.open { transform: translateX(0); }
+  #sidebar-overlay.open { display: block; }
+  #v-student, #v-parent, #v-calendar { padding-top: 52px; }
+}
 
 /* ══════════════════════════════════════════════
    VIEWS
@@ -739,9 +794,10 @@ input[type=range]::-webkit-slider-thumb:hover {
 }
 
 .msg.ai .msg-av {
-  background: var(--white);
-  border: 1.5px solid var(--border);
-  box-shadow: var(--shadow-sm);
+  background: #E8F5EE;
+  border: 1.5px solid #C8E6D4;
+  box-shadow: none;
+  font-size: 11px;
 }
 
 .msg-body { max-width: 76%; display: flex; flex-direction: column; gap: 6px; }
@@ -761,11 +817,11 @@ input[type=range]::-webkit-slider-thumb:hover {
 }
 
 .msg.ai .bubble {
-  background: var(--white);
+  background: #F7F6F3;
   color: var(--ink);
-  border: 1px solid rgba(226,218,208,.8);
+  border: 1px solid #EEEBE5;
   border-bottom-left-radius: 6px;
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 1px 2px rgba(0,0,0,.04);
 }
 
 /* Hint bubble */
@@ -947,21 +1003,22 @@ input[type=range]::-webkit-slider-thumb:hover {
 /* Hint/got-it bar */
 .action-bar {
   padding: 10px 24px;
-  border-top: 1px solid rgba(226,218,208,.7);
-  background: rgba(255,255,255,.95);
-  backdrop-filter: blur(8px);
+  border-top: 1px solid #EBE7E1;
+  background: #FFFFFF;
   display: flex;
   gap: 8px;
   align-items: center;
   flex-shrink: 0;
+  max-width: 100%;
 }
+.action-bar > * { flex-shrink: 0; }
 
 .btn-hint {
-  background: var(--hint-bg);
-  border: 1.5px solid var(--hint-bdr);
-  color: var(--gold);
+  background: #FFFFFF;
+  border: 1.5px solid #E8E4DE;
+  color: #6B5C2E;
   border-radius: 20px;
-  padding: 7px 16px;
+  padding: 7px 14px;
   font-size: 13px;
   font-weight: 600;
   font-family: 'Plus Jakarta Sans', sans-serif;
@@ -971,11 +1028,11 @@ input[type=range]::-webkit-slider-thumb:hover {
   align-items: center;
   gap: 7px;
 }
-.btn-hint:hover { background: #FDE8C4; }
+.btn-hint:hover { border-color: #264D3A; color: #264D3A; background: rgba(38,77,58,.04); }
 .btn-hint:disabled { opacity: .35; cursor: not-allowed; }
 
 .hint-count {
-  background: var(--gold);
+  background: #264D3A;
   color: #fff;
   border-radius: 20px;
   padding: 1px 7px;
@@ -984,11 +1041,11 @@ input[type=range]::-webkit-slider-thumb:hover {
 }
 
 .btn-gotit {
-  background: var(--aha-bg);
-  border: 1.5px solid var(--aha-bdr);
-  color: var(--forest);
+  background: #FFFFFF;
+  border: 1.5px solid #264D3A;
+  color: #264D3A;
   border-radius: 20px;
-  padding: 7px 16px;
+  padding: 7px 14px;
   font-size: 13px;
   font-weight: 600;
   font-family: 'Plus Jakarta Sans', sans-serif;
@@ -996,21 +1053,21 @@ input[type=range]::-webkit-slider-thumb:hover {
   transition: all .15s;
   margin-left: auto;
 }
-.btn-gotit:hover { background: #D4F5E5; }
+.btn-gotit:hover { background: rgba(38,77,58,.06); }
 
 .btn-whylearn {
-  background: #EEF2FF;
-  border: 1.5px solid rgba(99,102,241,.25);
-  color: #4F46E5;
+  background: #FFFFFF;
+  border: 1.5px solid #E8E4DE;
+  color: #4A4A4A;
   border-radius: 20px;
-  padding: 7px 16px;
+  padding: 7px 14px;
   font-size: 13px;
   font-weight: 600;
   font-family: 'Plus Jakarta Sans', sans-serif;
   cursor: pointer;
   transition: all .15s;
 }
-.btn-whylearn:hover { background: #E0E7FF; }
+.btn-whylearn:hover { border-color: #264D3A; color: #264D3A; background: rgba(38,77,58,.04); }
 
 .btn-testprep {
   background: var(--blue-dim);
@@ -1127,30 +1184,29 @@ input[type=range]::-webkit-slider-thumb:hover {
 
 /* Input area */
 .input-area {
-  padding: 16px 24px 22px;
-  border-top: 1px solid rgba(226,218,208,.7);
-  background: rgba(255,255,255,.97);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  padding: 12px 24px 18px;
+  border-top: 1px solid #EBE7E1;
+  background: #FFFFFF;
   flex-shrink: 0;
 }
 
 .input-wrap {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: flex-end;
-  background: var(--white);
-  border: 1.5px solid var(--border);
-  border-radius: 18px;
-  padding: 10px 10px 10px 20px;
+  background: #FFFFFF;
+  border: 1.5px solid #E2DAD0;
+  border-radius: 24px;
+  padding: 8px 8px 8px 18px;
   transition: border-color .2s, box-shadow .2s;
-  box-shadow: 0 2px 12px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.04);
+  box-shadow: 0 2px 12px rgba(0,0,0,.06);
+  max-width: 780px;
+  margin: 0 auto;
 }
 
 .input-wrap:focus-within {
-  border-color: var(--forest);
-  background: var(--white);
-  box-shadow: 0 0 0 3px rgba(26,51,40,.08), 0 2px 12px rgba(0,0,0,.06);
+  border-color: #264D3A;
+  box-shadow: 0 0 0 3px rgba(38,77,58,.08), 0 2px 12px rgba(0,0,0,.06);
 }
 
 #minput {
@@ -1158,7 +1214,7 @@ input[type=range]::-webkit-slider-thumb:hover {
   background: transparent;
   border: none;
   outline: none;
-  font-size: 14.5px;
+  font-size: 15px;
   font-family: 'Plus Jakarta Sans', sans-serif;
   color: var(--ink);
   resize: none;
@@ -1167,23 +1223,23 @@ input[type=range]::-webkit-slider-thumb:hover {
   line-height: 1.6;
 }
 
-#minput::placeholder { color: var(--ink5); }
+#minput::placeholder { color: #9E9790; font-size: 15px; }
 
 #sbtn {
-  width: 40px; height: 40px;
-  background: var(--btn-gradient);
+  width: 36px; height: 36px;
+  background: #264D3A;
   border: none;
-  border-radius: 12px;
+  border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   transition: all .2s cubic-bezier(.16,1,.3,1);
-  box-shadow: 0 3px 14px rgba(26,51,40,.32), inset 0 1px 0 rgba(255,255,255,.12);
+  box-shadow: 0 2px 8px rgba(38,77,58,.3);
 }
-#sbtn:hover { background: var(--btn-gradient-hover); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(26,51,40,.38), inset 0 1px 0 rgba(255,255,255,.12); }
-#sbtn:active { transform: translateY(0); box-shadow: 0 2px 6px rgba(26,51,40,.2); }
+#sbtn:hover { background: #1A3328; transform: scale(1.05); box-shadow: 0 4px 12px rgba(38,77,58,.35); }
+#sbtn:active { transform: scale(.97); }
 #sbtn:disabled { opacity: .28; cursor: not-allowed; transform: none; box-shadow: none; }
 #sbtn svg { color: #fff; }
 
@@ -2363,28 +2419,8 @@ body { background: #FFFFFF; }
   border-right: 1px solid #F0EDE8;
 }
 
-/* ── TOP NAV ── */
-.topnav {
-  height: 60px;
-  background: rgba(255,255,255,.97);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid #F0EDE8;
-  box-shadow: none;
-}
-
-.nav-logo {
-  font-family: var(--font-serif);
-  font-size: 21px;
-  letter-spacing: -.5px;
-}
-
-.nav-tab {
-  height: 60px;
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 600;
-}
+/* ── Nav tab font ── */
+.nav-tab { font-family: var(--font-body); }
 
 /* ── MESSAGES ── */
 #msgs {
@@ -2905,6 +2941,118 @@ body { background: #FFFFFF; }
 .stg-school-btn:hover { background:rgba(26,51,40,.05); }
 .stg-end-btn { width:100%;padding:13px;border-radius:12px;border:1.5px solid var(--border2);background:transparent;color:var(--red);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all .15s; }
 .stg-end-btn:hover { background:var(--red-dim);border-color:var(--red); }
+
+/* ══════════════════════════════════════════════
+   EMPTY STATE — welcome screen
+══════════════════════════════════════════════ */
+.empty-chat {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 32px 40px;
+  max-width: 780px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  gap: 0;
+}
+.empty-icon-ring {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #C8E6D4, #91C9A8);
+  border: none;
+  box-shadow: 0 8px 32px rgba(38,77,58,.18), 0 2px 8px rgba(38,77,58,.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  line-height: 1;
+  margin-bottom: 24px;
+}
+.empty-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -.4px;
+  color: #264D3A;
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+.empty-sub {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1C1C1C;
+  line-height: 1.5;
+  max-width: 560px;
+  margin-bottom: 32px;
+}
+.starter-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  max-width: 680px;
+  width: 100%;
+  margin: 0;
+}
+.starter {
+  background: #FFFFFF;
+  border: 1.5px solid #EBE7E1;
+  border-radius: 14px;
+  padding: 18px 20px;
+  font-size: 13.5px;
+  color: #2E2E2E;
+  cursor: pointer;
+  transition: all .2s;
+  font-weight: 500;
+  box-shadow: 0 1px 4px rgba(0,0,0,.04);
+  text-align: left;
+  line-height: 1.45;
+}
+.starter:hover { border-color: #264D3A; color: #264D3A; transform: translateY(-2px); box-shadow: 0 6px 18px rgba(38,77,58,.1); }
+
+/* Chat disclaimer */
+.chat-disclaimer {
+  max-width: 780px;
+  margin: 0 auto;
+  font-size: 12px;
+  color: #9E9790;
+  padding-bottom: 12px;
+}
+
+/* Message count */
+#msg-remaining { max-width: 780px; margin: 0 auto; font-size: 11px; color: #C8C3BC; }
+
+/* Messages area */
+#msgs { background: #FFFFFF; padding: 32px 40px; }
+
+/* Images toggle — in action bar */
+#img-pill {
+  display: inline-flex !important;
+  background: #FFFFFF;
+  border: 1.5px solid #E2DAD0;
+  color: #6B6560;
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  width: auto;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: all .15s;
+  font-family: var(--font-body);
+  gap: 5px;
+  align-items: center;
+}
+#img-pill.on { background: rgba(38,77,58,.06); border-color: #264D3A; color: #264D3A; }
+#img-pill:hover { border-color: #264D3A; color: #264D3A; }
+
+@media (max-width: 768px) {
+  .empty-chat { padding: 0 20px 28px; }
+  .empty-title { font-size: 26px; }
+  .empty-sub { font-size: 16px; }
+  .starter-grid { grid-template-columns: 1fr 1fr; }
+  #msgs { padding: 24px 16px; }
+}
 </style>
 </head>
 <body>
@@ -3775,39 +3923,33 @@ body { background: #FFFFFF; }
           <div class="fgroup">
             <label>Your subjects <span style="color:var(--ink4);font-weight:400">(pick all that apply)</span></label>
             <div class="subject-chips" id="child-ob-subjects">
-              <div class="subject-chip" data-s="Mathe" onclick="pickSubjectCO(this)">Mathe</div>
-              <div class="subject-chip" data-s="Physik" onclick="pickSubjectCO(this)">Physik</div>
-              <div class="subject-chip" data-s="Chemie" onclick="pickSubjectCO(this)">Chemie</div>
-              <div class="subject-chip" data-s="Biologie" onclick="pickSubjectCO(this)">Biologie</div>
-              <div class="subject-chip" data-s="Deutsch" onclick="pickSubjectCO(this)">Deutsch</div>
-              <div class="subject-chip" data-s="Englisch" onclick="pickSubjectCO(this)">Englisch</div>
-              <div class="subject-chip" data-s="Geschichte" onclick="pickSubjectCO(this)">Geschichte</div>
-              <div class="subject-chip" data-s="Geographie" onclick="pickSubjectCO(this)">Geographie</div>
-              <div class="subject-chip" data-s="Informatik" onclick="pickSubjectCO(this)">Informatik</div>
-              <div class="subject-chip" data-s="Wirtschaft" onclick="pickSubjectCO(this)">Wirtschaft</div>
-              <div class="subject-chip" data-s="Kunst" onclick="pickSubjectCO(this)">Kunst</div>
-              <div class="subject-chip" data-s="Musik" onclick="pickSubjectCO(this)">Musik</div>
-              <div class="subject-chip" data-s="Sport" onclick="pickSubjectCO(this)">Sport</div>
-              <div class="subject-chip" data-s="Philosophie" onclick="pickSubjectCO(this)">Philosophie</div>
-              <div class="subject-chip" data-s="Französisch" onclick="pickSubjectCO(this)">Französisch</div>
-              <div class="subject-chip" data-s="Latein" onclick="pickSubjectCO(this)">Latein</div>
-              <div class="subject-chip" data-s="Spanisch" onclick="pickSubjectCO(this)">Spanisch</div>
               <div class="subject-chip" data-s="Math" onclick="pickSubjectCO(this)">Math</div>
-              <div class="subject-chip" data-s="Science" onclick="pickSubjectCO(this)">Science</div>
+              <div class="subject-chip" data-s="Physics" onclick="pickSubjectCO(this)">Physics</div>
+              <div class="subject-chip" data-s="Chemistry" onclick="pickSubjectCO(this)">Chemistry</div>
+              <div class="subject-chip" data-s="Biology" onclick="pickSubjectCO(this)">Biology</div>
+              <div class="subject-chip" data-s="German" onclick="pickSubjectCO(this)">German</div>
               <div class="subject-chip" data-s="English" onclick="pickSubjectCO(this)">English</div>
               <div class="subject-chip" data-s="History" onclick="pickSubjectCO(this)">History</div>
-              <div class="subject-chip" data-s="Biology" onclick="pickSubjectCO(this)">Biology</div>
-              <div class="subject-chip" data-s="Chemistry" onclick="pickSubjectCO(this)">Chemistry</div>
-              <div class="subject-chip" data-s="Physics" onclick="pickSubjectCO(this)">Physics</div>
+              <div class="subject-chip" data-s="Geography" onclick="pickSubjectCO(this)">Geography</div>
+              <div class="subject-chip" data-s="Computer Science" onclick="pickSubjectCO(this)">Computer Science</div>
+              <div class="subject-chip" data-s="Economics" onclick="pickSubjectCO(this)">Economics</div>
+              <div class="subject-chip" data-s="Art" onclick="pickSubjectCO(this)">Art</div>
+              <div class="subject-chip" data-s="Music" onclick="pickSubjectCO(this)">Music</div>
+              <div class="subject-chip" data-s="P.E." onclick="pickSubjectCO(this)">P.E.</div>
+              <div class="subject-chip" data-s="Philosophy" onclick="pickSubjectCO(this)">Philosophy</div>
+              <div class="subject-chip" data-s="French" onclick="pickSubjectCO(this)">French</div>
+              <div class="subject-chip" data-s="Latin" onclick="pickSubjectCO(this)">Latin</div>
+              <div class="subject-chip" data-s="Spanish" onclick="pickSubjectCO(this)">Spanish</div>
+              <div class="subject-chip" data-s="Science" onclick="pickSubjectCO(this)">Science</div>
             </div>
           </div>
           <div class="fgroup">
             <label>Which is your favourite? <span style="color:var(--ink4);font-weight:400">(optional)</span></label>
-            <input class="fi" id="child-ob-fav-subject" placeholder="e.g. Mathe"/>
+            <input class="fi" id="child-ob-fav-subject" placeholder="e.g. Math"/>
           </div>
           <div class="fgroup">
             <label>Which is hardest for you? <span style="color:var(--ink4);font-weight:400">(optional)</span></label>
-            <input class="fi" id="child-ob-hard-subject" placeholder="e.g. Chemie"/>
+            <input class="fi" id="child-ob-hard-subject" placeholder="e.g. Chemistry"/>
           </div>
         </div>
 
@@ -4642,27 +4784,55 @@ body { background: #FFFFFF; }
 <div id="app">
 
   <div class="topnav">
-    <div class="nav-logo" style="display:flex;align-items:center;gap:10px">
-      <button onclick="goHome()" style="display:none;background:none;border:none;color:var(--ink4);font-size:13px;cursor:pointer;padding:4px 6px;border-radius:8px;transition:background .15s;line-height:1" title="Back to home">←</button>
-      <div class="nav-logo-dot"></div>
+
+    <!-- Logo -->
+    <div class="nav-logo">
+      <button onclick="goHome()" style="display:none;background:none;border:none;color:rgba(255,255,255,.4);font-size:13px;cursor:pointer;padding:4px 6px;border-radius:8px;transition:background .15s;line-height:1" title="Back to home" id="sidebar-back-btn">←</button>
+      <svg class="nav-logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+        <defs><linearGradient id="sbg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1E3D2F"/><stop offset="100%" stop-color="#2E5C44"/></linearGradient></defs>
+        <rect width="512" height="512" rx="112" fill="url(#sbg)"/>
+        <g transform="translate(256,256)" opacity="0.88">
+          <ellipse cx="0" cy="0" rx="52" ry="104" fill="white" transform="rotate(0)" opacity="0.78"/>
+          <ellipse cx="0" cy="0" rx="52" ry="104" fill="white" transform="rotate(45)" opacity="0.78"/>
+          <ellipse cx="0" cy="0" rx="52" ry="104" fill="white" transform="rotate(90)" opacity="0.78"/>
+          <ellipse cx="0" cy="0" rx="52" ry="104" fill="white" transform="rotate(135)" opacity="0.78"/>
+        </g>
+      </svg>
       Guided
     </div>
-    <div class="nav-tab active" id="tab-s" onclick="switchView('student')">Student</div>
+
+    <!-- New Chat -->
+    <button id="sidebar-new-chat" onclick="openGeneralChat()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      General Chat
+    </button>
+
+    <!-- Navigation (Student tab hidden — entry via subject click) -->
+    <div class="nav-tab active" id="tab-s" onclick="switchView('student')" style="display:none">🎓 Student</div>
+    <div class="sidebar-section-label">Overview</div>
     <div class="nav-tab" id="tab-p" onclick="switchView('parent')" style="display:none">
-      Parent Dashboard
+      📊 My Progress
       <span class="nav-tab-badge" id="dash-badge">Live</span>
     </div>
     <div class="nav-tab" id="tab-c" onclick="switchView('calendar')" style="display:none">
-      📅 Kalender
+      📅 Calendar
     </div>
+
+    <!-- Subject list (populated by JS) -->
+    <div class="sidebar-section-label" id="sidebar-subj-label" style="display:none">My Subjects</div>
+    <div id="sidebar-subjects"></div>
+
+    <!-- Profile + settings -->
     <div class="nav-right">
       <div class="profile-chip" id="profile-chip" onclick="openSettings()">
         <div class="chip-av" id="chip-av">?</div>
         <span id="chip-name">Student</span>
       </div>
-      <button class="nav-pill on" id="img-pill" onclick="toggleImgs()">🖼 Images</button>
     </div>
+
   </div>
+  <button id="sidebar-hamburger" onclick="toggleSidebar()">☰</button>
+  <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
   <!-- STUDENT VIEW -->
   <div class="view active" id="v-student">
@@ -4678,7 +4848,7 @@ body { background: #FFFFFF; }
         <div class="empty-chat" id="empty-chat">
           <div class="empty-icon-ring">🌱</div>
           <div class="empty-title" id="empty-title">Ready to learn!</div>
-          <div class="empty-sub" id="empty-sub">Ask anything. I won't just give you the answer — I'll help you think it through.</div>
+          <div class="empty-sub" id="empty-sub">How can I help you learn today?</div>
           <div class="starter-grid" id="starters"></div>
         </div>
       </div>
@@ -4694,6 +4864,7 @@ body { background: #FFFFFF; }
         </button>
         <button class="btn-whylearn" onclick="reqWhyLearn()" title="Why am I learning this?">🌍 Why do I need this?</button>
         <button class="btn-gotit" onclick="gotIt()">✓ I figured it out!</button>
+        <button class="nav-pill on" id="img-pill" onclick="toggleImgs()" style="margin-left:auto">🖼 Images</button>
       </div>
 
       <div id="msg-remaining" style="font-size:10px;color:var(--ink4);text-align:center;padding:2px 0;font-family:var(--font-body)"></div>
@@ -4836,10 +5007,10 @@ body { background: #FFFFFF; }
   <div class="view" id="v-calendar">
     <div class="cal-wrap">
       <div class="cal-header">
-        <h2>Kalender</h2>
+        <h2>Calendar</h2>
         <div class="cal-header-right">
-          <button class="cal-chip sel" id="cal-chip-all" onclick="setCalFilter('all')">Alle</button>
-          <button class="cal-chip" id="cal-chip-homework" onclick="setCalFilter('homework')">Hausaufgaben</button>
+          <button class="cal-chip sel" id="cal-chip-all" onclick="setCalFilter('all')">All</button>
+          <button class="cal-chip" id="cal-chip-homework" onclick="setCalFilter('homework')">Homework</button>
           <button class="cal-chip" id="cal-chip-test" onclick="setCalFilter('test')">Tests</button>
           <button class="cal-refresh-btn" id="cal-refresh-btn" onclick="refreshCalendar()">↺ Refresh</button>
         </div>
@@ -5030,6 +5201,7 @@ const S = {
   testConfidenceLog: [],
   testSessionCount: 0,
   testInterleaveQueue: [],
+  generalMode: false,
 };
 
 // ══════════════════════════════════════════════
@@ -5221,6 +5393,16 @@ TAG RULES — YOU MUST FOLLOW THESE:
 }
 
 function buildPrompt(ndCtx) {
+  if (S.generalMode) {
+    return `You are Guided, a friendly and knowledgeable AI assistant for ${S.name}${S.age ? `, aged ${S.age}` : ''}.
+${S.notes ? `About ${S.name}: ${S.notes}` : ''}
+
+You're in free-chat mode — no specific subject, no tutoring format. Just be genuinely helpful, direct, and conversational.
+Answer questions clearly and honestly. No need to withhold answers or force the Socratic method.
+Be warm, curious, and concise. If something is complex, explain it well. If it's simple, keep it short.
+Match the language ${S.name} writes in (German or English).`;
+  }
+
   const styleInstructions = {
     socratic: `
 TEACHING METHOD — SOCRATIC:
@@ -6379,13 +6561,79 @@ function startAppSession() {
       const phaseLabels = { diagnose:'Diagnose', build:'Build', simulate:'Simulate' };
       updateTestPrepUI();
       addBubble('ai', `👋 Welcome back, ${S.name}! Test prep for **${S.testSubject}** is still active — ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left, currently in the **${phaseLabels[S.testPhase]}** phase. Ready to continue?`);
-    } else {
-      const goalLine = S.goal ? ` Your goal: ${S.goal}.` : '';
-      addBubble('ai', `Hi ${S.name}! 👋 I'm your personal tutor.${goalLine} Ask me anything — I won't just give you answers, I'll help you actually think through them so you understand them for good. What's on your mind?`);
     }
+    // No auto-greeting for normal sessions — user starts the conversation
   }, 500);
 
+  updateSidebarSubjects();
   document.getElementById('minput').focus();
+}
+
+// ══════════════════════════════════════════════
+//  SIDEBAR HELPERS
+// ══════════════════════════════════════════════
+function updateSidebarSubjects() {
+  const container = document.getElementById('sidebar-subjects');
+  const label = document.getElementById('sidebar-subj-label');
+  if (!container) return;
+  let all = [...(S.lk||[]), ...(S.gk||[])].filter(Boolean);
+  if (!all.length && S.subj && S.subj !== 'General / Mixed') {
+    all = S.subj.split(',').map(s => s.trim()).filter(Boolean);
+  }
+  if (!all.length && S.selectedChannels?.length && S.slackChannels?.length) {
+    const selectedSet = new Set(S.selectedChannels);
+    all = S.slackChannels
+      .filter(ch => selectedSet.has(ch.id))
+      .map(ch => ch.subject || ch.name.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()));
+  }
+  if (!all.length) {
+    container.innerHTML = '';
+    if (label) label.style.display = 'none';
+    return;
+  }
+  if (label) label.style.display = '';
+  const emojiMap = {
+    'Math':'📐','Mathematics':'📐','Mathematik':'📐','Mathe':'📐',
+    'Physics':'🔬','Physik':'🔬',
+    'Chemistry':'⚗️','Chemie':'⚗️',
+    'Biology':'🌿','Biologie':'🌿',
+    'German':'📖','Deutsch':'📖',
+    'English':'🗣️','Englisch':'🗣️',
+    'History':'🏛️','Geschichte':'🏛️',
+    'Geography':'🌍','Geographie':'🌍','Geografie':'🌍',
+    'Computer Science':'💻','Informatik':'💻',
+    'Economics':'📊','Wirtschaft':'📊',
+    'Art':'🎨','Kunst':'🎨',
+    'Music':'🎵','Musik':'🎵',
+    'P.E.':'⚽','Sport':'⚽',
+    'Philosophy':'💭','Philosophie':'💭',
+    'French':'🇫🇷','Französisch':'🇫🇷',
+    'Latin':'📜','Latein':'📜',
+    'Spanish':'🇪🇸','Spanisch':'🇪🇸',
+    'Science':'🔭','Politik':'🏛️',
+  };
+  container.innerHTML = all.map(s => {
+    const emoji = emojiMap[s] || '📚';
+    const active = !S.generalMode && s === (S.currentSubject || S.subj);
+    return `<div class="sidebar-subject${active?' active':''}" data-subject="${s.replace(/"/g,'&quot;')}" onclick="switchSubject('${s.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">${emoji} ${s}</div>`;
+  }).join('');
+}
+
+function switchSubject(subject) {
+  S.generalMode = false;
+  S.currentSubject = subject;
+  S.subj = subject;
+  const dSubj = document.getElementById('d-subj');
+  if (dSubj) dSubj.textContent = subject;
+  switchView('student');
+  clearChat();
+  buildStarters();
+  updateSidebarSubjects();
+}
+
+function toggleSidebar() {
+  document.querySelector('.topnav').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
 }
 
 // ══════════════════════════════════════════════
@@ -6395,7 +6643,7 @@ async function sendMsg(isHint = false, isGotIt = false) {
   if (S.loading) return;
   const userMsgCount = S.events.filter(e => e.who === 'student' && e.type === 'message').length;
   if (userMsgCount >= 100) {
-    toast('Du hast das Limit von 100 Nachrichten für diese Session erreicht.', 'err');
+    toast('You\'ve reached the 100-message limit for this session.', 'err');
     document.getElementById('sbtn').disabled = true;
     document.getElementById('minput').disabled = true;
     return;
@@ -6490,7 +6738,7 @@ async function sendMsg(isHint = false, isGotIt = false) {
   } catch(e) {
     removeTyping(tid);
     if (e.message === 'daily_limit_reached') {
-      addBubble('ai', `Das war's für heute! Du hast alle ${MAX_DAILY_MESSAGES} Nachrichten aufgebraucht 💪\n\nKomm morgen wieder!`);
+      addBubble('ai', `That's all for today! You've used all ${MAX_DAILY_MESSAGES} messages 💪\n\nSee you tomorrow!`);
       document.getElementById('sbtn').disabled = true;
       document.getElementById('minput').disabled = true;
     } else {
@@ -6618,7 +6866,7 @@ async function callLLM(ndCtx, isHint = false) {
   if (!limit.allowed) throw new Error('daily_limit_reached');
   const model = pickModel(isHint);
   document.getElementById('d-model').textContent = `Claude · ${MODEL_LABELS[model] || model}`;
-  if (limit.warning) toast(`Noch ${limit.remaining} Nachrichten heute — nutz sie gut!`, 'ok');
+  if (limit.warning) toast(`${limit.remaining} messages left today — make them count!`, 'ok');
   const result = await callClaude(ndCtx, model);
   const newCount = incrementDailyMessageCount();
   const remEl = document.getElementById('msg-remaining');
@@ -7184,8 +7432,11 @@ function buildStarters() {
     const c = document.createElement('div'); c.className = 'starter'; c.textContent = t;
     c.onclick = () => fillInput(t); el.appendChild(c);
   });
-  document.getElementById('empty-title').textContent = `Hi ${S.name}! 👋`;
-  document.getElementById('empty-sub').textContent = `Ask me anything — I'll explain it properly, not just give you the answer.`;
+  const titleEl = document.getElementById('empty-title');
+  const subEl = document.getElementById('empty-sub');
+  if (titleEl) titleEl.textContent = `Hello, ${S.name || 'there'}`;
+  if (subEl) subEl.textContent = 'How can I help you learn today?';
+  updateSidebarSubjects();
 }
 
 function clearChat() {
@@ -7200,6 +7451,36 @@ function clearChat() {
   document.getElementById('hcount').textContent = '3';
   updateDev({}, 0);
   toast('Session cleared', 'ok');
+}
+
+function openGeneralChat() {
+  S.history = []; S.events = [];
+  S.totTok = 0; S.pTok = 0; S.cTok = 0; S.calls = 0;
+  S.imgs = 0; S.ndSearches = 0;
+  S.hintsLeft = 3; S.hintsUsed = 0; S.exchanges = 0; S.ahas = 0;
+  S.bloom = { remember:0, understand:0, apply:0, analyze:0, evaluate:0, create:0 };
+  S.bloomTotal = 0; S.sessionStart = Date.now();
+  S.generalMode = true;
+  S.currentSubject = null;
+  const generalStarters = [
+    "What's on your mind?",
+    'Tell me something interesting',
+    'Help me make a decision',
+    'I have a question about…',
+  ];
+  const starterCards = generalStarters.map(t =>
+    `<div class="starter" onclick="fillInput(${JSON.stringify(t)})">${t}</div>`
+  ).join('');
+  document.getElementById('msgs').innerHTML = `<div class="empty-chat" id="empty-chat">
+    <div class="empty-icon-ring">💬</div>
+    <div class="empty-title" id="empty-title">Hey, ${S.name || 'there'}</div>
+    <div class="empty-sub" id="empty-sub">No topic, no pressure — ask me anything.</div>
+    <div class="starter-grid" id="starters">${starterCards}</div>
+  </div>`;
+  document.getElementById('btn-hint').disabled = true;
+  document.getElementById('hcount').textContent = '—';
+  updateDev({}, 0);
+  updateSidebarSubjects();
 }
 
 function switchView(v) {
@@ -7323,19 +7604,17 @@ function _calDateLabel(dateStr) {
   const today = _calFmt(new Date());
   const tomorrow = (() => { const d=new Date(); d.setDate(d.getDate()+1); return _calFmt(d); })();
   const yesterday = (() => { const d=new Date(); d.setDate(d.getDate()-1); return _calFmt(d); })();
-  if (dateStr === today) return 'Heute';
-  if (dateStr === tomorrow) return 'Morgen';
-  if (dateStr === yesterday) return 'Gestern';
+  if (dateStr === today) return 'Today';
+  if (dateStr === tomorrow) return 'Tomorrow';
+  if (dateStr === yesterday) return 'Yesterday';
   const parts = dateStr.split('-');
   const d = new Date(+parts[0], +parts[1]-1, +parts[2]);
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   if (d < new Date() && dateStr !== today) {
-    const days = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-    const months = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
-    return `Überfällig — ${days[d.getDay()]}, ${d.getDate()}. ${months[d.getMonth()]}`;
+    return `Overdue — ${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
   }
-  const days = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-  const months = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
-  return `${days[d.getDay()]}, ${d.getDate()}. ${months[d.getMonth()]}`;
+  return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
 }
 
 function parseSlackForCalendar(allContent) {
@@ -7353,7 +7632,7 @@ function parseSlackForCalendar(allContent) {
       id,
       dueDate,
       type,
-      subject: msg.subject || 'Allgemein',
+      subject: msg.subject || 'General',
       text: msg.text || '',
       author: msg.author || '',
       channel: msg.channel || '',
@@ -7394,7 +7673,7 @@ function renderCalendar(filter) {
 
   const events = (S.calendarEvents || []).filter(ev => filter === 'all' || ev.type === filter);
   if (!events.length) {
-    list.innerHTML = `<div class="cal-empty"><div class="cal-empty-icon">📅</div><div class="cal-empty-title">Keine Einträge</div><div class="cal-empty-sub">Wenn Lehrer Hausaufgaben oder Tests in Slack posten, erscheinen sie hier automatisch.</div></div>`;
+    list.innerHTML = `<div class="cal-empty"><div class="cal-empty-icon">📅</div><div class="cal-empty-title">Nothing here yet</div><div class="cal-empty-sub">When teachers post homework or tests in Slack, they'll appear here automatically.</div></div>`;
     return;
   }
 
@@ -8339,11 +8618,6 @@ async function launchAsSchoolStudent(student) {
   // Auto-load curriculum if school is known
   if (S.school) lookupSchoolGeneric(S.school, 'obs-school-status');
 
-  setTimeout(() => {
-    const goalLine = S.goal ? ` Your goal today: ${goalMap[S.learningGoal]}.` : '';
-    addBubble('ai', `Hi ${S.name}! 👋 I'm your personal tutor.${goalLine} Ask me anything on your mind — I won't just give you answers, but help you truly understand. What are we working on today?`);
-  }, 500);
-
   document.getElementById('minput').focus();
 }
 
@@ -8833,6 +9107,7 @@ function confirmClassSelection() {
   toast(`Connected to ${S.schoolName} — ${selected.length} classes`, 'ok');
   obStudentStep++;
   renderObStudent();
+  updateSidebarSubjects();
 }
 
 function skipSchoolConnect() {
