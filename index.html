@@ -9,6 +9,14 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://esm.sh/three@0.170.0",
+    "three/addons/": "https://esm.sh/three@0.170.0/examples/jsm/"
+  }
+}
+</script>
 <style>
 /* ══════════════════════════════════════════════
    TOKENS & RESET
@@ -3610,6 +3618,84 @@ body { background: #FFFFFF; }
   .msg-body { max-width: 88%; }
   .input-area { padding: 8px 16px 16px; }
 }
+/* ══════════════════════════════════════════════
+   HYPERSPEED TRANSITION
+══════════════════════════════════════════════ */
+#hyperspeed-overlay {
+  position: fixed; inset: 0;
+  z-index: 9999;
+  background: #000000;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+}
+#hyperspeed-overlay.fade-out {
+  transition: opacity .55s ease-out;
+  opacity: 0;
+}
+#hyperspeed-canvas {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  display: block;
+  background: #000000;
+}
+.hs-text {
+  position: absolute;
+  z-index: 2;
+  text-align: center;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  opacity: 0;
+  transition: opacity .8s ease;
+  pointer-events: none;
+  top: 38%;
+  transform: translateY(-50%);
+}
+.hs-text.visible { opacity: 1; }
+.hs-title {
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -.5px;
+  margin-bottom: 10px;
+  text-shadow: 0 0 40px rgba(46,92,68,.35);
+}
+.hs-subtitle {
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(255,255,255,.45);
+  letter-spacing: .2px;
+}
+.hs-progress-wrap {
+  position: absolute;
+  bottom: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 180px;
+  z-index: 2;
+  pointer-events: none;
+}
+.hs-progress-bar {
+  height: 3px;
+  background: rgba(255,255,255,.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.hs-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #2E5C44, #D4A04E);
+  border-radius: 2px;
+}
+.hs-flash {
+  position: absolute; inset: 0;
+  background: transparent;
+  opacity: 0;
+  z-index: 3;
+  pointer-events: none;
+}
 </style>
 </head>
 <body>
@@ -5317,6 +5403,21 @@ body { background: #FFFFFF; }
   </div>
 </div>
 
+<!-- ═══ Hyperspeed Transition ═══ -->
+<div id="hyperspeed-overlay">
+  <canvas id="hyperspeed-canvas"></canvas>
+  <div class="hs-text" id="hs-text">
+    <div class="hs-title">Your tutor is ready</div>
+    <div class="hs-subtitle">Hold anywhere to accelerate</div>
+  </div>
+  <div class="hs-progress-wrap">
+    <div class="hs-progress-bar">
+      <div class="hs-progress-fill" id="hs-progress-fill"></div>
+    </div>
+  </div>
+  <div class="hs-flash" id="hs-flash"></div>
+</div>
+
 <div id="app">
 
   <div class="topnav">
@@ -6450,7 +6551,7 @@ async function launchFamilyChild(child) {
   }
 
   await loadLearningProfile(null);
-  startAppSession();
+  if (window.playHyperspeed) { playHyperspeed(() => startAppSession()); } else { startAppSession(); }
 }
 async function submitFamilyCode() {
   const entered = document.getElementById('ob-child-code-input').value.trim().toUpperCase();
@@ -6994,7 +7095,7 @@ function launchChild() {
   S.sessionStart = Date.now();
   S.userType = 'parent-child';
   document.getElementById('ob').style.display = 'none';
-  startAppSession();
+  if (window.playHyperspeed) { playHyperspeed(() => startAppSession()); } else { startAppSession(); }
 }
 
 // ── Launch: Student personal use ──
@@ -7033,7 +7134,7 @@ function launchStudent() {
   S.currentSubject = S.lk[0] || '';
   S.subjectLog   = [];
   document.getElementById('ob-student').style.display = 'none';
-  startAppSession();
+  if (window.playHyperspeed) { playHyperspeed(() => startAppSession()); } else { startAppSession(); }
   // Prompt to save account (unless already logged in)
   if (!S.accountId) setTimeout(() => { document.getElementById('save-account-banner').style.display = 'block'; }, 3000);
 }
@@ -9134,31 +9235,33 @@ async function launchAsSchoolStudent(student) {
   S.aiNotes = student.ai_notes || '';
   await loadLearningProfile(S.studentId);
 
-  document.getElementById('app').style.display = 'flex';
-  document.getElementById('app').classList.add('show');
+  function showSchoolApp() {
+    document.getElementById('app').style.display = 'flex';
+    document.getElementById('app').classList.add('show');
 
-  document.getElementById('chip-av').textContent   = S.name.slice(0,1).toUpperCase();
-  document.getElementById('chip-name').textContent = `${S.name}, ${S.age}`;
-  document.getElementById('d-name').textContent    = S.name;
-  document.getElementById('d-age').textContent     = S.age;
-  document.getElementById('d-school').textContent  = S.school || '—';
-  document.getElementById('d-subj').textContent    = S.subj;
-  document.getElementById('d-goal').textContent    = S.goal || '—';
-  document.getElementById('d-notes').textContent   = S.notes || '—';
-  document.getElementById('d-conf').textContent    = `${TEMP} / ${MAX_TOK}`;
-  document.getElementById('d-model').textContent   = `Claude · Smart Routing`;
-  document.getElementById('d-updates').textContent = S.parentUpdates;
+    document.getElementById('chip-av').textContent   = S.name.slice(0,1).toUpperCase();
+    document.getElementById('chip-name').textContent = `${S.name}, ${S.age}`;
+    document.getElementById('d-name').textContent    = S.name;
+    document.getElementById('d-age').textContent     = S.age;
+    document.getElementById('d-school').textContent  = S.school || '—';
+    document.getElementById('d-subj').textContent    = S.subj;
+    document.getElementById('d-goal').textContent    = S.goal || '—';
+    document.getElementById('d-notes').textContent   = S.notes || '—';
+    document.getElementById('d-conf').textContent    = `${TEMP} / ${MAX_TOK}`;
+    document.getElementById('d-model').textContent   = `Claude · Smart Routing`;
+    document.getElementById('d-updates').textContent = S.parentUpdates;
 
-  const styleLabels = {calm:'Calm & Empathetic',direct:'Clear & Direct',structured:'Structured & Methodical',motivating:'Energetic & Motivating',rigorous:'Demanding & Rigorous'};
-  document.getElementById('d-style').textContent = styleLabels[S.style] || S.style;
+    const styleLabels = {calm:'Calm & Empathetic',direct:'Clear & Direct',structured:'Structured & Methodical',motivating:'Energetic & Motivating',rigorous:'Demanding & Rigorous'};
+    document.getElementById('d-style').textContent = styleLabels[S.style] || S.style;
 
-  buildStarters();
-  document.getElementById('sbtn').disabled = false;
+    buildStarters();
+    document.getElementById('sbtn').disabled = false;
 
-  // Auto-load curriculum if school is known
-  if (S.school) lookupSchoolGeneric(S.school, 'obs-school-status');
+    if (S.school) lookupSchoolGeneric(S.school, 'obs-school-status');
 
-  document.getElementById('minput').focus();
+    document.getElementById('minput').focus();
+  }
+  if (window.playHyperspeed) { playHyperspeed(showSchoolApp); } else { showSchoolApp(); }
 }
 
 // ══════════════════════════════════════════════
@@ -10391,5 +10494,1084 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════
+     HYPERSPEED TRANSITION — 1:1 React Bits Port
+     Source: github.com/DavidHDev/react-bits (Hyperspeed)
+═══════════════════════════════════════════════ -->
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+/* ═══════════════════════════════════════════════════════
+   REACT BITS HYPERSPEED — FAITHFUL 1:1 VANILLA JS PORT
+   Architecture: TubeGeometry + InstancedBufferGeometry
+   Distortion: turbulentDistortion (GLSL + JS camera)
+   Colors: Guided muted green / gold palette
+═══════════════════════════════════════════════════════ */
+
+// ── Helpers (from React Bits) ──
+const nsin = val => Math.sin(val) * 0.5 + 0.5;
+const random = base => Array.isArray(base) ? Math.random() * (base[1] - base[0]) + base[0] : Math.random() * base;
+const pickRandom = arr => Array.isArray(arr) ? arr[Math.floor(Math.random() * arr.length)] : arr;
+function lerp(current, target, speed = 0.1, limit = 0.001) {
+  let change = (target - current) * speed;
+  if (Math.abs(change) < limit) change = target - current;
+  return change;
+}
+
+// ── Distortion: turbulentDistortion (React Bits default) ──
+const turbulentUniforms = {
+  uFreq: { value: new THREE.Vector4(4, 8, 8, 1) },
+  uAmp:  { value: new THREE.Vector4(25, 5, 10, 10) }
+};
+
+const turbulentDistortion = {
+  uniforms: turbulentUniforms,
+  getDistortion: `
+    uniform vec4 uFreq;
+    uniform vec4 uAmp;
+    float nsin(float val){
+      return sin(val) * 0.5 + 0.5;
+    }
+    #define PI 3.14159265358979
+    float getDistortionX(float progress){
+      return (
+        cos(PI * progress * uFreq.r + uTime) * uAmp.r +
+        pow(cos(PI * progress * uFreq.g + uTime * (uFreq.g / uFreq.r)), 2.) * uAmp.g
+      );
+    }
+    float getDistortionY(float progress){
+      return (
+        -nsin(PI * progress * uFreq.b + uTime) * uAmp.b +
+        -pow(nsin(PI * progress * uFreq.a + uTime / (uFreq.b / uFreq.a)), 5.) * uAmp.a
+      );
+    }
+    vec3 getDistortion(float progress){
+      return vec3(
+        getDistortionX(progress) - getDistortionX(0.0125),
+        getDistortionY(progress) - getDistortionY(0.0125),
+        0.
+      );
+    }
+  `,
+  getJS: (progress, time) => {
+    const uFreq = turbulentUniforms.uFreq.value;
+    const uAmp  = turbulentUniforms.uAmp.value;
+    const getX = p =>
+      Math.cos(Math.PI * p * uFreq.x + time) * uAmp.x +
+      Math.pow(Math.cos(Math.PI * p * uFreq.y + time * (uFreq.y / uFreq.x)), 2) * uAmp.y;
+    const getY = p =>
+      -nsin(Math.PI * p * uFreq.z + time) * uAmp.z -
+      Math.pow(nsin(Math.PI * p * uFreq.w + time / (uFreq.z / uFreq.w)), 5) * uAmp.w;
+    let distortion = new THREE.Vector3(
+      getX(progress) - getX(progress + 0.007),
+      getY(progress) - getY(progress + 0.007),
+      0
+    );
+    let lookAtAmp    = new THREE.Vector3(-2, -5, 0);
+    let lookAtOffset = new THREE.Vector3(0, 0, -10);
+    return distortion.multiply(lookAtAmp).add(lookAtOffset);
+  }
+};
+
+// ── JS-side distortion for positioning objects along the curved road ──
+function getPortalDistortion(zPos, time) {
+  const uFreq = turbulentUniforms.uFreq.value;
+  const uAmp  = turbulentUniforms.uAmp.value;
+  const progress = Math.abs(zPos / OPTIONS.length);
+  const getX = p =>
+    Math.cos(Math.PI * p * uFreq.x + time) * uAmp.x +
+    Math.pow(Math.cos(Math.PI * p * uFreq.y + time * (uFreq.y / uFreq.x)), 2) * uAmp.y;
+  const getY = p =>
+    -nsin(Math.PI * p * uFreq.z + time) * uAmp.z -
+    Math.pow(nsin(Math.PI * p * uFreq.w + time / (uFreq.z / uFreq.w)), 5) * uAmp.w;
+  return {
+    x: getX(progress) - getX(0.0125),
+    y: getY(progress) - getY(0.0125)
+  };
+}
+
+// ── Options (React Bits preset "one" structure, Guided green/gold colors) ──
+const OPTIONS = {
+  length: 800,
+  roadWidth: 10,
+  islandWidth: 2,
+  lanesPerRoad: 3,
+  fov: 90,
+  fovSpeedUp: 150,
+  speedUp: 2,
+  carLightsFade: 0.4,
+  totalSideLightSticks: 40,
+  lightPairsPerRoadWay: 70,
+  shoulderLinesWidthPercentage: 0.05,
+  brokenLinesWidthPercentage: 0.1,
+  brokenLinesLengthPercentage: 0.5,
+  lightStickWidth: [0.12, 0.5],
+  lightStickHeight: [1.3, 1.7],
+  movingAwaySpeed: [60, 80],
+  movingCloserSpeed: [-120, -160],
+  carLightsLength: [800 * 0.03, 800 * 0.2],
+  carLightsRadius: [0.05, 0.14],
+  carWidthPercentage: [0.3, 0.5],
+  carShiftX: [-0.8, 0.8],
+  carFloorSeparation: [0, 5],
+  distortion: turbulentDistortion,
+  colors: {
+    roadColor: 0x080808,
+    islandColor: 0x0a0a0a,
+    background: 0x000000,
+    shoulderLines: 0x131318,
+    brokenLines: 0x131318,
+    leftCars:  [0x2E5C44, 0x3A7A5C, 0x264D3A],
+    rightCars: [0xD4A04E, 0xB8822A, 0xC89535],
+    sticks: 0x2E5C44
+  }
+};
+
+// ═══════════════════════════════════════════════════
+//  Car Lights Shaders (1:1 from React Bits)
+//  TubeGeometry + InstancedBufferGeometry + custom GLSL
+// ═══════════════════════════════════════════════════
+const carLightsFragment = `
+  #define USE_FOG;
+  ${THREE.ShaderChunk['fog_pars_fragment']}
+  varying vec3 vColor;
+  varying vec2 vUv;
+  uniform vec2 uFade;
+  void main() {
+    vec3 color = vec3(vColor);
+    float alpha = smoothstep(uFade.x, uFade.y, vUv.x);
+    gl_FragColor = vec4(color, alpha);
+    if (gl_FragColor.a < 0.0001) discard;
+    ${THREE.ShaderChunk['fog_fragment']}
+  }
+`;
+
+const carLightsVertex = `
+  #define USE_FOG;
+  ${THREE.ShaderChunk['fog_pars_vertex']}
+  attribute vec3 aOffset;
+  attribute vec3 aMetrics;
+  attribute vec3 aColor;
+  uniform float uTravelLength;
+  uniform float uTime;
+  varying vec2 vUv;
+  varying vec3 vColor;
+  #include <getDistortion_vertex>
+  void main() {
+    vec3 transformed = position.xyz;
+    float radius = aMetrics.r;
+    float myLength = aMetrics.g;
+    float speed = aMetrics.b;
+
+    transformed.xy *= radius;
+    transformed.z *= myLength;
+
+    transformed.z += myLength - mod(uTime * speed + aOffset.z, uTravelLength);
+    transformed.xy += aOffset.xy;
+
+    float progress = abs(transformed.z / uTravelLength);
+    transformed.xyz += getDistortion(progress);
+
+    vec4 mvPosition = modelViewMatrix * vec4(transformed, 1.);
+    gl_Position = projectionMatrix * mvPosition;
+    vUv = uv;
+    vColor = aColor;
+    ${THREE.ShaderChunk['fog_vertex']}
+  }
+`;
+
+// ═══════════════════════════════════════════════════
+//  Side Sticks Shaders (1:1 from React Bits)
+//  PlaneGeometry + InstancedBufferGeometry, MOVING sticks
+// ═══════════════════════════════════════════════════
+const sideSticksVertex = `
+  #define USE_FOG;
+  ${THREE.ShaderChunk['fog_pars_vertex']}
+  attribute float aOffset;
+  attribute vec3 aColor;
+  attribute vec2 aMetrics;
+  uniform float uTravelLength;
+  uniform float uTime;
+  varying vec3 vColor;
+  mat4 rotationY( in float angle ) {
+    return mat4(cos(angle),   0, sin(angle), 0,
+                0,          1.0,          0, 0,
+               -sin(angle),  0, cos(angle), 0,
+                0,            0,          0, 1);
+  }
+  #include <getDistortion_vertex>
+  void main(){
+    vec3 transformed = position.xyz;
+    float width = aMetrics.x;
+    float height = aMetrics.y;
+
+    transformed.xy *= vec2(width, height);
+    float time = mod(uTime * 60. * 2. + aOffset, uTravelLength);
+
+    transformed = (rotationY(3.14/2.) * vec4(transformed,1.)).xyz;
+
+    transformed.z += - uTravelLength + time;
+
+    float progress = abs(transformed.z / uTravelLength);
+    transformed.xyz += getDistortion(progress);
+
+    transformed.y += height / 2.;
+    transformed.x += -width / 2.;
+    vec4 mvPosition = modelViewMatrix * vec4(transformed, 1.);
+    gl_Position = projectionMatrix * mvPosition;
+    vColor = aColor;
+    ${THREE.ShaderChunk['fog_vertex']}
+  }
+`;
+
+const sideSticksFragment = `
+  #define USE_FOG;
+  ${THREE.ShaderChunk['fog_pars_fragment']}
+  varying vec3 vColor;
+  void main(){
+    vec3 color = vec3(vColor);
+    gl_FragColor = vec4(color,1.);
+    ${THREE.ShaderChunk['fog_fragment']}
+  }
+`;
+
+// ═══════════════════════════════════════════════════
+//  Road Shaders (1:1 from React Bits)
+//  3 planes: leftRoadWay, rightRoadWay, island
+// ═══════════════════════════════════════════════════
+const roadMarkings_vars = `
+  uniform float uLanes;
+  uniform vec3 uBrokenLinesColor;
+  uniform vec3 uShoulderLinesColor;
+  uniform float uShoulderLinesWidthPercentage;
+  uniform float uBrokenLinesWidthPercentage;
+  uniform float uBrokenLinesLengthPercentage;
+  highp float random(vec2 co) {
+    highp float a = 12.9898;
+    highp float b = 78.233;
+    highp float c = 43758.5453;
+    highp float dt = dot(co.xy, vec2(a, b));
+    highp float sn = mod(dt, 3.14);
+    return fract(sin(sn) * c);
+  }
+`;
+
+const roadMarkings_fragment = `
+  uv.y = mod(uv.y + uTime * 0.05, 1.);
+  float laneWidth = 1.0 / uLanes;
+  float brokenLineWidth = laneWidth * uBrokenLinesWidthPercentage;
+  float laneEmptySpace = 1. - uBrokenLinesLengthPercentage;
+
+  float brokenLines = step(1.0 - brokenLineWidth, fract(uv.x * 2.0)) * step(laneEmptySpace, fract(uv.y * 10.0));
+  float sideLines = step(1.0 - brokenLineWidth, fract((uv.x - laneWidth * (uLanes - 1.0)) * 2.0)) + step(brokenLineWidth, uv.x);
+
+  brokenLines = mix(brokenLines, sideLines, uv.x);
+  color = mix(color, uBrokenLinesColor, brokenLines);
+`;
+
+const roadBaseFragment = `
+  #define USE_FOG;
+  varying vec2 vUv;
+  uniform vec3 uColor;
+  uniform float uTime;
+  #include <roadMarkings_vars>
+  ${THREE.ShaderChunk['fog_pars_fragment']}
+  void main() {
+    vec2 uv = vUv;
+    vec3 color = vec3(uColor);
+    #include <roadMarkings_fragment>
+    gl_FragColor = vec4(color, 1.);
+    ${THREE.ShaderChunk['fog_fragment']}
+  }
+`;
+
+const islandFragment = roadBaseFragment
+  .replace('#include <roadMarkings_fragment>', '')
+  .replace('#include <roadMarkings_vars>', '');
+
+const roadFragment = roadBaseFragment
+  .replace('#include <roadMarkings_fragment>', roadMarkings_fragment)
+  .replace('#include <roadMarkings_vars>', roadMarkings_vars);
+
+const roadVertex = `
+  #define USE_FOG;
+  uniform float uTime;
+  ${THREE.ShaderChunk['fog_pars_vertex']}
+  uniform float uTravelLength;
+  varying vec2 vUv;
+  #include <getDistortion_vertex>
+  void main() {
+    vec3 transformed = position.xyz;
+    vec3 distortion = getDistortion((transformed.y + uTravelLength / 2.) / uTravelLength);
+    transformed.x += distortion.x;
+    transformed.z += distortion.y;
+    transformed.y += -1. * distortion.z;
+
+    vec4 mvPosition = modelViewMatrix * vec4(transformed, 1.);
+    gl_Position = projectionMatrix * mvPosition;
+    vUv = uv;
+    ${THREE.ShaderChunk['fog_vertex']}
+  }
+`;
+
+// ═══════════════════════════════════════════════════
+//  Road Class (1:1 from React Bits)
+// ═══════════════════════════════════════════════════
+class Road {
+  constructor(webgl, options) {
+    this.webgl = webgl;
+    this.options = options;
+    this.uTime = { value: 0 };
+  }
+
+  createPlane(side, width, isRoad) {
+    const options = this.options;
+    const geometry = new THREE.PlaneGeometry(
+      isRoad ? options.roadWidth : options.islandWidth,
+      options.length,
+      20,
+      100
+    );
+    let uniforms = {
+      uTravelLength: { value: options.length },
+      uColor: { value: new THREE.Color(isRoad ? options.colors.roadColor : options.colors.islandColor) },
+      uTime: this.uTime
+    };
+
+    if (isRoad) {
+      uniforms = Object.assign(uniforms, {
+        uLanes: { value: options.lanesPerRoad },
+        uBrokenLinesColor: { value: new THREE.Color(options.colors.brokenLines) },
+        uShoulderLinesColor: { value: new THREE.Color(options.colors.shoulderLines) },
+        uShoulderLinesWidthPercentage: { value: options.shoulderLinesWidthPercentage },
+        uBrokenLinesLengthPercentage: { value: options.brokenLinesLengthPercentage },
+        uBrokenLinesWidthPercentage: { value: options.brokenLinesWidthPercentage }
+      });
+    }
+
+    const material = new THREE.ShaderMaterial({
+      fragmentShader: isRoad ? roadFragment : islandFragment,
+      vertexShader: roadVertex,
+      side: THREE.DoubleSide,
+      uniforms: Object.assign(uniforms, this.webgl.fogUniforms, options.distortion.uniforms)
+    });
+
+    material.onBeforeCompile = shader => {
+      shader.vertexShader = shader.vertexShader.replace(
+        '#include <getDistortion_vertex>',
+        options.distortion.getDistortion
+      );
+    };
+
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.z = -options.length / 2;
+    mesh.position.x += (this.options.islandWidth / 2 + options.roadWidth / 2) * side;
+    this.webgl.scene.add(mesh);
+    return mesh;
+  }
+
+  init() {
+    this.leftRoadWay = this.createPlane(-1, this.options.roadWidth, true);
+    this.rightRoadWay = this.createPlane(1, this.options.roadWidth, true);
+    this.island = this.createPlane(0, this.options.islandWidth, false);
+  }
+
+  update(time) {
+    this.uTime.value = time;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  CarLights Class (1:1 from React Bits)
+//  TubeGeometry + InstancedBufferGeometry, single draw call
+// ═══════════════════════════════════════════════════
+class CarLights {
+  constructor(webgl, options, colors, speed, fade) {
+    this.webgl = webgl;
+    this.options = options;
+    this.colors = colors;
+    this.speed = speed;
+    this.fade = fade;
+  }
+
+  init() {
+    const options = this.options;
+    // 3D tube along Z axis (React Bits signature geometry)
+    let curve = new THREE.LineCurve3(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1));
+    let geometry = new THREE.TubeGeometry(curve, 40, 1, 8, false);
+
+    let instanced = new THREE.InstancedBufferGeometry().copy(geometry);
+    instanced.instanceCount = options.lightPairsPerRoadWay * 2;
+
+    let laneWidth = options.roadWidth / options.lanesPerRoad;
+
+    let aOffset = [];
+    let aMetrics = [];
+    let aColor = [];
+
+    let colors = this.colors;
+    if (Array.isArray(colors)) {
+      colors = colors.map(c => new THREE.Color(c));
+    } else {
+      colors = new THREE.Color(colors);
+    }
+
+    for (let i = 0; i < options.lightPairsPerRoadWay; i++) {
+      let radius = random(options.carLightsRadius);
+      let length = random(options.carLightsLength);
+      let speed = random(this.speed);
+
+      let carLane = i % options.lanesPerRoad;
+      let laneX = carLane * laneWidth - options.roadWidth / 2 + laneWidth / 2;
+
+      let carWidth = random(options.carWidthPercentage) * laneWidth;
+      let carShiftX = random(options.carShiftX) * laneWidth;
+      laneX += carShiftX;
+
+      let offsetY = random(options.carFloorSeparation) + radius * 1.3;
+      let offsetZ = -random(options.length);
+
+      // Left headlight
+      aOffset.push(laneX - carWidth / 2);
+      aOffset.push(offsetY);
+      aOffset.push(offsetZ);
+      // Right headlight
+      aOffset.push(laneX + carWidth / 2);
+      aOffset.push(offsetY);
+      aOffset.push(offsetZ);
+
+      aMetrics.push(radius);
+      aMetrics.push(length);
+      aMetrics.push(speed);
+      aMetrics.push(radius);
+      aMetrics.push(length);
+      aMetrics.push(speed);
+
+      let color = pickRandom(colors);
+      aColor.push(color.r);
+      aColor.push(color.g);
+      aColor.push(color.b);
+      aColor.push(color.r);
+      aColor.push(color.g);
+      aColor.push(color.b);
+    }
+
+    instanced.setAttribute('aOffset',  new THREE.InstancedBufferAttribute(new Float32Array(aOffset), 3, false));
+    instanced.setAttribute('aMetrics', new THREE.InstancedBufferAttribute(new Float32Array(aMetrics), 3, false));
+    instanced.setAttribute('aColor',   new THREE.InstancedBufferAttribute(new Float32Array(aColor), 3, false));
+
+    let material = new THREE.ShaderMaterial({
+      fragmentShader: carLightsFragment,
+      vertexShader: carLightsVertex,
+      transparent: true,
+      uniforms: Object.assign(
+        {
+          uTime: { value: 0 },
+          uTravelLength: { value: options.length },
+          uFade: { value: this.fade }
+        },
+        this.webgl.fogUniforms,
+        options.distortion.uniforms
+      )
+    });
+
+    material.onBeforeCompile = shader => {
+      shader.vertexShader = shader.vertexShader.replace(
+        '#include <getDistortion_vertex>',
+        options.distortion.getDistortion
+      );
+    };
+
+    let mesh = new THREE.Mesh(instanced, material);
+    mesh.frustumCulled = false;
+    this.webgl.scene.add(mesh);
+    this.mesh = mesh;
+  }
+
+  update(time) {
+    this.mesh.material.uniforms.uTime.value = time;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  LightsSticks Class (1:1 from React Bits)
+//  PlaneGeometry + InstancedBufferGeometry, scrolling sticks
+// ═══════════════════════════════════════════════════
+class LightsSticks {
+  constructor(webgl, options) {
+    this.webgl = webgl;
+    this.options = options;
+  }
+
+  init() {
+    const options = this.options;
+    const geometry = new THREE.PlaneGeometry(1, 1);
+    let instanced = new THREE.InstancedBufferGeometry().copy(geometry);
+    let totalSticks = options.totalSideLightSticks;
+    instanced.instanceCount = totalSticks;
+
+    let stickoffset = options.length / (totalSticks - 1);
+    const aOffset = [];
+    const aColor = [];
+    const aMetrics = [];
+
+    let colors = options.colors.sticks;
+    if (Array.isArray(colors)) {
+      colors = colors.map(c => new THREE.Color(c));
+    } else {
+      colors = new THREE.Color(colors);
+    }
+
+    for (let i = 0; i < totalSticks; i++) {
+      let width = random(options.lightStickWidth);
+      let height = random(options.lightStickHeight);
+      aOffset.push((i - 1) * stickoffset * 2 + stickoffset * Math.random());
+
+      let color = pickRandom(colors);
+      aColor.push(color.r);
+      aColor.push(color.g);
+      aColor.push(color.b);
+
+      aMetrics.push(width);
+      aMetrics.push(height);
+    }
+
+    instanced.setAttribute('aOffset',  new THREE.InstancedBufferAttribute(new Float32Array(aOffset), 1, false));
+    instanced.setAttribute('aColor',   new THREE.InstancedBufferAttribute(new Float32Array(aColor), 3, false));
+    instanced.setAttribute('aMetrics', new THREE.InstancedBufferAttribute(new Float32Array(aMetrics), 2, false));
+
+    const material = new THREE.ShaderMaterial({
+      fragmentShader: sideSticksFragment,
+      vertexShader: sideSticksVertex,
+      side: THREE.DoubleSide,
+      uniforms: Object.assign(
+        {
+          uTravelLength: { value: options.length },
+          uTime: { value: 0 }
+        },
+        this.webgl.fogUniforms,
+        options.distortion.uniforms
+      )
+    });
+
+    material.onBeforeCompile = shader => {
+      shader.vertexShader = shader.vertexShader.replace(
+        '#include <getDistortion_vertex>',
+        options.distortion.getDistortion
+      );
+    };
+
+    const mesh = new THREE.Mesh(instanced, material);
+    mesh.frustumCulled = false;
+    this.webgl.scene.add(mesh);
+    this.mesh = mesh;
+  }
+
+  update(time) {
+    this.mesh.material.uniforms.uTime.value = time;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  Portal Preview Texture — stylized chat interface
+// ═══════════════════════════════════════════════════
+function makePortalPreviewTex() {
+  const W = 512, H = 768;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const cx = cv.getContext('2d');
+
+  // Light gray background (prevents bloom from washing out the UI)
+  cx.fillStyle = '#E8E4DE';
+  cx.fillRect(0, 0, W, H);
+
+  // Subtle top border line
+  cx.fillStyle = '#F0EDE8';
+  cx.fillRect(0, 58, W, 1);
+
+  // "Guided" header text
+  cx.font = '600 15px sans-serif';
+  cx.fillStyle = '#1A3328';
+  cx.textAlign = 'center';
+  cx.textBaseline = 'middle';
+  cx.fillText('Guided', W / 2, 34);
+
+  // Green gradient orb
+  const orbGrad = cx.createRadialGradient(W/2, 185, 0, W/2, 185, 48);
+  orbGrad.addColorStop(0, '#B4E6C8');
+  orbGrad.addColorStop(0.5, '#4CA87A');
+  orbGrad.addColorStop(1, '#2A7050');
+  cx.beginPath();
+  cx.arc(W/2, 185, 48, 0, Math.PI * 2);
+  cx.fillStyle = orbGrad;
+  cx.fill();
+
+  // Seedling emoji
+  cx.font = '36px serif';
+  cx.fillText('\u{1F331}', W/2, 188);
+
+  // "Ready to learn!" subtitle
+  cx.font = '400 15px sans-serif';
+  cx.fillStyle = '#A8A19A';
+  cx.fillText('Ready to learn!', W/2, 265);
+
+  // Headline
+  cx.font = '700 24px sans-serif';
+  cx.fillStyle = '#1C1C1C';
+  cx.fillText('How can I help you', W/2, 310);
+  cx.fillText('learn today?', W/2, 342);
+
+  // Helper: rounded rect
+  function roundRect(x, y, w, h, r) {
+    cx.beginPath();
+    cx.moveTo(x + r, y);
+    cx.lineTo(x + w - r, y);
+    cx.quadraticCurveTo(x + w, y, x + w, y + r);
+    cx.lineTo(x + w, y + h - r);
+    cx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    cx.lineTo(x + r, y + h);
+    cx.quadraticCurveTo(x, y + h, x, y + h - r);
+    cx.lineTo(x, y + r);
+    cx.quadraticCurveTo(x, y, x + r, y);
+    cx.closePath();
+  }
+
+  // 4 starter cards (2x2 grid)
+  const cardW = 210, cardH = 56, gap = 16;
+  const gridX = (W - cardW * 2 - gap) / 2;
+  const gridY = 390;
+  const labels = ['Math help', 'Science quiz', 'Essay review', 'Study plan'];
+  cx.font = '400 13px sans-serif';
+  for (let i = 0; i < 4; i++) {
+    const col = i % 2, row = Math.floor(i / 2);
+    const x = gridX + col * (cardW + gap);
+    const y = gridY + row * (cardH + gap);
+    roundRect(x, y, cardW, cardH, 14);
+    cx.fillStyle = '#FAFAF8';
+    cx.fill();
+    cx.strokeStyle = '#EDEAE5';
+    cx.lineWidth = 1;
+    cx.stroke();
+    cx.fillStyle = '#6B6560';
+    cx.fillText(labels[i], x + 18, y + cardH / 2 + 1);
+  }
+
+  // Input pill at bottom
+  const pillW = 430, pillH = 46;
+  const pillX = (W - pillW) / 2, pillY = H - 90;
+  roundRect(pillX, pillY, pillW, pillH, 23);
+  cx.fillStyle = '#FFFFFF';
+  cx.fill();
+  cx.strokeStyle = '#E4E0DA';
+  cx.lineWidth = 1.5;
+  cx.stroke();
+
+  // Placeholder text in input
+  cx.font = '400 14px sans-serif';
+  cx.fillStyle = '#B5B0A8';
+  cx.textAlign = 'left';
+  cx.fillText('Ask anything...', pillX + 20, pillY + pillH / 2 + 1);
+
+  // Green send button circle
+  cx.beginPath();
+  cx.arc(pillX + pillW - 26, pillY + pillH / 2, 16, 0, Math.PI * 2);
+  const btnGrad = cx.createLinearGradient(pillX + pillW - 42, pillY, pillX + pillW - 10, pillY + pillH);
+  btnGrad.addColorStop(0, '#1E3D2F');
+  btnGrad.addColorStop(1, '#2E5C44');
+  cx.fillStyle = btnGrad;
+  cx.fill();
+
+  // Arrow icon on send button
+  cx.strokeStyle = '#FFFFFF';
+  cx.lineWidth = 2;
+  cx.lineCap = 'round';
+  const bx = pillX + pillW - 26, by = pillY + pillH / 2;
+  cx.beginPath();
+  cx.moveTo(bx - 4, by + 4);
+  cx.lineTo(bx, by - 4);
+  cx.lineTo(bx + 4, by + 4);
+  cx.stroke();
+
+  return new THREE.CanvasTexture(cv);
+}
+
+// ═══════════════════════════════════════════════════
+//  HyperspeedApp — React Bits App class + Guided features
+//  Camera, FOV, speed, distortion, postprocessing
+// ═══════════════════════════════════════════════════
+class HyperspeedApp {
+  constructor(canvas) {
+    const options = OPTIONS;
+    this.options = options;
+
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+
+    // ── Renderer (React Bits: antialias false, alpha true) ──
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true });
+    this.renderer.setSize(w, h, false);
+    this.renderer.setPixelRatio(window.devicePixelRatio);
+
+    // ── EffectComposer ──
+    this.composer = new EffectComposer(this.renderer);
+
+    // ── Camera (React Bits: z=-5, y=8, x=0) ──
+    this.camera = new THREE.PerspectiveCamera(options.fov, w / h, 0.1, 10000);
+    this.camera.position.z = -5;
+    this.camera.position.y = 8;
+    this.camera.position.x = 0;
+
+    // ── Scene ──
+    this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(options.colors.background);
+
+    // ── Fog (React Bits: near=length*0.2, far=length*500) ──
+    let fog = new THREE.Fog(options.colors.background, options.length * 0.2, options.length * 500);
+    this.scene.fog = fog;
+    this.fogUniforms = {
+      fogColor: { value: fog.color },
+      fogNear:  { value: fog.near },
+      fogFar:   { value: fog.far }
+    };
+
+    this.clock = new THREE.Clock();
+    this.disposed = false;
+
+    // ── Scene objects (React Bits architecture) ──
+    this.road = new Road(this, options);
+    this.leftCarLights = new CarLights(
+      this, options,
+      options.colors.leftCars,
+      options.movingAwaySpeed,
+      new THREE.Vector2(0, 1 - options.carLightsFade)
+    );
+    this.rightCarLights = new CarLights(
+      this, options,
+      options.colors.rightCars,
+      options.movingCloserSpeed,
+      new THREE.Vector2(1, 0 + options.carLightsFade)
+    );
+    this.leftSticks = new LightsSticks(this, options);
+
+    // ── Animation state (React Bits) ──
+    this.fovTarget = options.fov;
+    this.speedUpTarget = 0;
+    this.speedUp = 0;
+    this.timeOffset = 0;
+
+    // ── Guided additions ──
+    this._tickCb = null;
+
+    // ── Fog transition: we'll animate fogNear/fogFar/fogColor in updateFog() ──
+    // The linear fog created above (and shared via fogUniforms) is what the
+    // road/carLights/sticks ShaderMaterials actually use.  No FogExp2 needed.
+
+    this.tick = this.tick.bind(this);
+    this.setSize = this.setSize.bind(this);
+    this.onWindowResize = this.onWindowResize.bind(this);
+    window.addEventListener('resize', this.onWindowResize);
+  }
+
+  onWindowResize() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    if (w <= 0 || h <= 0) return;
+    this.renderer.setSize(w, h);
+    this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
+    this.composer.setSize(w, h);
+  }
+
+  initPasses() {
+    this.renderPass = new RenderPass(this.scene, this.camera);
+    this.composer.addPass(this.renderPass);
+
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    // Bloom: matches React Bits BloomEffect(luminanceThreshold: 0.2)
+    this.bloomPass = new UnrealBloomPass(
+      new THREE.Vector2(w, h),
+      1.0,   // strength
+      0.3,   // radius
+      0.2    // threshold
+    );
+    this.composer.addPass(this.bloomPass);
+  }
+
+  init() {
+    this.initPasses();
+    const options = this.options;
+
+    this.road.init();
+
+    this.leftCarLights.init();
+    this.leftCarLights.mesh.position.setX(
+      -options.roadWidth / 2 - options.islandWidth / 2
+    );
+
+    this.rightCarLights.init();
+    this.rightCarLights.mesh.position.setX(
+      options.roadWidth / 2 + options.islandWidth / 2
+    );
+
+    this.leftSticks.init();
+    this.leftSticks.mesh.position.setX(
+      -(options.roadWidth + options.islandWidth / 2)
+    );
+
+    this.tick();
+  }
+
+  // ── React Bits update loop (1:1) ──
+  update(delta) {
+    let lerpPercentage = Math.exp(-(-60 * Math.log2(1 - 0.1)) * delta);
+    this.speedUp += lerp(this.speedUp, this.speedUpTarget, lerpPercentage, 0.00001);
+    this.timeOffset += this.speedUp * delta;
+
+    let time = this.clock.elapsedTime + this.timeOffset;
+
+    this.rightCarLights.update(time);
+    this.leftCarLights.update(time);
+    this.leftSticks.update(time);
+    this.road.update(time);
+
+    let updateCamera = false;
+    let fovChange = lerp(this.camera.fov, this.fovTarget, lerpPercentage);
+    if (fovChange !== 0) {
+      this.camera.fov += fovChange * delta * 6;
+      updateCamera = true;
+    }
+
+    if (this.options.distortion.getJS) {
+      const distortion = this.options.distortion.getJS(0.025, time);
+      this.camera.lookAt(
+        new THREE.Vector3(
+          this.camera.position.x + distortion.x,
+          this.camera.position.y + distortion.y,
+          this.camera.position.z + distortion.z
+        )
+      );
+      updateCamera = true;
+    }
+
+    if (updateCamera) {
+      this.camera.updateProjectionMatrix();
+    }
+  }
+
+  render(delta) {
+    this.composer.render(delta);
+  }
+
+  dispose() {
+    this.disposed = true;
+    if (this.scene) {
+      this.scene.traverse(object => {
+        if (!object.isMesh) return;
+        if (object.geometry) object.geometry.dispose();
+        if (object.material) {
+          if (Array.isArray(object.material)) {
+            object.material.forEach(m => m.dispose());
+          } else {
+            if (object.material.map) object.material.map.dispose();
+            object.material.dispose();
+          }
+        }
+      });
+      this.scene.clear();
+    }
+    if (this.renderer) {
+      this.renderer.dispose();
+      this.renderer.forceContextLoss();
+    }
+    if (this.composer) this.composer.dispose();
+    window.removeEventListener('resize', this.onWindowResize);
+  }
+
+  setSize(width, height, updateStyles) {
+    if (width <= 0 || height <= 0) return;
+    this.composer.setSize(width, height, updateStyles);
+  }
+
+  tick() {
+    if (this.disposed) return;
+    requestAnimationFrame(this.tick);
+    // Clamp delta to prevent huge jumps from init delay (100ms max per frame)
+    const delta = Math.min(this.clock.getDelta(), 0.1);
+    this.render(delta);
+    this.update(delta);
+    if (this._tickCb) this._tickCb(delta * 1000);
+  }
+
+  // ── Guided-specific methods ──
+  start(tickCb) {
+    this._tickCb = tickCb;
+    this.init();
+  }
+
+  setSpeedUp(active) {
+    this.speedUpTarget = active ? this.options.speedUp : 0;
+    this.fovTarget = active ? this.options.fovSpeedUp : this.options.fov;
+  }
+
+  updateFog(progress) {
+    // Fog rolls in around the road endpoint — not the whole horizon.
+    // 60%: first wisps near the vanishing point
+    // 80%: thick fog enveloping the road, sky still mostly dark
+    // 92%: dense whiteout, everything matches #E8E4DE
+    if (progress < 0.60) return;
+    const t = (progress - 0.60) / 0.40; // 0→1 over 60%→100%
+    const eased = t * t * t;             // cubic ease-in (slow start → very dense end)
+
+    // ── Shader linear fog (road / carLights / sticks ShaderMaterials) ──
+    // Fog color: transition from scene bg (black) → warm white #E8E4DE
+    const colorT = Math.min(1, t * 2.0); // fully white by progress ~80%
+    this.fogUniforms.fogColor.value.setRGB(
+      colorT * 0.91, colorT * 0.894, colorT * 0.871
+    );
+    // Bring the fog wall closer — cubic ramp makes final approach very dense:
+    //   fogFar  800 → 5    (everything beyond 5 units is fully fogged)
+    //   fogNear 200 → 1    (only objects right at camera peek through)
+    this.fogUniforms.fogFar.value  = 800 - eased * 795;  // 800 → 5
+    this.fogUniforms.fogNear.value = 200 - eased * 199;   // 200 → 1
+
+    // ── Scene background → fog color (sky/horizon) ──
+    // SLOW transition — sky stays dark longer so fog feels localized to the road.
+    // Only goes fully white at progress ~95%.
+    const bgT = Math.min(1, eased * 1.1);
+    this.scene.background.setRGB(
+      bgT * 0.91, bgT * 0.894, bgT * 0.871
+    );
+
+    // ── Bloom fades (glow looks wrong in fog) ──
+    if (t < 0.3) {
+      this.bloomPass.strength = 1.0 - t * 2.0; // 1.0→0.4
+    } else {
+      this.bloomPass.strength = Math.max(0, 0.4 - (t - 0.3) * 0.6);
+    }
+    this.bloomPass.threshold = 0.2 + t * 0.8;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  Public API (Guided integration)
+// ═══════════════════════════════════════════════════
+window.playHyperspeed = function(onComplete) {
+  const overlay = document.getElementById('hyperspeed-overlay');
+  const canvas  = document.getElementById('hyperspeed-canvas');
+  const textEl  = document.getElementById('hs-text');
+  const fillEl  = document.getElementById('hs-progress-fill');
+  const flashEl = document.getElementById('hs-flash');
+
+  if (!overlay || !canvas) { onComplete(); return; }
+
+  // Reset state
+  overlay.style.display = 'flex';
+  overlay.style.opacity = '1';
+  overlay.classList.remove('fade-out');
+  flashEl.style.opacity = '0';
+  fillEl.style.width    = '0%';
+  textEl.classList.remove('visible');
+  textEl.style.opacity  = '';
+
+  let app;
+  try { app = new HyperspeedApp(canvas); }
+  catch(e) { console.warn('Hyperspeed: WebGL init failed', e); overlay.style.display='none'; onComplete(); return; }
+
+  let progress = 0, holding = false, done = false;
+
+  const onDown = () => { holding = true;  app.setSpeedUp(true); };
+  const onUp   = () => { holding = false; app.setSpeedUp(false); };
+  overlay.addEventListener('pointerdown', onDown);
+  overlay.addEventListener('pointerup',   onUp);
+
+  // Fade in text
+  setTimeout(() => textEl.classList.add('visible'), 600);
+
+  function tick(dtMs) {
+    if (done) return;
+    let spd = holding ? 4.0 : 1.0;
+
+    // Final approach: decelerate into the fog
+    if (progress > 0.85) {
+      const landingT = (progress - 0.85) / 0.15;
+      spd = spd * (1.0 - landingT * 0.85);
+      spd = Math.max(spd, 0.15);
+      app.setSpeedUp(false);
+    }
+
+    progress = Math.min(1, progress + (dtMs / 14000) * spd);
+    fillEl.style.width = (progress * 100) + '%';
+
+    // 60%+: fog rolls in (WebGL scene fog + CSS fog layer)
+    if (progress > 0.60) {
+      app.updateFog(progress);
+
+      // CSS fog layer: radial fog centered on the road's vanishing point
+      // (~50% x, ~38% y) — fog expands outward from the endpoint, not the
+      // whole horizon.  Becomes denser and wider over time.
+      const ft = (progress - 0.60) / 0.40; // 0→1
+      const ftCubic = ft * ft * ft;          // cubic — very dense at the end
+      // Radius grows from 20% to 120% (overshoots to fill screen at end)
+      const radius = 20 + ftCubic * 100;
+      // Core opacity ramps up
+      const coreAlpha = Math.min(1, ft * 1.5).toFixed(3);
+      flashEl.style.background =
+        'radial-gradient(ellipse at 50% 38%, ' +
+        'rgba(232,228,222,' + coreAlpha + ') 0%, ' +
+        'rgba(232,228,222,' + (Math.min(1, ft * 1.0)).toFixed(3) + ') ' + (radius * 0.5).toFixed(0) + '%, ' +
+        'rgba(232,228,222,0) ' + Math.min(120, radius).toFixed(0) + '%)';
+      flashEl.style.opacity = Math.min(1, ft * 1.6).toFixed(3);
+    }
+
+    // 75%+: fade out text + progress bar (fog is covering them)
+    if (progress > 0.75) {
+      const fadeT = (progress - 0.75) / 0.08;
+      textEl.style.opacity = Math.max(0, 1 - fadeT);
+      fillEl.parentElement.parentElement.style.opacity = Math.max(0, 1 - fadeT);
+    }
+
+    if (progress >= 1) { done = true; finish(); }
+  }
+
+  function finish() {
+    // Everything is white fog now — make flash solid, then reveal chat
+    flashEl.style.background = '#E8E4DE';
+    flashEl.style.opacity = '1';
+
+    // Chat interface appears underneath
+    onComplete();
+
+    // Short pause in the white, then fade overlay to reveal chat
+    setTimeout(() => {
+      overlay.style.transition = 'opacity .6s ease-out';
+      overlay.style.opacity = '0';
+      setTimeout(() => {
+        app.dispose();
+        overlay.style.display = 'none';
+        overlay.style.opacity = '1';
+        overlay.style.transition = '';
+        flashEl.style.opacity = '0';
+        flashEl.style.background = '';
+        fillEl.style.width = '0%';
+        fillEl.parentElement.parentElement.style.opacity = '';
+        textEl.classList.remove('visible');
+        textEl.style.opacity = '';
+        overlay.removeEventListener('pointerdown', onDown);
+        overlay.removeEventListener('pointerup',   onUp);
+      }, 650);
+    }, 200);
+  }
+
+  app.start(tick);
+};
+
+window._hyperspeedReady = true;
+console.log('[Guided] Hyperspeed 1:1 React Bits port loaded');
+</script>
 </body>
 </html>
