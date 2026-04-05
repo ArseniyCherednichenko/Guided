@@ -9,6 +9,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 <script type="importmap">
 {
   "imports": {
@@ -708,6 +712,208 @@ input[type=range]::-webkit-slider-thumb:hover {
   background: var(--paper);
 }
 
+/* Chat / Files tab bar */
+.chat-mode-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--paper);
+  flex-shrink: 0;
+}
+.chat-mode-tab {
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font-body);
+  color: var(--ink4);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all .15s;
+  letter-spacing: .01em;
+}
+.chat-mode-tab:hover { color: var(--ink2); background: rgba(0,0,0,.02); }
+.chat-mode-tab.active {
+  color: #1A3328;
+  font-weight: 600;
+  border-bottom-color: #1A3328;
+}
+.chat-mode-tab .tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(26,51,40,.08);
+  color: #1A3328;
+  border-radius: 9px;
+}
+
+/* Files panel */
+#files-panel {
+  display: none;
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 28px;
+  flex-direction: column;
+  gap: 16px;
+}
+#files-panel.active { display: flex; }
+
+.files-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: var(--ink4);
+  gap: 8px;
+  padding: 60px 0;
+}
+.files-empty-icon { font-size: 36px; opacity: .5; }
+.files-empty-text { font-size: 14px; }
+
+.files-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--ink4);
+  padding: 4px 0;
+  margin-top: 8px;
+}
+
+.file-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.file-card:hover { border-color: #1A3328; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+
+.file-card-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.file-card-icon.pdf { background: rgba(220,38,38,.08); color: #DC2626; }
+.file-card-icon.txt { background: rgba(37,99,235,.08); color: #2563EB; }
+.file-card-icon.doc { background: rgba(37,99,235,.08); color: #2563EB; }
+.file-card-icon.img { background: rgba(234,179,8,.08); color: #CA8A04; }
+.file-card-icon.other { background: rgba(107,114,128,.08); color: #6B7280; }
+
+.file-card-info { flex: 1; min-width: 0; }
+.file-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.file-card-meta {
+  font-size: 11px;
+  color: var(--ink4);
+  margin-top: 2px;
+  display: flex;
+  gap: 8px;
+}
+.file-card-preview {
+  font-size: 12px;
+  color: var(--ink3);
+  margin-top: 6px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* File detail overlay */
+.file-detail-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0,0,0,.5);
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.file-detail-overlay.show { display: flex; }
+.file-detail-box {
+  background: #fff;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,.2);
+}
+.file-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.file-detail-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink1);
+}
+.file-detail-close {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(0,0,0,.05);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.file-detail-close:hover { background: rgba(0,0,0,.1); }
+.file-detail-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink2);
+  white-space: pre-wrap;
+  font-family: var(--font-body);
+}
+.file-detail-actions { display: flex; align-items: center; gap: 8px; }
+.file-detail-copy { padding: 5px 14px; border-radius: 8px; border: 1.5px solid var(--border); background: #fff; font-size: 12px; font-weight: 500; color: var(--ink2); cursor: pointer; transition: all .15s; font-family: var(--font-body); }
+.file-detail-copy:hover { background: var(--cream2); }
+.file-detail-copy.copied { background: rgba(26,51,40,.08); border-color: var(--forest); color: var(--forest); }
+.file-detail-meta { padding: 10px 20px; background: #FAF9F6; border-bottom: 1px solid #EDEAE5; display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--ink3); }
+.file-detail-meta-item { display: flex; align-items: center; gap: 4px; }
+.file-detail-content.is-code { font-family: 'SF Mono','Menlo','Consolas',monospace; font-size: 12px; background: #1e1e1e; color: #d4d4d4; border-radius: 0 0 14px 14px; tab-size: 2; }
+.file-detail-content.is-image { display: flex; align-items: center; justify-content: center; padding: 16px; background: #F5F4F0; }
+.file-detail-img { max-width: 100%; max-height: 60vh; border-radius: 8px; object-fit: contain; box-shadow: 0 2px 12px rgba(0,0,0,.1); }
+.file-card-thumb { width: 52px; height: 52px; border-radius: 10px; overflow: hidden; flex-shrink: 0; background: #F5F4F0; }
+.file-card-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
 
 /* Messages */
 #msgs {
@@ -1080,6 +1286,20 @@ input[type=range]::-webkit-slider-thumb:hover {
   transition: all .15s;
 }
 .btn-whylearn:hover { border-color: #264D3A; color: #264D3A; background: rgba(38,77,58,.04); }
+
+.btn-back-subject {
+  background: transparent;
+  border: 1.5px solid #E8E4DE;
+  color: #4A4A4A;
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer;
+  transition: all .15s;
+}
+.btn-back-subject:hover { border-color: #264D3A; color: #264D3A; background: rgba(38,77,58,.04); }
 
 .btn-testprep {
   background: rgba(37,99,235,.07);
@@ -2894,29 +3114,63 @@ body { background: #FFFFFF; }
 }
 .hiw-cta:hover { background: var(--forest2); }
 
-/* ── Calendar View ── */
-.cal-wrap { max-width: 700px; margin: 0 auto; padding: 24px 16px 40px; }
-.cal-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
-.cal-header h2 { font-size: 20px; font-weight: 700; color: var(--ink1); margin: 0; }
+/* ── Calendar View — Apple Calendar Month Grid ── */
+.cal-wrap { max-width: 760px; margin: 0 auto; padding: 24px 16px 40px; }
+.cal-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+.cal-nav { display: flex; align-items: center; gap: 8px; }
+.cal-nav-btn { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--border); background: #fff; font-size: 20px; color: var(--ink2); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .15s; line-height: 1; }
+.cal-nav-btn:hover { background: var(--cream2); }
+.cal-month-title { font-size: 20px; font-weight: 700; color: var(--ink1); margin: 0; min-width: 160px; text-align: center; }
+.cal-today-btn { padding: 5px 14px; border-radius: 16px; border: 1.5px solid var(--border); background: #fff; font-size: 12px; font-weight: 600; color: var(--ink2); cursor: pointer; transition: all .15s; margin-left: 4px; }
+.cal-today-btn:hover { background: var(--forest); color: #fff; border-color: var(--forest); }
 .cal-header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .cal-chip { padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--border); background: #fff; font-size: 13px; font-weight: 600; color: var(--ink2); cursor: pointer; transition: all .15s; }
 .cal-chip.sel { background: var(--ink1); color: #fff; border-color: var(--ink1); }
-.cal-chip:hover:not(.sel) { background: var(--bg2); }
-.cal-refresh-btn { padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--border); background: #fff; font-size: 13px; font-weight: 600; color: var(--ink2); cursor: pointer; transition: all .15s; }
-.cal-refresh-btn:hover { background: var(--bg2); }
+.cal-chip:hover:not(.sel) { background: var(--cream2); }
+.cal-refresh-btn { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--border); background: #fff; font-size: 16px; color: var(--ink2); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+.cal-refresh-btn:hover { background: var(--cream2); }
 .cal-refresh-btn.loading { opacity: .55; pointer-events: none; }
-.cal-group { margin-bottom: 24px; }
-.cal-group-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink3); margin-bottom: 10px; padding: 0 2px; }
-.cal-card { display: flex; align-items: stretch; background: #fff; border: 1.5px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 10px; transition: box-shadow .15s; }
+
+/* Grid layout */
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+.cal-weekdays { margin-bottom: 2px; }
+.cal-weekday { text-align: center; font-size: 11px; font-weight: 600; color: var(--ink4); padding: 8px 0; text-transform: uppercase; letter-spacing: .05em; }
+
+/* Day cells */
+.cal-day { min-height: 76px; border: 0.5px solid #E5E2DC; padding: 4px; cursor: pointer; position: relative; transition: background .12s; background: #fff; }
+.cal-day:hover { background: #FAF9F6; }
+.cal-day.outside { background: #F8F7F4; opacity: .4; }
+.cal-day.today { background: rgba(37,99,235,.05); }
+.cal-day.selected { background: rgba(26,51,40,.05); box-shadow: inset 0 0 0 1.5px var(--forest); }
+.cal-day-num { font-size: 12px; font-weight: 500; color: var(--ink2); padding: 2px 4px; line-height: 1; margin-bottom: 2px; }
+.cal-day.today .cal-day-num { background: #2563EB; color: #fff; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px; }
+.cal-day.outside .cal-day-num { color: var(--ink5); }
+
+/* Event dots/pills in day cells */
+.cal-day-events { display: flex; flex-direction: column; gap: 1px; overflow: hidden; }
+.cal-dot { font-size: 9px; font-weight: 600; padding: 1px 4px; border-radius: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.5; }
+.cal-dot.homework { background: rgba(37,99,235,.12); color: #2563EB; }
+.cal-dot.test { background: rgba(220,38,38,.12); color: #DC2626; }
+.cal-dot.overflow { font-size: 9px; color: var(--ink4); padding: 0 4px; background: none; }
+
+/* Detail panel below grid */
+.cal-detail { margin-top: 16px; border: 1.5px solid var(--border); border-radius: 14px; background: #fff; overflow: hidden; animation: calDetailIn .2s ease; }
+@keyframes calDetailIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+.cal-detail-header { padding: 14px 18px; border-bottom: 1px solid #EDEAE5; font-size: 14px; font-weight: 700; color: var(--ink1); }
+.cal-detail-list { padding: 8px 0; }
+.cal-detail-empty { padding: 24px; text-align: center; color: var(--ink4); font-size: 13px; }
+
+/* Event cards inside detail panel */
+.cal-card { display: flex; align-items: stretch; background: #fff; border: 1.5px solid var(--border); border-radius: 14px; overflow: hidden; margin: 0 12px 8px; transition: box-shadow .15s; }
 .cal-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,.08); }
 .cal-card-bar { width: 4px; flex-shrink: 0; }
-.cal-card-bar.homework { background: var(--blue); }
-.cal-card-bar.test { background: var(--red); }
+.cal-card-bar.homework { background: #2563EB; }
+.cal-card-bar.test { background: #DC2626; }
 .cal-card-body { flex: 1; padding: 12px 14px; min-width: 0; }
 .cal-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
 .cal-badge { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 6px; }
-.cal-badge.homework { background: color-mix(in srgb, var(--blue) 12%, transparent); color: var(--blue); }
-.cal-badge.test { background: color-mix(in srgb, var(--red) 12%, transparent); color: var(--red); }
+.cal-badge.homework { background: rgba(37,99,235,.1); color: #2563EB; }
+.cal-badge.test { background: rgba(220,38,38,.1); color: #DC2626; }
 .cal-badge-subject { font-size: 12px; font-weight: 600; color: var(--ink2); }
 .cal-card-text { font-size: 14px; color: var(--ink1); line-height: 1.45; margin-bottom: 6px; word-break: break-word; }
 .cal-card-meta { font-size: 12px; color: var(--ink3); }
@@ -2926,6 +3180,15 @@ body { background: #FFFFFF; }
 .cal-empty-icon { font-size: 40px; margin-bottom: 12px; }
 .cal-empty-title { font-size: 17px; font-weight: 700; color: var(--ink2); margin-bottom: 6px; }
 .cal-empty-sub { font-size: 14px; color: var(--ink3); max-width: 340px; margin: 0 auto; }
+
+@media (max-width: 768px) {
+  .cal-wrap { padding: 16px 8px 32px; }
+  .cal-day { min-height: 56px; }
+  .cal-day-num { font-size: 11px; }
+  .cal-dot { font-size: 8px; padding: 1px 3px; }
+  .cal-header { flex-direction: column; align-items: flex-start; }
+  .cal-month-title { font-size: 18px; min-width: auto; }
+}
 
 /* ── Settings Modal ── */
 .stg-modal { position:fixed;inset:0;z-index:800;background:rgba(28,28,28,.45);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:24px; }
@@ -3749,6 +4012,29 @@ body { background: #FFFFFF; }
 }
 #sidebar-change-classroom:hover { background: #264D3A; }
 #sidebar-change-classroom:active { transform: scale(.97); }
+
+/* Load More History Button */
+.load-more-btn {
+  text-align: center;
+  padding: 12px 0 8px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+.load-more-btn button {
+  background: rgba(26,51,40,.06);
+  border: 1.5px solid rgba(26,51,40,.12);
+  border-radius: 10px;
+  padding: 7px 18px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1A3328;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: background .15s;
+}
+.load-more-btn button:hover { background: rgba(26,51,40,.1); }
+.load-more-btn button:disabled { opacity: .5; cursor: wait; }
 
 /* Hallway Fullscreen Overlay */
 #hallway-overlay {
@@ -5523,7 +5809,7 @@ body { background: #FFFFFF; }
 
       <!-- S1: About you -->
       <div class="ob-step active" id="obs1">
-        <div class="ob-step-eyebrow">Step 1 of 4</div>
+        <div class="ob-step-eyebrow">Step 1 of 5</div>
         <div class="ob-step-title">Let's get to know you</div>
         <div class="ob-step-desc">Your tutor will adapt its tone, difficulty, and examples entirely to you.</div>
         <div class="fgroup">
@@ -5545,7 +5831,7 @@ body { background: #FFFFFF; }
 
       <!-- S2: Your learning -->
       <div class="ob-step" id="obs2">
-        <div class="ob-step-eyebrow">Step 2 of 4</div>
+        <div class="ob-step-eyebrow">Step 2 of 5</div>
         <div class="ob-step-title">What are you studying?</div>
         <div class="ob-step-desc">Pick everything relevant — your tutor will focus on what matters to you.</div>
         <div class="fgroup">
@@ -5569,6 +5855,14 @@ body { background: #FFFFFF; }
           </div>
         </div>
         <div class="fgroup">
+          <label>Which is your favourite? <span style="color:var(--ink4);font-weight:400">(optional)</span></label>
+          <input class="fi" id="obs-fav-subject" placeholder="e.g. Math"/>
+        </div>
+        <div class="fgroup">
+          <label>Which is hardest for you? <span style="color:var(--ink4);font-weight:400">(optional)</span></label>
+          <input class="fi" id="obs-hard-subject" placeholder="e.g. Chemistry"/>
+        </div>
+        <div class="fgroup">
           <label>School or university <span style="color:var(--ink4);font-weight:400">(optional — helps match your curriculum)</span></label>
           <div class="school-wrap">
             <input class="fi" id="obs-school" placeholder="e.g. Goethe-Gymnasium, University of Manchester..." oninput="debounceSchoolS(this.value)"/>
@@ -5582,7 +5876,7 @@ body { background: #FFFFFF; }
         <div class="fgroup">
           <div class="abitur-toggle-row" id="abitur-toggle-row" onclick="toggleAbiturPanel()">
             <div>
-              <div class="abitur-toggle-label">🎓 Preparing for Abitur?</div>
+              <div class="abitur-toggle-label">Preparing for Abitur?</div>
               <div class="abitur-toggle-sub">Germany — loads official exam focus topics via Needle</div>
             </div>
             <div class="abitur-pill-switch"></div>
@@ -5617,7 +5911,7 @@ body { background: #FFFFFF; }
 
       <!-- S3: Your style -->
       <div class="ob-step" id="obs3">
-        <div class="ob-step-eyebrow">Step 3 of 4</div>
+        <div class="ob-step-eyebrow">Step 3 of 5</div>
         <div class="ob-step-title">How do you learn?</div>
         <div class="ob-step-desc">The more you share, the better your tutor will match your personality.</div>
         <div class="fgroup">
@@ -5628,36 +5922,49 @@ body { background: #FFFFFF; }
           <label>How do you learn best?</label>
           <div class="learn-style-grid">
             <div class="learn-style-card sel" data-ls="visual" onclick="pickLearnStyleS(this)">
-              <div class="learn-style-emoji">👁️</div>
               <div class="learn-style-name">Visual</div>
               <div class="learn-style-desc">Diagrams, images and visuals</div>
             </div>
             <div class="learn-style-card" data-ls="reading" onclick="pickLearnStyleS(this)">
-              <div class="learn-style-emoji">📖</div>
               <div class="learn-style-name">Reading</div>
               <div class="learn-style-desc">Reading and writing notes</div>
             </div>
             <div class="learn-style-card" data-ls="doing" onclick="pickLearnStyleS(this)">
-              <div class="learn-style-emoji">✋</div>
               <div class="learn-style-name">Doing</div>
               <div class="learn-style-desc">Trying things out myself</div>
             </div>
             <div class="learn-style-card" data-ls="talking" onclick="pickLearnStyleS(this)">
-              <div class="learn-style-emoji">💬</div>
               <div class="learn-style-name">Talking</div>
               <div class="learn-style-desc">Discussing ideas out loud</div>
             </div>
           </div>
         </div>
         <div class="fgroup">
-          <label>What do you struggle with most? <span style="color:var(--ink4);font-weight:400">(optional)</span></label>
-          <textarea class="fta" id="obs-struggles" placeholder="e.g. I find it hard to stay focused, I struggle with algebra, I get anxious about exams..."></textarea>
+          <label>What are you curious about outside school? <span style="color:var(--ink4);font-weight:400">(optional)</span></label>
+          <input class="fi" id="obs-curiosity" placeholder="e.g. How rockets work, AI, the ocean, ancient history..."/>
+        </div>
+        <div class="fgroup" style="margin-top:4px">
+          <label>When I'm stuck, it helps most to...</label>
+          <div class="subject-chips" id="obs-stuck" style="margin-top:8px">
+            <div class="subject-chip sel" data-val="hint" onclick="pickStuckS(this)">Get a small hint</div>
+            <div class="subject-chip" data-val="example" onclick="pickStuckS(this)">See a worked example</div>
+            <div class="subject-chip" data-val="step" onclick="pickStuckS(this)">Walk me through it</div>
+            <div class="subject-chip" data-val="rephrase" onclick="pickStuckS(this)">Try a different angle</div>
+          </div>
+        </div>
+        <div class="fgroup" style="margin-top:4px">
+          <label>How much challenge do you want?</label>
+          <div class="subject-chips" id="obs-challenge" style="margin-top:8px">
+            <div class="subject-chip" data-val="easy" onclick="pickChallengeS(this)">Start easy, build up slowly</div>
+            <div class="subject-chip sel" data-val="gentle-push" onclick="pickChallengeS(this)">Start gentle, then push me</div>
+            <div class="subject-chip" data-val="hard" onclick="pickChallengeS(this)">Bring on the hard stuff!</div>
+          </div>
         </div>
       </div>
 
       <!-- S4: Your tutor -->
       <div class="ob-step" id="obs4">
-        <div class="ob-step-eyebrow">Step 4 of 4</div>
+        <div class="ob-step-eyebrow">Step 4 of 5</div>
         <div class="ob-step-title">Build your tutor</div>
         <div class="ob-step-desc">Choose how your AI tutor should teach you. You can change this anytime.</div>
         <div class="fgroup">
@@ -5691,26 +5998,42 @@ body { background: #FFFFFF; }
             <div class="goal-chip sel" data-g="critical" onclick="pickGoalS(this)">
               <div class="goal-chip-check"></div>
               <div class="goal-chip-body">
-                <div class="goal-chip-name">🧠 Build strong critical thinking</div>
+                <div class="goal-chip-name">Build strong critical thinking</div>
                 <div class="goal-chip-desc">Learn to reason and solve problems independently — skills that stay with you</div>
               </div>
             </div>
-            <div class="goal-chip" data-g="homework" onclick="pickGoalS(this)">
+            <div class="goal-chip" data-g="grades" onclick="pickGoalS(this)">
               <div class="goal-chip-check"></div>
               <div class="goal-chip-body">
-                <div class="goal-chip-name">📚 Homework &amp; exam help</div>
-                <div class="goal-chip-desc">Get unstuck on assignments and understand material well enough to do it alone</div>
+                <div class="goal-chip-name">Get better grades</div>
+                <div class="goal-chip-desc">Improve your results — understand material deeply enough to ace exams</div>
               </div>
             </div>
             <div class="goal-chip" data-g="curiosity" onclick="pickGoalS(this)">
               <div class="goal-chip-check"></div>
               <div class="goal-chip-body">
-                <div class="goal-chip-name">✨ Explore &amp; stay curious</div>
+                <div class="goal-chip-name">Explore &amp; stay curious</div>
                 <div class="goal-chip-desc">Make learning genuinely enjoyable — spark wonder and explore ideas deeply</div>
               </div>
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- S5: Create account -->
+      <div class="ob-step" id="obs5">
+        <div class="ob-step-eyebrow">Step 5 of 5</div>
+        <div class="ob-step-title">Create your account</div>
+        <div class="ob-step-desc">Save your tutor profile and chat history. Log in from any device.</div>
+        <div class="fgroup">
+          <label>Email</label>
+          <input class="fi" id="obs-email" type="email" placeholder="your@email.com" autocomplete="email"/>
+        </div>
+        <div class="fgroup">
+          <label>Password <span style="color:var(--ink4);font-weight:400">(min. 6 characters)</span></label>
+          <input class="fi" id="obs-pw" type="password" placeholder="Choose a password" autocomplete="new-password"/>
+        </div>
+        <button class="btn-skip-account" onclick="skipAccountAndLaunch()" style="background:none;border:none;color:var(--ink4);font-size:13px;cursor:pointer;font-family:var(--font-body);margin-top:4px;text-decoration:underline">Skip — I'll do this later</button>
       </div>
 
       <!-- Nav -->
@@ -5720,6 +6043,7 @@ body { background: #FFFFFF; }
           <div class="sdot" id="sd-s2"></div>
           <div class="sdot" id="sd-s3"></div>
           <div class="sdot" id="sd-s4"></div>
+          <div class="sdot" id="sd-s5"></div>
         </div>
         <button class="btn-back" id="obs-back" onclick="obStudentBack()" style="display:none">← Back</button>
         <button class="btn-next" id="obs-next" onclick="obStudentNext()">Continue →</button>
@@ -5924,7 +6248,7 @@ body { background: #FFFFFF; }
 <!-- ╚══════════════════════════════════════════╝ -->
 <!-- Save Account Banner -->
 <div id="save-account-banner">
-  <div class="sab-title">💾 Save your progress</div>
+  <div class="sab-title">Save your progress</div>
   <div class="sab-sub">Create a free account — your chat history and profile will be saved automatically.</div>
   <div class="sab-row">
     <input class="fi" id="sab-email" type="email" placeholder="Email address" autocomplete="email"/>
@@ -6047,6 +6371,11 @@ body { background: #FFFFFF; }
 
     <div id="chat-col">
 
+      <div class="chat-mode-tabs" id="chat-mode-tabs">
+        <button class="chat-mode-tab active" id="tab-chat" onclick="switchChatMode('chat')">Chat</button>
+        <button class="chat-mode-tab" id="tab-files" onclick="switchChatMode('files')">Files <span class="tab-count" id="files-count" style="display:none">0</span></button>
+      </div>
+
       <div class="test-banner" id="test-banner">
         <span class="tp-dot"></span>
         <span id="test-banner-text">Test Prep active</span>
@@ -6061,18 +6390,34 @@ body { background: #FFFFFF; }
         </div>
       </div>
 
+      <div id="files-panel">
+        <div class="files-empty" id="files-empty">
+          <div class="files-empty-icon">📁</div>
+          <div class="files-empty-text">No files yet</div>
+          <div style="font-size:12px;color:var(--ink5)">Files shared in your Slack channels will appear here</div>
+        </div>
+        <div id="files-list"></div>
+      </div>
+
+      <!-- File detail overlay -->
+      <div class="file-detail-overlay" id="file-detail-overlay" onclick="if(event.target===this)closeFileDetail()">
+        <div class="file-detail-box">
+          <div class="file-detail-header">
+            <div class="file-detail-title" id="file-detail-title">File</div>
+            <div class="file-detail-actions">
+              <button class="file-detail-copy" id="file-detail-copy" onclick="copyFileText()" title="Text kopieren">Kopieren</button>
+              <button class="file-detail-close" onclick="closeFileDetail()">✕</button>
+            </div>
+          </div>
+          <div class="file-detail-meta" id="file-detail-meta" style="display:none"></div>
+          <div class="file-detail-content" id="file-detail-content"></div>
+        </div>
+      </div>
 
       <div class="input-area" style="position:relative">
-        <div class="action-bar">
-          <button class="btn-testprep" id="btn-testprep" onclick="handleTestPrepClick()">
-            📝 <span class="tp-label">Prepare for Test</span>
-          </button>
-          <button class="btn-hint" id="btn-hint" onclick="reqHint()">
-            💡 Need a hint
-            <span class="hint-count" id="hcount">3</span>
-          </button>
-          <button class="btn-whylearn" onclick="reqWhyLearn()" title="Why am I learning this?">🌍 Why do I need this?</button>
-          <button class="btn-gotit" onclick="gotIt()">✓ I figured it out!</button>
+        <div class="action-bar" id="action-bar">
+          <button class="btn-whylearn" id="btn-whylearn" onclick="reqWhyLearn()" title="Why am I learning this?">Why do I need this?</button>
+          <button class="btn-back-subject" id="btn-back-subject" onclick="goBackToSubject()" style="display:none">← Back to subject</button>
           <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
             <span id="msg-remaining" style="font-size:11px;color:var(--ink4);font-family:var(--font-body)"></span>
             <button class="nav-pill on" id="img-pill" onclick="toggleImgs()">🖼 Images</button>
@@ -6218,15 +6563,30 @@ body { background: #FFFFFF; }
   <div class="view" id="v-calendar">
     <div class="cal-wrap">
       <div class="cal-header">
-        <h2>Calendar</h2>
+        <div class="cal-nav">
+          <button class="cal-nav-btn" onclick="calNavPrev()" title="Vorheriger Monat">&#8249;</button>
+          <h2 class="cal-month-title" id="cal-month-title">April 2026</h2>
+          <button class="cal-nav-btn" onclick="calNavNext()" title="Nächster Monat">&#8250;</button>
+          <button class="cal-today-btn" onclick="calNavToday()">Heute</button>
+        </div>
         <div class="cal-header-right">
-          <button class="cal-chip sel" id="cal-chip-all" onclick="setCalFilter('all')">All</button>
-          <button class="cal-chip" id="cal-chip-homework" onclick="setCalFilter('homework')">Homework</button>
+          <button class="cal-chip sel" id="cal-chip-all" onclick="setCalFilter('all')">Alle</button>
+          <button class="cal-chip" id="cal-chip-homework" onclick="setCalFilter('homework')">Hausaufgaben</button>
           <button class="cal-chip" id="cal-chip-test" onclick="setCalFilter('test')">Tests</button>
-          <button class="cal-refresh-btn" id="cal-refresh-btn" onclick="refreshCalendar()">↺ Refresh</button>
+          <button class="cal-refresh-btn" id="cal-refresh-btn" onclick="refreshCalendar()">&#8635;</button>
         </div>
       </div>
-      <div class="cal-list" id="cal-list"></div>
+      <div class="cal-grid cal-weekdays" id="cal-weekdays"></div>
+      <div class="cal-grid cal-days" id="cal-days"></div>
+      <div class="cal-detail" id="cal-detail" style="display:none">
+        <div class="cal-detail-header" id="cal-detail-header"></div>
+        <div class="cal-detail-list" id="cal-detail-list"></div>
+      </div>
+      <div class="cal-empty" id="cal-empty" style="display:none">
+        <div class="cal-empty-icon">📅</div>
+        <div class="cal-empty-title">Noch keine Einträge</div>
+        <div class="cal-empty-sub">Wenn Lehrer Hausaufgaben oder Tests in Slack posten, erscheinen sie hier automatisch.</div>
+      </div>
     </div>
   </div>
 
@@ -6413,7 +6773,150 @@ const S = {
   testSessionCount: 0,
   testInterleaveQueue: [],
   generalMode: false,
+  // ── Per-subject data isolation ──
+  subjects: {},         // { "Mathematik": { history, events, slackContext, aiNotes, weaknesses, ... }, ... }
+  historyOffset: 0,     // pagination offset for current subject
+  historyHasMore: false, // whether DB has older messages
+  historyLoading: false, // prevent concurrent loads
+  accountId: null,      // for DB owner resolution
+  // ── Calendar month grid ──
+  _calMonth: null,
+  _calYear: null,
+  _calSelectedDay: null,
 };
+
+// ══════════════════════════════════════════════
+//  CONTENT FILTER — block profanity/slurs
+// ══════════════════════════════════════════════
+const _BLOCKED_WORDS = [
+  // English slurs & profanity
+  'fuck','shit','damn','bitch','asshole','bastard','dick','cock','pussy','cunt',
+  'whore','slut','nigger','nigga','faggot','fag','retard','retarded','tranny',
+  'kike','chink','spic','wetback','beaner','gook','cracker','honky','dyke',
+  'motherfucker','bullshit','piss','wanker','twat','bollocks','arse',
+  // German profanity & slurs
+  'ficken','fick','scheiße','scheisse','arschloch','hurensohn','wichser',
+  'fotze','missgeburt','spast','behindert','schwuchtel','kanake','neger',
+  'nutte','hure','drecksau','vollidiot','bastard','miststück','pisser',
+  'nazi','hitl er',
+];
+const _BLOCKED_RE = new RegExp('(' + _BLOCKED_WORDS.join('|') + ')', 'i');
+
+function containsProfanity(text) {
+  if (!text) return false;
+  const lower = text.toLowerCase().replace(/[_\-.*!@#$%^&0-9]/g, '');
+  return _BLOCKED_RE.test(lower);
+}
+
+function isCleanName(name) {
+  if (!name || !name.trim()) return false;
+  return !containsProfanity(name);
+}
+
+function isCleanMessage(text) {
+  if (!text || !text.trim()) return true; // empty is ok
+  return !containsProfanity(text);
+}
+
+// ══════════════════════════════════════════════
+//  PER-SUBJECT STATE HELPER
+// ══════════════════════════════════════════════
+function getSubjectState(subject) {
+  if (!subject) return null;
+  if (!S.subjects[subject]) {
+    S.subjects[subject] = {
+      history: [],
+      events: [],
+      slackContext: '',
+      slackChannelId: '',
+      aiNotes: '',
+      weaknesses: '',
+      homeworkInfo: '',
+      bloom: { remember:0, understand:0, apply:0, analyze:0, evaluate:0, create:0 },
+      bloomTotal: 0,
+      loaded: false,
+      totalMessages: 0,
+      sessionNotes: [],
+      files: [],       // { name, type, size, text, date, channel, url }
+    };
+  }
+  return S.subjects[subject];
+}
+
+// ══════════════════════════════════════════════
+//  PER-SUBJECT MIGRATION & LOADING ON LOGIN
+// ══════════════════════════════════════════════
+async function loadPerSubjectData() {
+  if (!SB) return;
+  // Determine owner
+  let ownerCol = null, ownerId = null;
+  if (S.studentId)           { ownerCol = 'student_id';       ownerId = S.studentId; }
+  else if (S.familyMemberId) { ownerCol = 'family_member_id'; ownerId = S.familyMemberId; }
+  else if (S.accountId)      { ownerCol = 'account_id';       ownerId = S.accountId; }
+  if (!ownerCol || !ownerId) return;
+
+  try {
+    // Fetch all subject_histories rows for this owner
+    const { data: rows, error } = await SB.from('subject_histories')
+      .select('subject, messages, message_count, slack_channel_id, slack_context, ai_notes, weaknesses, homework_info, bloom_data, files')
+      .eq(ownerCol, ownerId);
+
+    if (error) { console.warn('loadPerSubjectData:', error); return; }
+
+    if (rows && rows.length > 0) {
+      // Load each subject's data into S.subjects
+      rows.forEach(row => {
+        const ss = getSubjectState(row.subject);
+        ss.history = row.messages || [];
+        ss.totalMessages = row.message_count || ss.history.length;
+        ss.slackChannelId = row.slack_channel_id || '';
+        ss.slackContext = row.slack_context || '';
+        ss.aiNotes = row.ai_notes || '';
+        ss.weaknesses = row.weaknesses || '';
+        ss.homeworkInfo = row.homework_info || '';
+        ss.bloom = row.bloom_data || {};
+        ss.files = row.files || [];
+        ss.loaded = true;
+      });
+
+      // If the current subject has per-subject data, use it
+      const currentSubject = S.subj || 'General / Mixed';
+      const currentSS = S.subjects[currentSubject];
+      if (currentSS && currentSS.loaded && currentSS.history.length) {
+        S.history = currentSS.history;
+        S.historyHasMore = false; // already loaded all
+        if (currentSS.aiNotes) S.aiNotes = currentSS.aiNotes;
+      }
+      console.log(`Loaded per-subject data: ${rows.length} subject(s)`);
+      try { updateFilesCount(); } catch(e) {}
+      return;
+    }
+
+    // No subject_histories yet → migrate old history if exists
+    if (S.history && S.history.length > 0) {
+      const migrateSubject = S.subj || 'General / Mixed';
+      const ss = getSubjectState(migrateSubject);
+      ss.history = [...S.history];
+      ss.totalMessages = S.history.length;
+      ss.aiNotes = S.aiNotes || '';
+      ss.loaded = true;
+
+      // Write migration to DB
+      const constraintCol = ownerCol === 'account_id' ? 'account_id,subject'
+        : ownerCol === 'family_member_id' ? 'family_member_id,subject'
+        : 'student_id,subject';
+      await SB.from('subject_histories').upsert({
+        [ownerCol]: ownerId,
+        subject: migrateSubject,
+        messages: S.history,
+        message_count: S.history.length,
+        ai_notes: S.aiNotes || '',
+        updated_at: new Date().toISOString(),
+      }, { onConflict: constraintCol });
+      console.log(`Migrated ${S.history.length} messages to subject_histories (${migrateSubject})`);
+    }
+  } catch(e) { console.warn('loadPerSubjectData error:', e); }
+}
 
 // ══════════════════════════════════════════════
 //  NEEDLE SUBJECT AUTO-LOADING
@@ -6605,13 +7108,22 @@ TAG RULES — YOU MUST FOLLOW THESE:
 
 function buildPrompt(ndCtx) {
   if (S.generalMode) {
-    return `You are Guided, a friendly and knowledgeable AI assistant for ${S.name}${S.age ? `, aged ${S.age}` : ''}.
+    return `You are Guided, a friendly AI companion for ${S.name}${S.age ? `, aged ${S.age}` : ''}.
 ${S.notes ? `About ${S.name}: ${S.notes}` : ''}
 
-You're in free-chat mode — no specific subject, no tutoring format. Just be genuinely helpful, direct, and conversational.
-Answer questions clearly and honestly. No need to withhold answers or force the Socratic method.
-Be warm, curious, and concise. If something is complex, explain it well. If it's simple, keep it short.
-Match the language ${S.name} writes in (German or English).`;
+You're in general chat mode. This is NOT a tutoring session. You are NOT a teacher here.
+This is a relaxed space for general questions, random curiosity, life advice, interesting conversations — anything that's NOT classwork.
+
+RULES:
+- Be genuinely helpful, warm, and conversational — like a smart friend
+- Answer questions directly and honestly. No Socratic method, no quizzing, no "what do you think?"
+- Do NOT push the student to study, learn, or be productive. This is their chill space
+- If they ask about something they're curious about, share cool facts and make it interesting
+- Be encouraging about their interests and hobbies — connect with what excites them
+- Keep it concise. If it's simple, keep it short. If it's complex, explain it well
+- You can motivate them based on their personal interests and goals — but never nag about school
+- LANGUAGE RULE: Always respond in the same language the student writes in. If they write in German, answer in German. If they write in English, answer in English. Match their language exactly.
+- Do NOT reference specific class content, curricula, grades, or test preparation`;
   }
 
   const styleInstructions = {
@@ -6674,7 +7186,7 @@ ${S.notes ? `IMPORTANT about this student: ${S.notes}` : ''}
 ${abiturContext}
 ${S.testMode ? buildTestModePrompt() : ''}
 ${S.learningProfile ? `\n${S.learningProfile}` : ''}
-${S.aiNotes ? `\n━━━━━━━━━━━━━━━━━━━━━━━━\nTUTOR HANDOVER NOTES\n━━━━━━━━━━━━━━━━━━━━━━━━\n${S.aiNotes}` : ''}
+${(() => { const ss = getSubjectState(S.currentSubject || S.subj); if (!ss) return ''; const parts = []; if (ss.aiNotes) parts.push(`TUTOR HANDOVER NOTES (${S.currentSubject||S.subj}):\n${ss.aiNotes}`); if (ss.weaknesses) parts.push(`KNOWN WEAKNESSES in ${S.currentSubject||S.subj}: ${ss.weaknesses}`); if (ss.homeworkInfo) parts.push(`HOMEWORK for ${S.currentSubject||S.subj}: ${ss.homeworkInfo}`); return parts.length ? `\n━━━━━━━━━━━━━━━━━━━━━━━━\n${parts.join('\n\n')}\n━━━━━━━━━━━━━━━━━━━━━━━━` : ''; })()}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 CRITICAL RULE — NEVER GIVE A DIRECT ANSWER
@@ -6727,6 +7239,7 @@ Read this entire conversation history. If ${S.name} keeps making the same mistak
 ━━━━━━━━━━━━━━━━━━━━━━━━
 PERSONALIZATION RULES
 ━━━━━━━━━━━━━━━━━━━━━━━━
+• LANGUAGE RULE: Always respond in the same language the student writes in. If they write in German, answer in German. If they write in English, answer in English. Match their language exactly.
 • Vocabulary MUST be appropriate for a ${S.age}-year-old — a 10-year-old and a 17-year-old need completely different language, examples, and complexity
 • All analogies must reference things a ${S.age}-year-old actually encounters in daily life
 • Be warm, encouraging, and patient — celebrate genuine effort and curiosity, not just correct answers
@@ -6739,10 +7252,46 @@ ${styleInstructions[S.style] || styleInstructions.calm}
 ━━━━━━━━━━━━━━━━━━━━━━━━
 VISUAL LEARNING
 ━━━━━━━━━━━━━━━━━━━━━━━━
-When a diagram would genuinely help (geometry, processes, anatomy, timelines, mathematical graphs), generate a simple inline SVG on its own line. IMPORTANT: always place the [SVG:...] tag at the very end of your response, after your explanation and question — never in the middle.
-Format: [SVG: <svg viewBox="0 0 420 300" xmlns="http://www.w3.org/2000/svg"><rect width="420" height="300" fill="#f9f9f9"/>...shapes, lines, text here...</svg>]
-Rules: basic shapes only (rect, circle, path, line, polyline, text). No scripts. Maximum one per response.
-For mathematical graphs: origin at pixel (70,240), scale 50px per unit. Pixel mapping: px_x = 70 + x*50, px_y = 240 - y*50. Draw x-axis (line from x1="40" to x2="400") and y-axis (line from y1="270" to y2="15") with arrowhead polygons. For every curve compute explicit pixel coordinates for at least 8 x-values then use &lt;polyline&gt; — NEVER a straight line for a curved function. For exponential graphs (y=a^x) always use x range -2 to 3 so the hockey-stick shape is visible: y=2^x at x=-2,-1,0,1,2,3 gives y=0.25,0.5,1,2,4,8 → px points: "0,251 20,248 70,240 120,190 170,40" (dramatic upward sweep). Add axis labels and tick marks.
+When a visual would genuinely help understanding, you have TWO options:
+
+OPTION A — SVG DIAGRAM (for graphs, geometry, flowcharts, simple diagrams):
+Place the [SVG:...] tag at the very END of your response, after your explanation and question.
+Format: [SVG: <svg viewBox="0 0 500 350" xmlns="http://www.w3.org/2000/svg">...all elements here...</svg>]
+
+CRITICAL SVG QUALITY RULES — take your time, these must look professional:
+- Canvas: Always start with <rect width="500" height="350" fill="#FAFAF8" rx="16"/> as background
+- Colors: Primary #1A3328 (forest), accent #2563EB (blue), alert #DC2626 (red), success #059669 (green), highlight #8B5CF6 (purple), warm #EA580C (orange). Use opacity for lighter variants (e.g. fill="#2563EB" fill-opacity="0.12" for light blue fills)
+- Typography: font-family="system-ui, -apple-system, sans-serif". Titles 18px bold, labels 13-14px, annotations 11px. Use fill="currentColor" or explicit dark colors for readability
+- Shapes: rx="8" on rectangles, stroke-width="2" for main elements, stroke-width="1" for secondary. stroke-linecap="round" stroke-linejoin="round" on all paths
+- Spacing: 40px padding from edges minimum. Center content visually. Generous whitespace between elements
+- Drop shadows: Add <filter id="shadow"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.1"/></filter> and apply filter="url(#shadow)" on key shapes
+- Arrows: Use <marker> definitions for proper arrowheads, not hacky triangles
+- For MATHEMATICAL GRAPHS:
+  * Canvas 500x400, axes with origin at pixel (70, 320), x-axis spans to 460, y-axis spans to 40
+  * Grid: stroke="#E8E5E0" stroke-width="0.5" dashed. Major grid lines every unit, subtle
+  * Axes: stroke="#1A3328" stroke-width="2" with proper arrowhead markers at ends
+  * Tick marks: 6px lines at each unit, labeled with font-size 11px
+  * Curves: Compute at LEAST 20 explicit pixel coordinates. Use <path d="M x1,y1 C cx1,cy1 cx2,cy2 x2,y2 ..."/> with cubic bezier for smooth curves — NEVER approximate curves with straight line segments
+  * Multiple functions: use different colors (blue, red, green) with a clear legend
+  * Label axes (e.g. "x", "f(x)") near the arrowheads
+- For FLOWCHARTS/DIAGRAMS: Use rounded rectangles with 12px padding, connect with smooth curves or straight lines with arrowheads
+- Maximum one SVG per response. No scripts, no event handlers, no <text> elements with opacity 0.
+
+OPTION B — GENERATED IMAGE (for realistic illustrations, biology, anatomy, complex scenes):
+Place [IMAGE: detailed description] at the very END of your response.
+Write a rich, specific description (20-40 words) focusing on what should be shown.
+Good: [IMAGE: cross-section of a human heart showing four chambers, aorta, pulmonary artery, with blood flow arrows in red and blue]
+Bad: [IMAGE: heart diagram]
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+MATH & SCIENCE NOTATION
+━━━━━━━━━━━━━━━━━━━━━━━━
+For ALL mathematical and scientific expressions, use LaTeX notation:
+• Inline math: wrap in single dollar signs, e.g. $x^2 + y^2 = r^2$
+• Display math (standalone equations): wrap in double dollar signs, e.g. $$\\int_0^1 x^2 \\, dx = \\frac{1}{3}$$
+• Always use LaTeX for: fractions (\\frac{}{}), exponents (x^2), subscripts (a_n), roots (\\sqrt{}), integrals (\\int), summations (\\sum), Greek letters (\\alpha, \\beta), vectors (\\vec{v}), matrices (\\begin{pmatrix}...\\end{pmatrix})
+• NEVER write math as plain text like "x^2 + 3x - 5" — always use $x^2 + 3x - 5$
+• For chemistry: use LaTeX too, e.g. $\\text{H}_2\\text{O}$, $\\text{CO}_2$
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 FORMAT
@@ -6752,7 +7301,7 @@ FORMAT
 • Always include [BLOOM:level] tag.
 • After [BLOOM:level], append your private tutor note: [TUTOR_NOTE: 1-2 sentences on what you observed in this exchange — misconceptions spotted, what clicked, what approach worked or didn't. This is your private notebook, the student never sees it.]
 
-${ndCtx ? `\n━━━━━━━━━━━━━━━━━━━━━━━━\nSTUDY MATERIAL (use this to ask specific, grounded questions):\n${ndCtx}\n━━━━━━━━━━━━━━━━━━━━━━━━` : ''}${S.lessonContext||''}`;
+${ndCtx ? `\n━━━━━━━━━━━━━━━━━━━━━━━━\nSTUDY MATERIAL (use this to ask specific, grounded questions):\n${ndCtx}\n━━━━━━━━━━━━━━━━━━━━━━━━` : ''}${(() => { const ss = getSubjectState(S.currentSubject || S.subj); return ss && ss.slackContext ? ss.slackContext : (S.lessonContext||''); })()}`;
 }
 
 // ══════════════════════════════════════════════
@@ -6832,6 +7381,8 @@ function pickSubjectC(el) { el.classList.toggle('sel'); }
 function pickSubjectS(el) { el.classList.toggle('sel'); }
 function pickLearnStyleC(el) { document.querySelectorAll('#ob-c2 .learn-style-card').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
 function pickLearnStyleS(el) { document.querySelectorAll('#obs3 .learn-style-card').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
+function pickStuckS(el) { document.querySelectorAll('#obs-stuck .subject-chip').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
+function pickChallengeS(el) { document.querySelectorAll('#obs-challenge .subject-chip').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
 // Legacy aliases
 function pickStyle(el) { pickStyleP(el); }
 function pickGoal(el)  { pickGoalP(el); }
@@ -7103,11 +7654,14 @@ async function launchFamilyChild(child) {
     }
   }
 
-  // Load saved chat history for this child
+  // Load saved chat history for this child (legacy fallback)
   if (child.history && child.history.length) {
     S.history = child.history;
-    restoreHistoryBubbles();
   }
+
+  // Load per-subject data (overrides legacy history if available, migrates if not)
+  await loadPerSubjectData();
+  if (S.history.length) restoreHistoryBubbles();
 
   // Restore test mode state if active
   const tms = child.test_mode_state;
@@ -7387,8 +7941,54 @@ function obStudentNext() {
     showSchoolConnectModal();
     return;
   }
-  if (obStudentStep === 4) { launchStudent(); return; }
+  if (obStudentStep === 5) { createAccountAndLaunch(); return; }
   obStudentStep++; renderObStudent();
+}
+async function createAccountAndLaunch() {
+  const email = document.getElementById('obs-email')?.value?.trim()?.toLowerCase();
+  const pw = document.getElementById('obs-pw')?.value;
+  if (email && pw) {
+    if (pw.length < 6) { toast('Password must be at least 6 characters', 'err'); return; }
+    if (!SB) { skipAccountAndLaunch(); return; }
+    const btn = document.getElementById('obs-next');
+    btn.textContent = 'Creating account...'; btn.disabled = true;
+    try {
+      const hash = await sha256(pw);
+      // Build profile from onboarding data
+      const subjects = [...document.querySelectorAll('#s-subject-chips .subject-chip.sel')].map(el=>el.dataset.s);
+      const selStyle = document.querySelector('#s-style-grid .style-card.sel');
+      const selGoal = document.querySelector('#s-goal-chips .goal-chip.sel');
+      const profile = {
+        name: document.getElementById('obs-name').value.trim(),
+        age: document.getElementById('obs-age').value,
+        subj: subjects.join(', ') || 'General / Mixed',
+        style: selStyle?.dataset?.s || 'calm',
+        goal: selGoal?.dataset?.g || 'critical',
+        notes: '',
+        school: document.getElementById('obs-school').value.trim()
+      };
+      const { data, error } = await SB.from('guided_accounts').insert({
+        email, password_hash: hash, user_type: 'solo',
+        profile, history: [], events: []
+      }).select().single();
+      if (error) {
+        if (error.code === '23505') toast('Email already registered — please sign in', 'err');
+        else toast('Error: ' + error.message, 'err');
+        btn.textContent = 'Start Learning →'; btn.disabled = false;
+        return;
+      }
+      S.accountId = data.id;
+      toast('Account created!', 'ok');
+    } catch(e) {
+      toast('Error: ' + e.message, 'err');
+      btn.textContent = 'Start Learning →'; btn.disabled = false;
+      return;
+    }
+  }
+  launchStudent();
+}
+function skipAccountAndLaunch() {
+  launchStudent();
 }
 // ── Enter = green button across all onboarding screens ──
 function _enterGuard(e) {
@@ -7442,21 +8042,23 @@ document.addEventListener('keydown', e => {
 });
 
 function renderObStudent() {
-  ['obs1','obs2','obs3','obs4'].forEach((id,i) => {
+  ['obs1','obs2','obs3','obs4','obs5'].forEach((id,i) => {
     document.getElementById(id).classList.toggle('active', i+1===obStudentStep);
     const dot = document.getElementById(`sd-s${i+1}`);
     dot.classList.toggle('cur', i+1===obStudentStep);
     dot.classList.toggle('done', i+1<obStudentStep);
   });
-  document.getElementById('obs-prog').style.width = (obStudentStep/4*100)+'%';
+  document.getElementById('obs-prog').style.width = (obStudentStep/5*100)+'%';
   document.getElementById('obs-back').style.display = obStudentStep>1 ? 'block' : 'none';
-  document.getElementById('obs-next').textContent = obStudentStep===4 ? 'Start Learning →' : 'Continue →';
+  document.getElementById('obs-next').textContent = obStudentStep===5 ? 'Start Learning →' : 'Continue →';
 }
 
 // ── Launch: Parent Dashboard ──
 function launchParentDashboard() {
   const parentName  = document.getElementById('ob-p-name').value.trim();
   const childName   = document.getElementById('ob-p-child-name').value.trim();
+  if (!isCleanName(parentName)) { toast('This name is not allowed. Please choose a different name.', 'err'); return; }
+  if (!isCleanName(childName)) { toast('This name is not allowed. Please choose a different name.', 'err'); return; }
   const childAge    = document.getElementById('ob-p-age').value;
   const childSchool = document.getElementById('ob-p-school').value.trim();
   const childNotes  = document.getElementById('ob-p-notes').value.trim();
@@ -7652,6 +8254,7 @@ async function launchFromDashboard(idx) {
 // ── Launch: Child onboarding ──
 function launchChild() {
   const name     = document.getElementById('ob-c-name').value.trim();
+  if (!isCleanName(name)) { toast('This name is not allowed. Please choose a different name.', 'err'); return; }
   const subjects = [...document.querySelectorAll('#c-subject-chips .subject-chip.sel')].map(el=>el.dataset.s);
   const langs    = document.getElementById('ob-c-langs').value.trim();
   const hobbies  = document.getElementById('ob-c-hobbies').value.trim();
@@ -7672,16 +8275,21 @@ function launchChild() {
 // ── Launch: Student personal use ──
 function launchStudent() {
   const name      = document.getElementById('obs-name').value.trim();
+  if (!isCleanName(name)) { toast('This name is not allowed. Please choose a different name.', 'err'); return; }
   const age       = document.getElementById('obs-age').value;
   const subjects  = [...document.querySelectorAll('#s-subject-chips .subject-chip.sel')].map(el=>el.dataset.s);
   const school    = document.getElementById('obs-school').value.trim();
   const langs     = document.getElementById('obs-langs').value.trim();
   const hobbies   = document.getElementById('obs-hobbies').value.trim();
-  const struggles = document.getElementById('obs-struggles').value.trim();
+  const favSubject  = document.getElementById('obs-fav-subject')?.value?.trim() || '';
+  const hardSubject = document.getElementById('obs-hard-subject')?.value?.trim() || '';
+  const curiosity   = document.getElementById('obs-curiosity')?.value?.trim() || '';
+  const whenStuck   = document.querySelector('#obs-stuck .subject-chip.sel')?.dataset?.val || '';
+  const challengePref = document.querySelector('#obs-challenge .subject-chip.sel')?.dataset?.val || '';
   const selLS     = document.querySelector('#obs3 .learn-style-card.sel');
   const selStyle  = document.querySelector('#s-style-grid .style-card.sel');
   const selGoal   = document.querySelector('#s-goal-chips .goal-chip.sel');
-  const goalMap   = { critical:'Build strong critical thinking', homework:'Homework & exam help', curiosity:'Explore & stay curious' };
+  const goalMap   = { critical:'Build strong critical thinking', grades:'Get better grades', curiosity:'Explore & stay curious' };
   // Abitur data
   const abiturOn  = document.getElementById('abitur-toggle-row').classList.contains('active');
   const bundesland= document.getElementById('obs-bundesland').value;
@@ -7695,7 +8303,7 @@ function launchStudent() {
   S.style        = selStyle ? selStyle.dataset.s : 'calm';
   S.learningGoal = selGoal  ? selGoal.dataset.g  : 'critical';
   S.goal         = goalMap[S.learningGoal];
-  S.notes        = [langs&&'Languages: '+langs, hobbies&&'Hobbies: '+hobbies, 'Learns best by: '+(selLS?selLS.dataset.ls:'visual'), struggles&&'Struggles with: '+struggles].filter(Boolean).join('. ');
+  S.notes        = [langs&&'Languages: '+langs, hobbies&&'Hobbies: '+hobbies, favSubject&&'Favourite subject: '+favSubject, hardSubject&&'Finds hardest: '+hardSubject, 'Learns best by: '+(selLS?selLS.dataset.ls:'visual'), whenStuck&&'When stuck prefers: '+whenStuck, challengePref&&'Challenge pref: '+challengePref, curiosity&&'Curious about: '+curiosity].filter(Boolean).join('. ');
   S.sessionStart = Date.now();
   S.userType     = 'solo';
   S.abitur       = abiturOn && !!bundesland;
@@ -7706,8 +8314,7 @@ function launchStudent() {
   S.subjectLog   = [];
   document.getElementById('ob-student').style.display = 'none';
   if (window.playHyperspeed) { playHyperspeed(() => startAppSession()); } else { startAppSession(); }
-  // Prompt to save account (unless already logged in)
-  if (!S.accountId) setTimeout(() => { document.getElementById('save-account-banner').style.display = 'block'; }, 3000);
+  // Account creation now happens in onboarding Step 5
 }
 
 // ── Shared app launch ──
@@ -7759,7 +8366,7 @@ function startAppSession() {
     console.log('[Guided] Slack fetch starting. Channels:', S.selectedChannels);
     fetchSlackClassContent().then(ctx => {
       console.log('[Guided] Slack result length:', ctx?.length || 0);
-      if (ctx) { S.lessonContext = ctx; toast('Class content loaded from school ✓', 'ok'); }
+      if (ctx) { S.lessonContext = ctx; toast('Class content loaded from school ✓', 'ok'); updateFilesCount(); }
       else { console.log('[Guided] Slack returned empty'); }
     }).catch(e => console.error('[Guided] Slack fetch error:', e));
   } else {
@@ -7826,18 +8433,214 @@ function updateSidebarSubjects() {
 
 function switchSubject(subject) {
   S.generalMode = false;
-  S.currentSubject = subject;
-  // Preserve the full subject list before overwriting S.subj
+
+  // 1. Save current subject's in-memory state
+  if (S.currentSubject && S.subjects[S.currentSubject]) {
+    const cur = S.subjects[S.currentSubject];
+    cur.history = [...S.history];
+    cur.events = [...S.events];
+    cur.bloom = { ...S.bloom };
+    cur.bloomTotal = S.bloomTotal;
+    cur.sessionNotes = [...(S.sessionNotes || [])];
+  }
+
+  // 2. Preserve full subject list
   if (!S._allSubjects || !S._allSubjects.length) {
     S._allSubjects = getSubjectList();
   }
+
+  // 3. Switch to new subject
+  S.currentSubject = subject;
   S.subj = subject;
   const dSubj = document.getElementById('d-subj');
   if (dSubj) dSubj.textContent = subject;
+
+  // 4. Load new subject's state
+  const ss = getSubjectState(subject);
+
+  // If not loaded from DB yet, try async load (non-blocking for now)
+  if (!ss.loaded && SB) {
+    loadSubjectFromDB(subject).then(() => {
+      if (S.currentSubject === subject) renderSubjectChat(subject);
+    });
+    ss.loaded = true;
+  }
+
+  // 5. Restore in-memory state from subject store
+  S.history = [...ss.history];
+  S.events = [...ss.events];
+  S.bloom = { ...(ss.bloom || { remember:0, understand:0, apply:0, analyze:0, evaluate:0, create:0 }) };
+  S.bloomTotal = ss.bloomTotal || 0;
+  S.sessionNotes = [...(ss.sessionNotes || [])];
+  S.historyOffset = ss.history.length;
+  S.historyHasMore = ss.totalMessages > ss.history.length;
+
+  // Reset per-session counters
+  S.totTok = 0; S.pTok = 0; S.cTok = 0; S.calls = 0;
+  S.imgs = 0; S.ndSearches = 0;
+  S.hintsLeft = 3; S.hintsUsed = 0;
+  if (!S.sessionStart) S.sessionStart = Date.now();
+
+  // 6. Render — NOT clearChat()
+  renderSubjectChat(subject);
+
+  // 7. Show school-subject buttons, hide General-only buttons
+  document.getElementById('btn-whylearn').style.display = '';
+  document.getElementById('btn-back-subject').style.display = 'none';
+  S._whyLearnReturnSubject = null;
+
+  // 8. Update files count badge + switch back to chat mode
+  updateFilesCount();
+  switchChatMode('chat');
+
   switchView('student');
-  clearChat();
   buildStarters();
   updateSidebarSubjects();
+}
+
+// Render the chat for a specific subject (replaces clearChat for subject switches)
+function renderSubjectChat(subject) {
+  const msgsEl = document.getElementById('msgs');
+  if (!msgsEl) return;
+  msgsEl.innerHTML = '';
+
+  const ss = getSubjectState(subject);
+
+  // Add "Load older messages" button if more history exists in DB
+  if (S.historyHasMore) {
+    const loadMore = document.createElement('div');
+    loadMore.id = 'load-more-history';
+    loadMore.className = 'load-more-btn';
+    loadMore.innerHTML = '<button onclick="loadMoreHistory()">Older messages ↑</button>';
+    msgsEl.appendChild(loadMore);
+  }
+
+  // Empty state: show starters
+  if (ss.history.length === 0) {
+    msgsEl.innerHTML = `<div class="empty-chat" id="empty-chat"><div class="empty-icon-ring">🌱</div><div class="empty-title" id="empty-title">Hello, ${S.name||'there'}</div><div class="empty-sub" id="empty-sub">How can I help you learn ${subject}?</div><div class="starter-grid" id="starters"></div></div>`;
+    buildStarters();
+    return;
+  }
+
+  // Render existing history
+  const empty = document.getElementById('empty-chat');
+  if (empty) empty.remove();
+  ss.history.forEach(msg => {
+    if (msg.role === 'user') addBubble('user', msg.content);
+    else if (msg.role === 'assistant') addBubble('ai', msg.content.replace(/\[TUTOR_NOTE:[\s\S]*?\]/gi, '').trim());
+  });
+}
+
+// Load a subject's history from Supabase
+async function loadSubjectFromDB(subject) {
+  if (!SB) return;
+  const ownerType = S.studentId ? 'student' : S.familyMemberId ? 'family_member' : 'account';
+  const ownerId = S.studentId || S.familyMemberId || S.accountId;
+  if (!ownerId) return;
+
+  try {
+    const { data, error } = await SB.rpc('get_subject_history_page', {
+      p_owner_type: ownerType,
+      p_owner_id: ownerId,
+      p_subject: subject,
+      p_offset: 0,
+      p_limit: 30
+    });
+    if (error || !data) return;
+
+    const ss = getSubjectState(subject);
+    const msgs = (data.messages || []).reverse(); // DB returns newest-first, we want oldest-first
+    ss.history = msgs;
+    ss.totalMessages = data.total || 0;
+    S.history = [...msgs];
+    S.historyHasMore = data.hasMore || false;
+    S.historyOffset = msgs.length;
+  } catch(e) { console.warn('loadSubjectFromDB:', e); }
+
+  // Also load per-subject metadata (ai_notes, weaknesses, slack_context)
+  try {
+    const ownerCol = S.studentId ? 'student_id' : S.familyMemberId ? 'family_member_id' : 'account_id';
+    const ownerId = S.studentId || S.familyMemberId || S.accountId;
+    const { data } = await SB.from('subject_histories')
+      .select('ai_notes, weaknesses, slack_context, homework_info, bloom_data')
+      .eq(ownerCol, ownerId)
+      .eq('subject', subject)
+      .single();
+    if (data) {
+      const ss = getSubjectState(subject);
+      ss.aiNotes = data.ai_notes || '';
+      ss.weaknesses = data.weaknesses || '';
+      ss.slackContext = data.slack_context || '';
+      ss.homeworkInfo = data.homework_info || '';
+      if (data.bloom_data) ss.bloom = data.bloom_data;
+    }
+  } catch(e) { /* no row yet, that's fine */ }
+}
+
+// Lazy-load older messages when user scrolls up
+async function loadMoreHistory() {
+  if (S.historyLoading || !S.historyHasMore) return;
+  S.historyLoading = true;
+
+  const btn = document.querySelector('#load-more-history button');
+  if (btn) { btn.disabled = true; btn.textContent = 'Loading...'; }
+
+  const subject = S.currentSubject || S.subj;
+  const ownerType = S.studentId ? 'student' : S.familyMemberId ? 'family_member' : 'account';
+  const ownerId = S.studentId || S.familyMemberId || S.accountId;
+  if (!ownerId || !SB) { S.historyLoading = false; return; }
+
+  try {
+    const { data } = await SB.rpc('get_subject_history_page', {
+      p_owner_type: ownerType,
+      p_owner_id: ownerId,
+      p_subject: subject,
+      p_offset: S.historyOffset,
+      p_limit: 20
+    });
+    if (!data) { S.historyLoading = false; return; }
+
+    const olderMsgs = (data.messages || []).reverse();
+    const ss = getSubjectState(subject);
+
+    // Prepend to history
+    ss.history = [...olderMsgs, ...ss.history];
+    S.history = [...ss.history];
+    S.historyOffset = ss.history.length;
+    S.historyHasMore = data.hasMore || false;
+
+    // Render older messages at top of chat
+    const msgsEl = document.getElementById('msgs');
+    const scrollH = msgsEl.scrollHeight;
+    const anchor = document.getElementById('load-more-history');
+
+    olderMsgs.forEach(msg => {
+      const bubble = document.createElement('div');
+      bubble.className = `msg ${msg.role === 'user' ? 'user' : 'ai'}`;
+      const content = msg.role === 'assistant'
+        ? msg.content.replace(/\[TUTOR_NOTE:[\s\S]*?\]/gi, '').trim()
+        : msg.content;
+      bubble.innerHTML = `<div class="bubble">${escH(content)}</div>`;
+      if (anchor && anchor.nextSibling) {
+        msgsEl.insertBefore(bubble, anchor.nextSibling);
+      } else {
+        msgsEl.prepend(bubble);
+      }
+    });
+
+    // Maintain scroll position
+    msgsEl.scrollTop = msgsEl.scrollHeight - scrollH;
+
+    if (!S.historyHasMore) {
+      const loadMoreEl = document.getElementById('load-more-history');
+      if (loadMoreEl) loadMoreEl.remove();
+    } else if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Older messages ↑';
+    }
+  } catch(e) { console.warn('loadMoreHistory:', e); }
+
+  S.historyLoading = false;
 }
 
 function toggleSidebar() {
@@ -8247,6 +9050,12 @@ async function sendMsg(isHint = false, isGotIt = false) {
 
   if (!text && !isHint && !isGotIt && !imgSnap) return;
 
+  // Block profanity
+  if (text && !isCleanMessage(text)) {
+    toast('That language is not allowed here.', 'err');
+    return;
+  }
+
   const empty = document.getElementById('empty-chat');
   if (empty) empty.remove();
 
@@ -8265,12 +9074,23 @@ async function sendMsg(isHint = false, isGotIt = false) {
     ? 'I think I got it! Please confirm if I understood correctly and challenge me further.'
     : text;
 
-  if (imgSnap && !isHint && !isGotIt) {
-    const imgNote = `[The student shared an image${text ? ': ' + text : '. Ask curiously what they want to learn or understand from it'}]`;
-    aiContent = text ? `${text}\n\n${imgNote}` : imgNote;
+  if (imgSnap && imgSnap.type === 'image' && imgSnap.dataUrl && !isHint && !isGotIt) {
+    // Send actual image data to Claude as multimodal content
+    const base64Match = imgSnap.dataUrl.match(/^data:(image\/\w+);base64,(.+)$/);
+    if (base64Match) {
+      const mediaType = base64Match[1]; // e.g. "image/jpeg"
+      const base64Data = base64Match[2];
+      const contentBlocks = [
+        { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64Data } },
+        { type: 'text', text: text || 'The student shared this image. Look at it carefully and ask what they want to learn or understand from it.' }
+      ];
+      S.history.push({ role: 'user', content: contentBlocks });
+    } else {
+      S.history.push({ role: 'user', content: aiContent });
+    }
+  } else {
+    S.history.push({ role: 'user', content: aiContent });
   }
-
-  S.history.push({ role: 'user', content: aiContent });
 
   S.loading = true;
   document.getElementById('sbtn').disabled = true;
@@ -8343,49 +9163,71 @@ async function sendMsg(isHint = false, isGotIt = false) {
 }
 
 function reqHint() {
-  if (S.hintsLeft <= 0) { toast('No hints left!', 'err'); return; }
-  S.hintsLeft--;
-  S.hintsUsed++;
-  document.getElementById('hcount').textContent = S.hintsLeft;
-  document.getElementById('d-hints').textContent = S.hintsUsed;
-  if (S.hintsLeft === 0) document.getElementById('btn-hint').disabled = true;
-  S.events.push({ who: 'student', text: '(requested a hint)', type: 'hint', ts: Date.now() });
-  sendMsg(true, false);
+  // Hints are only for school subjects, not General mode — handled by button visibility
 }
 
-function gotIt() { sendMsg(false, true); }
+function gotIt() {
+  // Removed — no longer used
+}
 
-async function reqWhyLearn() {
-  if (S.loading) return;
+function reqWhyLearn() {
+  if (S.loading || S.generalMode) return;
+
+  // Remember where we came from
+  S._whyLearnReturnSubject = S.currentSubject || S.subj;
+
+  // Build context from current subject conversation
+  const subj = S.subj || 'this topic';
+  const recentMsgs = S.history.slice(-6).map(m => m.content).join('\n').substring(0, 600);
+  const contextSummary = recentMsgs ? `The student was just studying ${subj}. Recent conversation context:\n${recentMsgs}` : `The student is studying ${subj}.`;
+
+  // Switch to General mode with context
+  openGeneralChat();
+
+  // Pre-fill a "Why do I need this?" question with context
   const interests = S.notes ? S.notes : '';
   const interestLine = interests ? ` The student's interests and background: ${interests}.` : '';
-  const prompt = `(The student is asking: "Why do I need to learn this in real life? How is what we're discussing right now actually useful outside of school?")${interestLine} Give a short, genuine, and inspiring answer that connects the current topic directly to real-life situations — ideally using examples that relate to their personal interests. Keep it under 5 sentences and make it feel exciting, not like a textbook.`;
-  S.events.push({ who: 'student', text: '(asked why they need to learn this)', type: 'message', ts: Date.now() });
-  addBubble('user', '🌍 Why do I need to learn this?');
+  const prompt = `${contextSummary}\n\n(The student is asking: "Why do I need to learn ${subj} in real life? How is what we're studying actually useful outside of school?")${interestLine} Give a short, genuine, and inspiring answer that connects ${subj} directly to real-life situations — ideally using examples that relate to their personal interests. Keep it under 5 sentences and make it feel exciting, not like a textbook.`;
+
+  // Show the back button
+  document.getElementById('btn-back-subject').style.display = '';
+  document.getElementById('btn-whylearn').style.display = 'none';
+
+  // Notify user they switched to General Chat
+  toast('Switched to General Chat', 'ok');
+
+  // Send as first message in General
+  addBubble('user', `Why do I need ${subj}?`);
   S.history.push({ role: 'user', content: prompt });
   S.loading = true;
   document.getElementById('sbtn').disabled = true;
   const tid = showTyping();
-  let ndCtx = '';
-  if (S.ndReady) ndCtx = await srchNeedle('real life application');
   const t0 = Date.now();
-  try {
-    const { reply, usage } = await callLLM(ndCtx, false);
+  callLLM('', false).then(({ reply, usage }) => {
     const lat = Date.now() - t0;
     removeTyping(tid);
     const { forHistory, forDisplay } = parseTutorNote(reply.replace(/^\[AHA\]\s*/, ''));
     const { txt } = parseImg(forDisplay);
-    addBubble('ai', txt, usage, false, false, 'understand');
+    addBubble('ai', txt, usage);
     S.history.push({ role: 'assistant', content: forHistory });
     updateDev(usage, lat);
-  } catch(e) {
+    S.loading = false;
+    document.getElementById('sbtn').disabled = false;
+  }).catch(e => {
     removeTyping(tid);
     addBubble('ai', '⚠️ Error: ' + e.message);
     S.history.pop();
+    S.loading = false;
+    document.getElementById('sbtn').disabled = false;
+  });
+}
+
+function goBackToSubject() {
+  const returnTo = S._whyLearnReturnSubject;
+  S._whyLearnReturnSubject = null;
+  if (returnTo) {
+    switchSubject(returnTo);
   }
-  S.loading = false;
-  document.getElementById('sbtn').disabled = false;
-  document.getElementById('minput').focus();
 }
 
 // ══════════════════════════════════════════════
@@ -8435,7 +9277,8 @@ function maybeCompressHistory() {
   const old = S.history.splice(0, 20);
   const summary = old.map(m => {
     const who  = m.role === 'user' ? 'Student' : 'Tutor';
-    const text = String(m.content).replace(/\s+/g, ' ').slice(0, 150);
+    const rawContent = Array.isArray(m.content) ? m.content.filter(b => b.type === 'text').map(b => b.text).join(' ') || '[image]' : String(m.content);
+    const text = rawContent.replace(/\s+/g, ' ').slice(0, 150);
     return `${who}: ${text}`;
   }).join('\n');
   // Insert a synthetic exchange so history stays alternating user/assistant
@@ -8530,7 +9373,7 @@ function renderSvgDiagram(svgCode) {
 }
 
 function genImg(p) {
-  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent('clean educational diagram: ' + p + ', white background, textbook style, labeled, professional')}?width=640&height=380&nologo=true&model=turbo`;
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent('high quality educational illustration: ' + p + '. Clean modern style, white background, precise labels, clear annotations, vibrant but professional colors, detailed and accurate, textbook quality, flat design, vector-like, no text artifacts')}?width=1024&height=600&nologo=true&model=flux`;
   const wrap = document.createElement('div');
   wrap.className = 'msg ai';
   const imgId = 'img-' + Date.now();
@@ -8972,6 +9815,20 @@ function addBubble(role, text, usage, isHint, isAha, bloomLvl) {
     </div>`;
 
   msgs.appendChild(d);
+  // Render math notation with KaTeX
+  if (role === 'ai' && window.renderMathInElement) {
+    try {
+      renderMathInElement(d, {
+        delimiters: [
+          { left: '$$', right: '$$', display: true },
+          { left: '$', right: '$', display: false },
+          { left: '\\[', right: '\\]', display: true },
+          { left: '\\(', right: '\\)', display: false }
+        ],
+        throwOnError: false
+      });
+    } catch(e) { /* ignore KaTeX errors */ }
+  }
   msgs.scrollTop = msgs.scrollHeight;
 }
 
@@ -9012,7 +9869,7 @@ function buildStarters() {
     Geography: ['Why do tectonic plates move?','What causes climate zones?','Why do rivers flood?'],
     'Computer Science': ['What is recursion?','How does the internet work?','What is an algorithm?'],
     Economics: ['What causes inflation?','How does supply and demand work?','What is GDP?'],
-    'General / Mixed': ['Explain something I find confusing','How do I think more critically?','What is the scientific method?'],
+    'General / Mixed': ['Tell me something interesting','Help me with a decision','I have a random question'],
   };
   const s = map[S.subj] || map['General / Mixed'];
   const el = document.getElementById('starters');
@@ -9037,8 +9894,6 @@ function clearChat() {
   S.bloom = { remember:0, understand:0, apply:0, analyze:0, evaluate:0, create:0 };
   S.bloomTotal = 0; S.sessionStart = Date.now();
   document.getElementById('msgs').innerHTML = '<div class="empty-chat" id="empty-chat"><div class="empty-icon-ring">🌱</div><div class="empty-title">Cleared</div><div class="empty-sub">Start fresh.</div></div>';
-  document.getElementById('btn-hint').disabled = false;
-  document.getElementById('hcount').textContent = '3';
   updateDev({}, 0);
   toast('Session cleared', 'ok');
 }
@@ -9055,8 +9910,8 @@ function openGeneralChat() {
   const generalStarters = [
     "What's on your mind?",
     'Tell me something interesting',
-    'Help me make a decision',
-    'I have a question about…',
+    'Help me with something',
+    'I have a random question',
   ];
   const starterCards = generalStarters.map(t =>
     `<div class="starter" onclick="fillInput(${JSON.stringify(t)})">${t}</div>`
@@ -9067,8 +9922,11 @@ function openGeneralChat() {
     <div class="empty-sub" id="empty-sub">No topic, no pressure — ask me anything.</div>
     <div class="starter-grid" id="starters">${starterCards}</div>
   </div>`;
-  document.getElementById('btn-hint').disabled = true;
-  document.getElementById('hcount').textContent = '—';
+  // Hide school-only buttons, show back button if coming from "why learn"
+  document.getElementById('btn-whylearn').style.display = 'none';
+  if (!S._whyLearnReturnSubject) {
+    document.getElementById('btn-back-subject').style.display = 'none';
+  }
   updateDev({}, 0);
   updateSidebarSubjects();
 }
@@ -9241,64 +10099,186 @@ function toggleCalDone(id) {
   const idx = done.indexOf(id);
   if (idx >= 0) done.splice(idx, 1); else done.push(id);
   localStorage.setItem('guided_cal_done', JSON.stringify(done));
-  const btn = document.querySelector(`[data-cal-done="${id}"]`);
-  if (btn) {
-    const isDone = done.includes(id);
-    btn.classList.toggle('checked', isDone);
-    btn.textContent = isDone ? '✓' : '○';
-    btn.closest('.cal-card').style.opacity = isDone ? '.5' : '';
+  renderCalendar(S._calFilter || 'all');
+}
+
+// ── Calendar Month Grid ──
+const _calMonthNames = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const _calDayNamesShort = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+const _calDayNamesFull = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+
+function _calInitMonth() {
+  if (S._calYear == null) {
+    const now = new Date();
+    S._calMonth = now.getMonth();
+    S._calYear = now.getFullYear();
   }
 }
 
+function calNavPrev() {
+  _calInitMonth();
+  S._calMonth--;
+  if (S._calMonth < 0) { S._calMonth = 11; S._calYear--; }
+  S._calSelectedDay = null;
+  renderCalendar(S._calFilter || 'all');
+}
+
+function calNavNext() {
+  _calInitMonth();
+  S._calMonth++;
+  if (S._calMonth > 11) { S._calMonth = 0; S._calYear++; }
+  S._calSelectedDay = null;
+  renderCalendar(S._calFilter || 'all');
+}
+
+function calNavToday() {
+  const now = new Date();
+  S._calMonth = now.getMonth();
+  S._calYear = now.getFullYear();
+  S._calSelectedDay = _calFmt(now);
+  renderCalendar(S._calFilter || 'all');
+}
+
+function calSelectDay(dateStr) {
+  S._calSelectedDay = (S._calSelectedDay === dateStr) ? null : dateStr;
+  renderCalendar(S._calFilter || 'all');
+}
+
 function renderCalendar(filter) {
+  _calInitMonth();
   S._calFilter = filter || 'all';
+
   // Update chip states
   ['all','homework','test'].forEach(f => {
     const chip = document.getElementById(`cal-chip-${f}`);
     if (chip) chip.classList.toggle('sel', f === S._calFilter);
   });
 
-  const list = document.getElementById('cal-list');
-  if (!list) return;
+  // Month title
+  const titleEl = document.getElementById('cal-month-title');
+  if (titleEl) titleEl.textContent = `${_calMonthNames[S._calMonth]} ${S._calYear}`;
 
-  const events = (S.calendarEvents || []).filter(ev => filter === 'all' || ev.type === filter);
-  if (!events.length) {
-    list.innerHTML = `<div class="cal-empty"><div class="cal-empty-icon">📅</div><div class="cal-empty-title">Nothing here yet</div><div class="cal-empty-sub">When teachers post homework or tests in Slack, they'll appear here automatically.</div></div>`;
+  // Weekday headers
+  const weekdaysEl = document.getElementById('cal-weekdays');
+  if (weekdaysEl) {
+    weekdaysEl.innerHTML = _calDayNamesShort.map(d => `<div class="cal-weekday">${d}</div>`).join('');
+  }
+
+  // Calculate grid days
+  const year = S._calYear, month = S._calMonth;
+  const firstOfMonth = new Date(year, month, 1);
+  const lastOfMonth = new Date(year, month + 1, 0);
+  const daysInMonth = lastOfMonth.getDate();
+  const startDow = (firstOfMonth.getDay() + 6) % 7; // Mon=0
+
+  const prevMonthLast = new Date(year, month, 0).getDate();
+  const gridDays = [];
+
+  // Previous month padding
+  for (let i = startDow - 1; i >= 0; i--) {
+    const d = prevMonthLast - i;
+    gridDays.push({ date: new Date(year, month - 1, d), dayNum: d, isOutside: true });
+  }
+  // Current month
+  for (let d = 1; d <= daysInMonth; d++) {
+    gridDays.push({ date: new Date(year, month, d), dayNum: d, isOutside: false });
+  }
+  // Next month padding
+  const totalRows = gridDays.length > 35 ? 42 : 35;
+  let nextDay = 1;
+  while (gridDays.length < totalRows) {
+    gridDays.push({ date: new Date(year, month + 1, nextDay), dayNum: nextDay++, isOutside: true });
+  }
+
+  // Event lookup: dateStr → events[]
+  const events = (S.calendarEvents || []).filter(ev => S._calFilter === 'all' || ev.type === S._calFilter);
+  const eventsByDate = {};
+  events.forEach(ev => {
+    if (!eventsByDate[ev.dueDate]) eventsByDate[ev.dueDate] = [];
+    eventsByDate[ev.dueDate].push(ev);
+  });
+
+  // Render day cells
+  const todayStr = _calFmt(new Date());
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const daysEl = document.getElementById('cal-days');
+  if (!daysEl) return;
+
+  const MAX_DOTS = 3;
+  let html = '';
+  for (const cell of gridDays) {
+    const dateStr = _calFmt(cell.date);
+    const cls = ['cal-day',
+      cell.isOutside ? 'outside' : '',
+      dateStr === todayStr ? 'today' : '',
+      dateStr === S._calSelectedDay ? 'selected' : ''
+    ].filter(Boolean).join(' ');
+
+    const dayEvents = eventsByDate[dateStr] || [];
+    let dotsHtml = '';
+    const shown = dayEvents.slice(0, MAX_DOTS);
+    for (const ev of shown) {
+      const label = ev.subject || (ev.type === 'homework' ? 'HA' : 'Test');
+      dotsHtml += `<div class="cal-dot ${ev.type}">${esc(label)}</div>`;
+    }
+    if (dayEvents.length > MAX_DOTS) {
+      dotsHtml += `<div class="cal-dot overflow">+${dayEvents.length - MAX_DOTS}</div>`;
+    }
+
+    html += `<div class="${cls}" onclick="calSelectDay('${dateStr}')">
+      <div class="cal-day-num">${cell.dayNum}</div>
+      <div class="cal-day-events">${dotsHtml}</div>
+    </div>`;
+  }
+  daysEl.innerHTML = html;
+
+  // Detail panel
+  _renderCalDetail(eventsByDate);
+
+  // Empty state
+  const emptyEl = document.getElementById('cal-empty');
+  if (emptyEl) emptyEl.style.display = events.length === 0 && !S._calSelectedDay ? '' : 'none';
+}
+
+function _renderCalDetail(eventsByDate) {
+  const detailEl = document.getElementById('cal-detail');
+  const headerEl = document.getElementById('cal-detail-header');
+  const listEl = document.getElementById('cal-detail-list');
+  if (!detailEl || !headerEl || !listEl) return;
+
+  if (!S._calSelectedDay) { detailEl.style.display = 'none'; return; }
+  detailEl.style.display = '';
+
+  const dayEvents = eventsByDate[S._calSelectedDay] || [];
+  const parts = S._calSelectedDay.split('-');
+  const d = new Date(+parts[0], +parts[1]-1, +parts[2]);
+  headerEl.textContent = `${_calDayNamesFull[d.getDay()]}, ${d.getDate()}. ${_calMonthNames[d.getMonth()]} ${d.getFullYear()}`;
+
+  if (!dayEvents.length) {
+    listEl.innerHTML = `<div class="cal-detail-empty">Keine Einträge an diesem Tag</div>`;
     return;
   }
 
   const done = _calGetDone();
-  // Group by dueDate
-  const groups = {};
-  events.forEach(ev => {
-    if (!groups[ev.dueDate]) groups[ev.dueDate] = [];
-    groups[ev.dueDate].push(ev);
-  });
-
-  const escape = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
   let html = '';
-  for (const date of Object.keys(groups).sort()) {
-    const label = _calDateLabel(date);
-    html += `<div class="cal-group"><div class="cal-group-label">${escape(label)}</div>`;
-    for (const ev of groups[date]) {
-      const isDone = done.includes(ev.id);
-      html += `<div class="cal-card" style="${isDone ? 'opacity:.5' : ''}">
-        <div class="cal-card-bar ${ev.type}"></div>
-        <div class="cal-card-body">
-          <div class="cal-card-top">
-            <span class="cal-badge ${ev.type}">${ev.type === 'homework' ? 'Hausaufgabe' : 'Test'}</span>
-            <span class="cal-badge-subject">${escape(ev.subject)}</span>
-          </div>
-          <div class="cal-card-text">${escape(ev.text)}</div>
-          <div class="cal-card-meta">von ${escape(ev.author)} · #${escape(ev.channel)} · gepostet ${escape(ev.postedDate)}</div>
+  for (const ev of dayEvents) {
+    const isDone = done.includes(ev.id);
+    html += `<div class="cal-card" style="${isDone ? 'opacity:.5' : ''}">
+      <div class="cal-card-bar ${ev.type}"></div>
+      <div class="cal-card-body">
+        <div class="cal-card-top">
+          <span class="cal-badge ${ev.type}">${ev.type === 'homework' ? 'Hausaufgabe' : 'Test'}</span>
+          <span class="cal-badge-subject">${esc(ev.subject)}</span>
         </div>
-        <button class="cal-done-btn${isDone ? ' checked' : ''}" data-cal-done="${escape(ev.id)}" onclick="toggleCalDone('${escape(ev.id)}')" title="Als erledigt markieren">${isDone ? '✓' : '○'}</button>
-      </div>`;
-    }
-    html += `</div>`;
+        <div class="cal-card-text">${esc(ev.text)}</div>
+        <div class="cal-card-meta">von ${esc(ev.author)} · #${esc(ev.channel)} · gepostet ${esc(ev.postedDate)}</div>
+      </div>
+      ${ev.type === 'homework' ? `<button class="cal-done-btn${isDone ? ' checked' : ''}" data-cal-done="${esc(ev.id)}" onclick="toggleCalDone('${esc(ev.id)}')" title="Als erledigt markieren">${isDone ? '✓' : '○'}</button>` : ''}
+    </div>`;
   }
-  list.innerHTML = html;
+  listEl.innerHTML = html;
 }
 
 function setCalFilter(f) {
@@ -10182,6 +11162,7 @@ async function launchAsSchoolStudent(student) {
 
   // Load learning profile from past sessions + handover notes
   S.aiNotes = student.ai_notes || '';
+  await loadPerSubjectData();
   await loadLearningProfile(S.studentId);
 
   function showSchoolApp() {
@@ -10275,7 +11256,7 @@ function handleImgPick(input) {
     document.getElementById('img-preview-wrap').innerHTML = `
       <div class="img-preview-inner">
         <div style="background:var(--cream2);border:1.5px solid var(--border);border-radius:12px;padding:10px 16px;font-size:13px;font-weight:600;color:var(--ink2);display:flex;align-items:center;gap:8px">
-          <span style="font-size:20px">📎</span> ${escH(file.name)}
+          ${escH(file.name)}
           <button class="img-preview-remove" onclick="clearImgPreview()" style="position:relative;top:0;right:0;margin-left:8px">×</button>
         </div>
       </div>`;
@@ -10585,58 +11566,398 @@ async function validateSchoolCode(code) {
   return { valid: schoolChannels.length > 0, channels: schoolChannels, allChannels: channels };
 }
 
+// ── PDF.js worker setup ──
+if (typeof pdfjsLib !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+// ── Extract text from a Slack file attachment ──
+// Supports: PDF, TXT, MD, CSV, code files
+// Downloads via slack-proxy, parses client-side
+async function extractSlackFileText(file) {
+  if (!file || !file.url_private) return null;
+
+  const PROXY = `${SUPABASE_URL}/functions/v1/slack-proxy`;
+  const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
+  // Skip files that are too large
+  if (file.size && file.size > MAX_SIZE) {
+    return { name: file.name, text: `[File too large: ${file.name} (${(file.size/1024/1024).toFixed(1)}MB)]`, type: file.filetype };
+  }
+
+  // Only process text-extractable file types
+  const textTypes = ['pdf', 'text', 'txt', 'markdown', 'md', 'csv', 'javascript', 'js', 'python', 'py', 'html', 'css', 'json', 'xml', 'yaml', 'yml', 'rtf', 'log'];
+  const ft = (file.filetype || '').toLowerCase();
+  const isPdf = ft === 'pdf';
+  const isText = textTypes.includes(ft) || (file.mimetype || '').startsWith('text/');
+
+  const imageTypes = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'heic'];
+  const isImage = imageTypes.includes(ft) || (file.mimetype || '').startsWith('image/');
+
+  if (!isPdf && !isText && !isImage) {
+    // For other binary files, just note their existence
+    return { name: file.name, text: `[Attached file: ${file.name} (${ft})]`, type: ft };
+  }
+
+  try {
+    // Download file via slack-proxy
+    const res = await fetch(PROXY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
+      body: JSON.stringify({ file_url: file.url_private, token: SLACK_TOKEN })
+    });
+    const result = await res.json();
+    if (!result.ok || !result.data) {
+      return { name: file.name, text: `[Could not download: ${file.name}]`, type: ft };
+    }
+
+    const raw = Uint8Array.from(atob(result.data), c => c.charCodeAt(0));
+
+    if (isImage) {
+      // Return base64 image data for display
+      const contentType = result.content_type || file.mimetype || `image/${ft === 'jpg' ? 'jpeg' : ft}`;
+      return { name: file.name, text: '', type: ft, isImage: true, imageData: result.data, contentType: contentType };
+    } else if (isPdf) {
+      // Extract text from PDF using pdf.js
+      if (typeof pdfjsLib === 'undefined') {
+        return { name: file.name, text: `[PDF library not loaded: ${file.name}]`, type: 'pdf' };
+      }
+      const pdf = await pdfjsLib.getDocument({ data: raw }).promise;
+      let fullText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const pageText = content.items.map(item => item.str).join(' ');
+        fullText += pageText + '\n';
+      }
+      const trimmed = fullText.trim();
+      if (!trimmed) return { name: file.name, text: `[PDF has no extractable text (might be scanned/image): ${file.name}]`, type: 'pdf' };
+      return { name: file.name, text: trimmed, type: 'pdf' };
+    } else {
+      // Text-based files — decode UTF-8
+      const decoder = new TextDecoder('utf-8');
+      const text = decoder.decode(raw).trim();
+      return { name: file.name, text: text || `[Empty file: ${file.name}]`, type: ft };
+    }
+  } catch(e) {
+    console.warn('File extraction failed:', file.name, e);
+    return { name: file.name, text: `[Error reading file: ${file.name}]`, type: ft };
+  }
+}
+
 async function fetchSlackClassContent() {
   if (!SLACK_TOKEN || !S.selectedChannels.length) return '';
   const PROXY = `${SUPABASE_URL}/functions/v1/slack-proxy`;
-  const since = String(Math.floor((Date.now() - 7*24*60*60*1000) / 1000));
   let allContent = [];
+  const userCache = {}; // cache user ID → name
+
+  // Include school-wide channels (announcements, general)
   const schoolWideIds = (S.slackChannels || []).filter(c => {
     const n = c.name.toLowerCase();
     return n.includes('announcement') || n.includes('general') || n.includes('info') || n.includes('schulweit');
   }).map(c => c.id);
   const allChannelIds = [...new Set([...S.selectedChannels, ...schoolWideIds])];
+
   for (const chId of allChannelIds) {
     try {
       const chInfo = (S.slackChannels || []).find(c => c.id === chId);
       const chName = chInfo?.name || chId;
-      const subject = chInfo?.subject || 'General';
-      const res = await fetch(PROXY, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
-        body: JSON.stringify({ endpoint: `conversations.history?channel=${chId}&oldest=${since}&limit=10`, token: SLACK_TOKEN })
-      });
-      const data = await res.json();
-      if (!data.ok || !data.messages?.length) continue;
-      for (const msg of data.messages.filter(m => m.type === 'message' && !m.subtype)) {
-        let authorName = 'Teacher';
-        if (msg.user) {
-          try {
-            const uRes = await fetch(PROXY, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
-              body: JSON.stringify({ endpoint: `users.info?user=${msg.user}`, token: SLACK_TOKEN })
-            });
-            const uData = await uRes.json();
-            if (uData.ok) authorName = uData.user?.real_name || uData.user?.name || 'Teacher';
-          } catch(e) {}
+      const subject = chInfo?.subject || detectSubjectFromChannel(chName) || 'General';
+
+      // Paginate through ALL messages (no date limit, no count limit)
+      let channelMessages = [];
+      let cursor = null;
+      do {
+        const endpoint = `conversations.history?channel=${chId}&limit=200${cursor ? `&cursor=${cursor}` : ''}`;
+        const res = await fetch(PROXY, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
+          body: JSON.stringify({ endpoint, token: SLACK_TOKEN })
+        });
+        const data = await res.json();
+        if (!data.ok) break;
+
+        // Include regular messages AND file_share messages
+        const validMsgs = (data.messages || []).filter(m => m.type === 'message' && (!m.subtype || m.subtype === 'file_share'));
+        for (const msg of validMsgs) {
+          // Resolve username (cached)
+          let authorName = 'Teacher';
+          if (msg.user) {
+            if (userCache[msg.user]) {
+              authorName = userCache[msg.user];
+            } else {
+              try {
+                const uRes = await fetch(PROXY, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
+                  body: JSON.stringify({ endpoint: `users.info?user=${msg.user}`, token: SLACK_TOKEN })
+                });
+                const uData = await uRes.json();
+                if (uData.ok) authorName = uData.user?.real_name || uData.user?.name || 'Teacher';
+                userCache[msg.user] = authorName;
+              } catch(e) {}
+            }
+          }
+          const date = new Date(parseFloat(msg.ts) * 1000).toLocaleDateString('de-DE');
+          let messageText = msg.text || '';
+
+          // ── Extract text from attached files (PDFs, docs, etc.) ──
+          if (msg.files && msg.files.length > 0) {
+            for (const file of msg.files) {
+              try {
+                const extracted = await extractSlackFileText(file);
+                if (extracted) {
+                  if (extracted.text) {
+                    messageText += `\n📎 ${extracted.name}:\n${extracted.text}`;
+                  } else if (extracted.isImage) {
+                    messageText += `\n🖼 ${extracted.name} [Bild]`;
+                  }
+                  // Store file metadata for the Files panel
+                  const ss = getSubjectState(subject);
+                  const alreadyStored = ss.files.some(f => f.name === file.name && f.date === date);
+                  if (!alreadyStored) {
+                    const fileEntry = {
+                      name: file.name || 'Unknown',
+                      type: extracted.type || file.filetype || '',
+                      size: file.size || 0,
+                      text: extracted.text || '',
+                      date: date,
+                      channel: chName,
+                      url: file.url_private || '',
+                    };
+                    if (extracted.isImage) {
+                      fileEntry.isImage = true;
+                      fileEntry.imageData = extracted.imageData;
+                      fileEntry.contentType = extracted.contentType;
+                    }
+                    ss.files.push(fileEntry);
+                  }
+                }
+              } catch(e) { console.warn('File extract error:', file.name, e); }
+            }
+          }
+
+          channelMessages.push({ channel: chName, subject, author: authorName, date, text: messageText });
         }
-        const date = new Date(parseFloat(msg.ts) * 1000).toLocaleDateString('de-DE');
-        allContent.push({ channel: chName, subject, author: authorName, date, text: msg.text });
+
+        cursor = data.response_metadata?.next_cursor || null;
+      } while (cursor);
+
+      allContent.push(...channelMessages);
+
+      // Store per-subject Slack context (direct channel → subject mapping)
+      if (subject !== 'General') {
+        const ss = getSubjectState(subject);
+        ss.slackChannelId = chId;
+        let ctx = `\n━━━━━━━━━━━━━━━━━━━━━━━━\nSCHOOL CONTENT for ${subject} (from #${chName})\n━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        channelMessages.forEach(m => { ctx += `  [${m.date}] ${m.author}: ${m.text}\n`; });
+        ctx += `\nUse this to ask specific questions about what was taught in ${subject}.\n`;
+        ss.slackContext = ctx;
       }
+
     } catch(e) { console.warn('Slack channel fetch:', chId, e); }
   }
+
   S.slackRawMessages = allContent;
   parseSlackForCalendar(allContent);
+
+  // Also build legacy S.lessonContext for backward compatibility
   if (!allContent.length) return '';
-  let ctx = '\n━━━━━━━━━━━━━━━━━━━━━━━━\nSCHOOL CONTENT (from Slack — last 7 days)\n━━━━━━━━━━━━━━━━━━━━━━━━\n';
+  let ctx = '\n━━━━━━━━━━━━━━━━━━━━━━━━\nSCHOOL CONTENT (from Slack)\n━━━━━━━━━━━━━━━━━━━━━━━━\n';
   const bySubject = {};
   allContent.forEach(c => { if (!bySubject[c.subject]) bySubject[c.subject] = []; bySubject[c.subject].push(c); });
   for (const [subject, msgs] of Object.entries(bySubject)) {
     ctx += `\n📚 ${subject} (#${msgs[0].channel}):\n`;
-    msgs.forEach(m => { ctx += `  [${m.date}] ${m.author}: ${m.text}\n`; });
+    msgs.slice(0, 20).forEach(m => { ctx += `  [${m.date}] ${m.author}: ${m.text}\n`; });
+    if (msgs.length > 20) ctx += `  ... and ${msgs.length - 20} more messages\n`;
   }
-  ctx += '\nUse this context to ask specific questions about what the student learned this week.\n';
   return ctx;
+}
+
+// ══════════════════════════════════════════════
+//  CHAT / FILES MODE SWITCHING
+// ══════════════════════════════════════════════
+function switchChatMode(mode) {
+  const tabChat = document.getElementById('tab-chat');
+  const tabFiles = document.getElementById('tab-files');
+  const msgs = document.getElementById('msgs');
+  const filesPanel = document.getElementById('files-panel');
+  const inputArea = document.querySelector('.input-area');
+  const testBanner = document.getElementById('test-banner');
+  const disclaimer = document.querySelector('.chat-disclaimer');
+
+  if (mode === 'files') {
+    tabChat.classList.remove('active');
+    tabFiles.classList.add('active');
+    msgs.style.display = 'none';
+    if (inputArea) inputArea.style.display = 'none';
+    if (testBanner) testBanner.style.display = 'none';
+    if (disclaimer) disclaimer.style.display = 'none';
+    filesPanel.classList.add('active');
+    renderFilesPanel();
+  } else {
+    tabFiles.classList.remove('active');
+    tabChat.classList.add('active');
+    msgs.style.display = '';
+    if (inputArea) inputArea.style.display = '';
+    if (disclaimer) disclaimer.style.display = '';
+    filesPanel.classList.remove('active');
+  }
+}
+
+function updateFilesCount() {
+  let count = 0;
+  for (const ss of Object.values(S.subjects || {})) {
+    count += (ss.files || []).length;
+  }
+  const badge = document.getElementById('files-count');
+  if (badge) {
+    badge.textContent = count;
+    badge.style.display = count > 0 ? '' : 'none';
+  }
+}
+
+function getFileIcon(type) {
+  const t = (type || '').toLowerCase();
+  if (t === 'pdf') return { emoji: '📕', cls: 'pdf' };
+  if (['doc', 'docx', 'rtf'].includes(t)) return { emoji: '📘', cls: 'doc' };
+  if (['txt', 'text', 'md', 'markdown', 'csv', 'log'].includes(t)) return { emoji: '📄', cls: 'txt' };
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(t)) return { emoji: '🖼', cls: 'img' };
+  if (['js', 'javascript', 'python', 'py', 'html', 'css', 'json', 'xml', 'yaml', 'yml'].includes(t)) return { emoji: '📋', cls: 'txt' };
+  return { emoji: '📎', cls: 'other' };
+}
+
+function renderFilesPanel() {
+  const emptyEl = document.getElementById('files-empty');
+  const listEl = document.getElementById('files-list');
+
+  // Collect files from ALL subjects
+  const allFiles = [];
+  for (const [subj, ss] of Object.entries(S.subjects || {})) {
+    if (ss.files && ss.files.length) {
+      for (const f of ss.files) {
+        allFiles.push({ ...f, _subject: subj });
+      }
+    }
+  }
+  // Store for openFileDetail
+  S._allRenderedFiles = allFiles;
+
+  if (!allFiles.length) {
+    emptyEl.style.display = 'flex';
+    listEl.innerHTML = '';
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  // Group files by date
+  const byDate = {};
+  allFiles.forEach((f, idx) => {
+    const d = f.date || 'Unbekannt';
+    if (!byDate[d]) byDate[d] = [];
+    byDate[d].push({ ...f, _globalIdx: idx });
+  });
+
+  let html = '';
+  // Sort dates newest first
+  const sortedDates = Object.keys(byDate).sort((a, b) => {
+    const pa = a.split('.').reverse().join('-');
+    const pb = b.split('.').reverse().join('-');
+    return pb.localeCompare(pa);
+  });
+
+  for (const date of sortedDates) {
+    html += `<div class="files-section-title">${date}</div>`;
+    for (const f of byDate[date]) {
+      const icon = getFileIcon(f.type);
+      const sizeStr = f.size ? (f.size > 1024*1024 ? (f.size/1024/1024).toFixed(1) + ' MB' : Math.round(f.size/1024) + ' KB') : '';
+      const preview = (f.text || '').substring(0, 120).replace(/</g, '&lt;');
+
+      // Thumbnail for images, icon for other files
+      let thumbHtml;
+      if (f.isImage && f.imageData) {
+        thumbHtml = `<div class="file-card-thumb"><img src="data:${f.contentType || 'image/jpeg'};base64,${f.imageData}" alt="${escH(f.name)}"/></div>`;
+      } else {
+        thumbHtml = `<div class="file-card-icon ${icon.cls}">${icon.emoji}</div>`;
+      }
+
+      html += `<div class="file-card" onclick="openFileDetail(${f._globalIdx})">
+        ${thumbHtml}
+        <div class="file-card-info">
+          <div class="file-card-name">${escH(f.name)}</div>
+          <div class="file-card-meta">
+            <span>${escH(f._subject)}</span>
+            <span>${f.type?.toUpperCase() || 'FILE'}</span>
+            ${sizeStr ? `<span>${sizeStr}</span>` : ''}
+            ${f.channel ? `<span>#${escH(f.channel)}</span>` : ''}
+          </div>
+          ${!f.isImage && preview ? `<div class="file-card-preview">${preview}...</div>` : ''}
+        </div>
+      </div>`;
+    }
+  }
+  listEl.innerHTML = html;
+}
+
+function escH(t) { return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function openFileDetail(idx) {
+  const file = (S._allRenderedFiles || [])[idx];
+  if (!file) return;
+
+  // Title
+  document.getElementById('file-detail-title').textContent = file.name || 'File';
+
+  // Metadata
+  const metaEl = document.getElementById('file-detail-meta');
+  if (metaEl) {
+    const sizeStr = file.size ? (file.size > 1024*1024 ? (file.size/1024/1024).toFixed(1)+' MB' : Math.round(file.size/1024)+' KB') : '';
+    const parts = [];
+    if (file.type) parts.push(`<span class="file-detail-meta-item">📄 ${escH(file.type.toUpperCase())}</span>`);
+    if (sizeStr) parts.push(`<span class="file-detail-meta-item">💾 ${sizeStr}</span>`);
+    if (file.channel) parts.push(`<span class="file-detail-meta-item">💬 #${escH(file.channel)}</span>`);
+    if (file.date) parts.push(`<span class="file-detail-meta-item">📅 ${escH(file.date)}</span>`);
+    metaEl.innerHTML = parts.join('');
+    metaEl.style.display = parts.length ? '' : 'none';
+  }
+
+  // Content
+  const contentEl = document.getElementById('file-detail-content');
+  const copyBtn = document.getElementById('file-detail-copy');
+
+  if (file.isImage && file.imageData) {
+    // Display image
+    contentEl.classList.remove('is-code');
+    contentEl.classList.add('is-image');
+    contentEl.innerHTML = `<img src="data:${file.contentType || 'image/jpeg'};base64,${file.imageData}" alt="${escH(file.name)}" class="file-detail-img"/>`;
+    contentEl.dataset.rawText = '';
+    if (copyBtn) { copyBtn.style.display = 'none'; }
+  } else {
+    // Display text content
+    contentEl.classList.remove('is-image');
+    const content = file.text || '[Kein Textinhalt extrahiert]';
+    const codeTypes = ['js','javascript','python','py','html','css','json','xml','yaml','yml','ts','tsx','jsx','sh','bash','sql','csv'];
+    const isCode = codeTypes.includes((file.type||'').toLowerCase());
+    contentEl.classList.toggle('is-code', isCode);
+    contentEl.textContent = content;
+    contentEl.dataset.rawText = content;
+    if (copyBtn) { copyBtn.style.display = ''; copyBtn.classList.remove('copied'); copyBtn.textContent = 'Kopieren'; }
+  }
+
+  document.getElementById('file-detail-overlay').classList.add('show');
+}
+
+function closeFileDetail() {
+  document.getElementById('file-detail-overlay').classList.remove('show');
+}
+
+function copyFileText() {
+  const contentEl = document.getElementById('file-detail-content');
+  const text = contentEl?.dataset.rawText || contentEl?.textContent || '';
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('file-detail-copy');
+    if (btn) { btn.classList.add('copied'); btn.textContent = '✓ Kopiert!'; setTimeout(() => { btn.classList.remove('copied'); btn.textContent = 'Kopieren'; }, 2000); }
+  }).catch(() => { toast('Kopieren fehlgeschlagen', ''); });
 }
 
 function showSchoolConnectModal() {
@@ -10930,6 +12251,8 @@ async function unifiedSignIn() {
         S.testInterleaveQueue = tms.testInterleaveQueue || [];
         updateTestPhase();
       }
+      // Load per-subject data (migrates old history if needed)
+      await loadPerSubjectData();
       if (S.history.length) restoreHistoryBubbles();
       await loadLearningProfile(null);
       startAppSession();
@@ -11022,13 +12345,17 @@ async function saveAccountFromBanner() {
 async function syncHistoryToSupabase() {
   if (!SB) return;
 
-  // Trim to last 50 messages (25 exchanges) to keep the blob small
-  const trimmedHistory = S.history.slice(-50);
-  const trimmedEvents = S.events.slice(-100);
+  // Determine the current subject for per-subject storage
+  const currentSubject = S.subj || 'General / Mixed';
+
+  // Keep current subject's in-memory state in sync
+  const ss = getSubjectState(currentSubject);
+  if (ss) {
+    ss.history = S.history;
+    ss.events = S.events;
+  }
 
   // Test mode state snapshot for cross-session restoration
-  // ALTER TABLE family_members ADD COLUMN IF NOT EXISTS test_mode_state jsonb;
-  // ALTER TABLE guided_accounts ADD COLUMN IF NOT EXISTS test_mode_state jsonb;
   const testModeState = S.testMode ? {
     testMode: true, testSubject: S.testSubject, testDate: S.testDate,
     testTopics: S.testTopics, testPhase: S.testPhase, testTotalDays: S.testTotalDays,
@@ -11037,15 +12364,50 @@ async function syncHistoryToSupabase() {
     testSessionCount: S.testSessionCount, testInterleaveQueue: S.testInterleaveQueue,
   } : null;
 
+  // Determine owner column + id for subject_histories
+  let ownerCol = null, ownerId = null;
+  if (S.studentId)        { ownerCol = 'student_id';       ownerId = S.studentId; }
+  else if (S.familyMemberId) { ownerCol = 'family_member_id'; ownerId = S.familyMemberId; }
+  else if (S.accountId)   { ownerCol = 'account_id';       ownerId = S.accountId; }
+
   try {
+    // ── Per-subject upsert into subject_histories (NO trimming) ──
+    if (ownerCol && ownerId) {
+      const upsertRow = {
+        [ownerCol]: ownerId,
+        subject: currentSubject,
+        messages: S.history,            // full history, no trimming
+        message_count: S.history.length,
+        slack_context: ss?.slackContext || '',
+        slack_channel_id: ss?.slackChannelId || '',
+        ai_notes: ss?.aiNotes || S.aiNotes || '',
+        weaknesses: ss?.weaknesses || '',
+        homework_info: ss?.homeworkInfo || '',
+        bloom_data: S.bloom || {},
+        files: ss?.files || [],
+        updated_at: new Date().toISOString(),
+      };
+
+      // Determine the unique constraint columns for onConflict
+      const constraintCol = ownerCol === 'account_id' ? 'account_id,subject'
+        : ownerCol === 'family_member_id' ? 'family_member_id,subject'
+        : 'student_id,subject';
+
+      await SB.from('subject_histories').upsert(upsertRow, {
+        onConflict: constraintCol,
+      });
+    }
+
+    // ── Legacy sync (backward compatibility — trimmed) ──
+    const trimmedHistory = S.history.slice(-50);
+    const trimmedEvents = S.events.slice(-100);
+
     if (S.familyMemberId) {
-      // Family child → save to family_members.history
       await SB.from('family_members').update({
         history: trimmedHistory,
         test_mode_state: testModeState,
       }).eq('id', S.familyMemberId);
     } else if (S.accountId) {
-      // Solo user → save to guided_accounts.history + events
       await SB.from('guided_accounts').update({
         history: trimmedHistory,
         events: trimmedEvents,
@@ -11168,15 +12530,38 @@ Last session: ${last.subject||'General'} — score ${last.independence_score||'?
 
   // Refresh ai_notes from DB (might have been updated on another device)
   try {
-    if (S.studentId) {
-      const { data } = await SB.from('students').select('ai_notes').eq('id', S.studentId).single();
-      if (data?.ai_notes) S.aiNotes = data.ai_notes;
-    } else if (S.familyMemberId) {
-      const { data } = await SB.from('family_members').select('ai_notes').eq('id', S.familyMemberId).single();
-      if (data?.ai_notes) S.aiNotes = data.ai_notes;
-    } else if (S.accountId) {
-      const { data } = await SB.from('guided_accounts').select('ai_notes').eq('id', S.accountId).single();
-      if (data?.ai_notes) S.aiNotes = data.ai_notes;
+    // First try per-subject ai_notes from subject_histories
+    const currentSubject = S.subj || 'General / Mixed';
+    let ownerCol = null, ownerId = null;
+    if (S.studentId)           { ownerCol = 'student_id';       ownerId = S.studentId; }
+    else if (S.familyMemberId) { ownerCol = 'family_member_id'; ownerId = S.familyMemberId; }
+    else if (S.accountId)      { ownerCol = 'account_id';       ownerId = S.accountId; }
+
+    if (ownerCol && ownerId) {
+      const { data: shRow } = await SB.from('subject_histories')
+        .select('ai_notes, weaknesses')
+        .eq(ownerCol, ownerId)
+        .eq('subject', currentSubject)
+        .maybeSingle();
+      if (shRow) {
+        const ss = getSubjectState(currentSubject);
+        if (shRow.ai_notes) { ss.aiNotes = shRow.ai_notes; S.aiNotes = shRow.ai_notes; }
+        if (shRow.weaknesses) ss.weaknesses = shRow.weaknesses;
+      }
+    }
+
+    // Fallback: refresh global ai_notes from legacy tables
+    if (!S.aiNotes) {
+      if (S.studentId) {
+        const { data } = await SB.from('students').select('ai_notes').eq('id', S.studentId).single();
+        if (data?.ai_notes) S.aiNotes = data.ai_notes;
+      } else if (S.familyMemberId) {
+        const { data } = await SB.from('family_members').select('ai_notes').eq('id', S.familyMemberId).single();
+        if (data?.ai_notes) S.aiNotes = data.ai_notes;
+      } else if (S.accountId) {
+        const { data } = await SB.from('guided_accounts').select('ai_notes').eq('id', S.accountId).single();
+        if (data?.ai_notes) S.aiNotes = data.ai_notes;
+      }
     }
   } catch(e) { console.warn('ai_notes refresh:', e); }
 }
@@ -11247,12 +12632,37 @@ async function saveSession() {
     const newNote = `[${new Date().toLocaleDateString('en-GB')}] ${S.sessionNotes.slice(-3).join(' | ')}`;
     const combined = [newNote, S.aiNotes].filter(Boolean).join('\n').slice(0, 500);
     S.aiNotes = combined;
+    // Legacy: save to main table
     if (S.studentId) {
       SB.from('students').update({ ai_notes: combined }).eq('id', S.studentId);
     } else if (S.familyMemberId) {
       SB.from('family_members').update({ ai_notes: combined }).eq('id', S.familyMemberId);
     } else if (S.accountId) {
       SB.from('guided_accounts').update({ ai_notes: combined }).eq('id', S.accountId);
+    }
+    // Per-subject: save notes to subject_histories.ai_notes
+    const currentSubject = S.subj || 'General / Mixed';
+    const ss = getSubjectState(currentSubject);
+    if (ss) {
+      const subjectNote = `[${new Date().toLocaleDateString('en-GB')}] ${S.sessionNotes.slice(-3).join(' | ')}`;
+      ss.aiNotes = [subjectNote, ss.aiNotes].filter(Boolean).join('\n').slice(0, 800);
+      // Determine owner for upsert
+      let ownerCol = null, ownerId = null;
+      if (S.studentId)        { ownerCol = 'student_id';       ownerId = S.studentId; }
+      else if (S.familyMemberId) { ownerCol = 'family_member_id'; ownerId = S.familyMemberId; }
+      else if (S.accountId)   { ownerCol = 'account_id';       ownerId = S.accountId; }
+      if (ownerCol && ownerId) {
+        const constraintCol = ownerCol === 'account_id' ? 'account_id,subject'
+          : ownerCol === 'family_member_id' ? 'family_member_id,subject'
+          : 'student_id,subject';
+        SB.from('subject_histories').upsert({
+          [ownerCol]: ownerId,
+          subject: currentSubject,
+          ai_notes: ss.aiNotes,
+          weaknesses: ss.weaknesses || '',
+          updated_at: new Date().toISOString(),
+        }, { onConflict: constraintCol }).then(() => {}).catch(e => console.warn('Per-subject notes sync:', e));
+      }
     }
   }
   // Sync profile snapshot for solo users
