@@ -6033,7 +6033,6 @@ body { background: #FFFFFF; }
           <label>Password <span style="color:var(--ink4);font-weight:400">(min. 6 characters)</span></label>
           <input class="fi" id="obs-pw" type="password" placeholder="Choose a password" autocomplete="new-password"/>
         </div>
-        <button class="btn-skip-account" onclick="skipAccountAndLaunch()" style="background:none;border:none;color:var(--ink4);font-size:13px;cursor:pointer;font-family:var(--font-body);margin-top:4px;text-decoration:underline">Skip — I'll do this later</button>
       </div>
 
       <!-- Nav -->
@@ -7947,9 +7946,9 @@ function obStudentNext() {
 async function createAccountAndLaunch() {
   const email = document.getElementById('obs-email')?.value?.trim()?.toLowerCase();
   const pw = document.getElementById('obs-pw')?.value;
-  if (email && pw) {
-    if (pw.length < 6) { toast('Password must be at least 6 characters', 'err'); return; }
-    if (!SB) { skipAccountAndLaunch(); return; }
+  if (!email || !pw) { toast('Enter your email and password to continue', 'err'); return; }
+  if (pw.length < 6) { toast('Password must be at least 6 characters', 'err'); return; }
+  if (SB) {
     const btn = document.getElementById('obs-next');
     btn.textContent = 'Creating account...'; btn.disabled = true;
     try {
@@ -7985,9 +7984,6 @@ async function createAccountAndLaunch() {
       return;
     }
   }
-  launchStudent();
-}
-function skipAccountAndLaunch() {
   launchStudent();
 }
 // ── Enter = green button across all onboarding screens ──
@@ -8526,8 +8522,8 @@ function renderSubjectChat(subject) {
   const empty = document.getElementById('empty-chat');
   if (empty) empty.remove();
   ss.history.forEach(msg => {
-    if (msg.role === 'user') addBubble('user', msg.content);
-    else if (msg.role === 'assistant') addBubble('ai', msg.content.replace(/\[TUTOR_NOTE:[\s\S]*?\]/gi, '').trim());
+    if (msg.role === 'user') addBubble('user', getTextContent(msg.content));
+    else if (msg.role === 'assistant') addBubble('ai', getTextContent(msg.content).replace(/\[TUTOR_NOTE:[\s\S]*?\]/gi, '').trim());
   });
 }
 
@@ -8618,8 +8614,8 @@ async function loadMoreHistory() {
       const bubble = document.createElement('div');
       bubble.className = `msg ${msg.role === 'user' ? 'user' : 'ai'}`;
       const content = msg.role === 'assistant'
-        ? msg.content.replace(/\[TUTOR_NOTE:[\s\S]*?\]/gi, '').trim()
-        : msg.content;
+        ? getTextContent(msg.content).replace(/\[TUTOR_NOTE:[\s\S]*?\]/gi, '').trim()
+        : getTextContent(msg.content);
       bubble.innerHTML = `<div class="bubble">${escH(content)}</div>`;
       if (anchor && anchor.nextSibling) {
         msgsEl.insertBefore(bubble, anchor.nextSibling);
@@ -9060,9 +9056,10 @@ async function sendMsg(isHint = false, isGotIt = false) {
   if (empty) empty.remove();
 
   if (!isHint && !isGotIt) {
-    if (imgSnap) addImgBubble(imgSnap.dataUrl, text);
+    if (imgSnap && imgSnap.type === 'image') addImgBubble(imgSnap.dataUrl, text);
+    else if (imgSnap) addFileBubble(imgSnap.name, text);
     else addBubble('user', text);
-    S.events.push({ who: 'student', text: text || '[Bild]', type: 'message', ts: Date.now() });
+    S.events.push({ who: 'student', text: text || (imgSnap ? `[${imgSnap.name}]` : ''), type: 'message', ts: Date.now() });
     ta.value = ''; ta.style.height = 'auto';
     if (S.abitur) detectAndLogSubject(text);
   }
@@ -9074,17 +9071,36 @@ async function sendMsg(isHint = false, isGotIt = false) {
     ? 'I think I got it! Please confirm if I understood correctly and challenge me further.'
     : text;
 
-  if (imgSnap && imgSnap.type === 'image' && imgSnap.dataUrl && !isHint && !isGotIt) {
-    // Send actual image data to Claude as multimodal content
-    const base64Match = imgSnap.dataUrl.match(/^data:(image\/\w+);base64,(.+)$/);
-    if (base64Match) {
-      const mediaType = base64Match[1]; // e.g. "image/jpeg"
-      const base64Data = base64Match[2];
-      const contentBlocks = [
-        { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64Data } },
-        { type: 'text', text: text || 'The student shared this image. Look at it carefully and ask what they want to learn or understand from it.' }
-      ];
-      S.history.push({ role: 'user', content: contentBlocks });
+  if (imgSnap && !isHint && !isGotIt) {
+    if (imgSnap.type === 'image' && imgSnap.dataUrl) {
+      // Send image as multimodal content
+      const base64Match = imgSnap.dataUrl.match(/^data:(image\/[\w+]+);base64,(.+)$/);
+      if (base64Match) {
+        const contentBlocks = [
+          { type: 'image', source: { type: 'base64', media_type: base64Match[1], data: base64Match[2] } },
+          { type: 'text', text: text || 'The student shared this image. Look at it carefully and ask what they want to learn or understand from it.' }
+        ];
+        S.history.push({ role: 'user', content: contentBlocks });
+      } else {
+        S.history.push({ role: 'user', content: aiContent });
+      }
+    } else if (imgSnap.type === 'pdf' && imgSnap.dataUrl) {
+      // Send PDF as document content for Claude to read
+      const base64Match = imgSnap.dataUrl.match(/^data:application\/pdf;base64,(.+)$/);
+      if (base64Match) {
+        const contentBlocks = [
+          { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64Match[1] } },
+          { type: 'text', text: text || 'The student shared this PDF document. Read it carefully, summarize what you see, and ask what they need help with.' }
+        ];
+        S.history.push({ role: 'user', content: contentBlocks });
+      } else {
+        S.history.push({ role: 'user', content: aiContent });
+      }
+    } else if (imgSnap.type === 'text-file' && imgSnap.textContent) {
+      // Send text file content inline
+      const fileContent = imgSnap.textContent.slice(0, 50000); // limit to 50k chars
+      const fileMsg = `[File: ${imgSnap.name}]\n\n${fileContent}\n\n${text || 'The student shared this file. Read it and ask what they need help with.'}`;
+      S.history.push({ role: 'user', content: fileMsg });
     } else {
       S.history.push({ role: 'user', content: aiContent });
     }
@@ -9178,7 +9194,7 @@ function reqWhyLearn() {
 
   // Build context from current subject conversation
   const subj = S.subj || 'this topic';
-  const recentMsgs = S.history.slice(-6).map(m => m.content).join('\n').substring(0, 600);
+  const recentMsgs = S.history.slice(-6).map(m => getTextContent(m.content)).join('\n').substring(0, 600);
   const contextSummary = recentMsgs ? `The student was just studying ${subj}. Recent conversation context:\n${recentMsgs}` : `The student is studying ${subj}.`;
 
   // Switch to General mode with context
@@ -9270,6 +9286,13 @@ async function callClaude(ndCtx, model) {
 }
 
 // ══════════════════════════════════════════════
+// ── Helper: safely extract text from string or multimodal content ──
+function getTextContent(content) {
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content)) return content.filter(b => b.type === 'text').map(b => b.text).join(' ') || '[attachment]';
+  return String(content || '');
+}
+
 //  HISTORY COMPRESSION (≥30 messages → compress oldest 20)
 // ══════════════════════════════════════════════
 function maybeCompressHistory() {
@@ -9277,7 +9300,7 @@ function maybeCompressHistory() {
   const old = S.history.splice(0, 20);
   const summary = old.map(m => {
     const who  = m.role === 'user' ? 'Student' : 'Tutor';
-    const rawContent = Array.isArray(m.content) ? m.content.filter(b => b.type === 'text').map(b => b.text).join(' ') || '[image]' : String(m.content);
+    const rawContent = getTextContent(m.content);
     const text = rawContent.replace(/\s+/g, ' ').slice(0, 150);
     return `${who}: ${text}`;
   }).join('\n');
@@ -9770,7 +9793,7 @@ function updateDev(usage, lat) {
   [{ role: 'system', content: buildPrompt('') }, ...S.history].forEach(m => {
     const d = document.createElement('div');
     d.className = 'hist-entry';
-    d.innerHTML = `<div class="hrole ${m.role}">${m.role}</div><div class="htext">${escH(m.content)}</div>`;
+    d.innerHTML = `<div class="hrole ${m.role}">${m.role}</div><div class="htext">${escH(getTextContent(m.content))}</div>`;
     hl.appendChild(d);
   });
 }
@@ -11239,29 +11262,48 @@ function handleImgPick(input) {
   if (file.type.startsWith('image/')) {
     const reader = new FileReader();
     reader.onload = (e) => {
-      pendingImg = { dataUrl: e.target.result, name: file.name, type: 'image' };
+      pendingImg = { dataUrl: e.target.result, name: file.name, type: 'image', mimeType: file.type };
       document.getElementById('img-preview').src = e.target.result;
       document.getElementById('img-preview-wrap').style.display = 'block';
       document.getElementById('btn-attach').classList.add('has-img');
       document.getElementById('sbtn').disabled = false;
     };
     reader.readAsDataURL(file);
+  } else if (file.type === 'application/pdf') {
+    // Read PDF as base64 for Claude's document vision
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      pendingImg = { dataUrl: e.target.result, name: file.name, type: 'pdf', mimeType: 'application/pdf' };
+      document.getElementById('img-preview-wrap').style.display = 'block';
+      document.getElementById('img-preview-wrap').innerHTML = `
+        <div class="img-preview-inner">
+          <div style="background:var(--cream2);border:1.5px solid var(--border);border-radius:12px;padding:10px 16px;font-size:13px;font-weight:600;color:var(--ink2);display:flex;align-items:center;gap:8px">
+            ${escH(file.name)}
+            <button class="img-preview-remove" onclick="clearImgPreview()" style="position:relative;top:0;right:0;margin-left:8px">x</button>
+          </div>
+        </div>`;
+      document.getElementById('btn-attach').classList.add('has-img');
+      document.getElementById('sbtn').disabled = false;
+    };
+    reader.readAsDataURL(file);
   } else {
-    // Non-image file: just reference by name in the message
-    pendingImg = { dataUrl: null, name: file.name, type: 'file' };
-    document.getElementById('img-preview').src = '';
-    document.getElementById('img-preview-wrap').style.display = 'block';
-    document.getElementById('img-preview').style.display = 'none';
-    // Show filename instead
-    document.getElementById('img-preview-wrap').innerHTML = `
-      <div class="img-preview-inner">
-        <div style="background:var(--cream2);border:1.5px solid var(--border);border-radius:12px;padding:10px 16px;font-size:13px;font-weight:600;color:var(--ink2);display:flex;align-items:center;gap:8px">
-          ${escH(file.name)}
-          <button class="img-preview-remove" onclick="clearImgPreview()" style="position:relative;top:0;right:0;margin-left:8px">×</button>
-        </div>
-      </div>`;
-    document.getElementById('btn-attach').classList.add('has-img');
-    document.getElementById('sbtn').disabled = false;
+    // Other files: read as text if possible
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const textContent = e.target.result;
+      pendingImg = { dataUrl: null, name: file.name, type: 'text-file', textContent, mimeType: file.type };
+      document.getElementById('img-preview-wrap').style.display = 'block';
+      document.getElementById('img-preview-wrap').innerHTML = `
+        <div class="img-preview-inner">
+          <div style="background:var(--cream2);border:1.5px solid var(--border);border-radius:12px;padding:10px 16px;font-size:13px;font-weight:600;color:var(--ink2);display:flex;align-items:center;gap:8px">
+            ${escH(file.name)}
+            <button class="img-preview-remove" onclick="clearImgPreview()" style="position:relative;top:0;right:0;margin-left:8px">x</button>
+          </div>
+        </div>`;
+      document.getElementById('btn-attach').classList.add('has-img');
+      document.getElementById('sbtn').disabled = false;
+    };
+    reader.readAsText(file);
   }
 }
 
@@ -11278,6 +11320,25 @@ function clearImgPreview() {
   if (!document.getElementById('minput').value.trim()) {
     document.getElementById('sbtn').disabled = true;
   }
+}
+
+function addFileBubble(filename, caption) {
+  const msgs = document.getElementById('msgs');
+  const empty = document.getElementById('empty-chat');
+  if (empty) empty.remove();
+  const initials = S.name ? S.name.slice(0,2).toUpperCase() : '?';
+  const time = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+  const d = document.createElement('div');
+  d.className = 'msg user';
+  d.innerHTML = `
+    <div class="msg-av" style="background:var(--forest);color:#fff;font-weight:700;font-family:'Playfair Display',serif">${initials}</div>
+    <div class="msg-body">
+      <div style="background:var(--cream2);border:1.5px solid var(--border);border-radius:14px;padding:12px 16px;font-size:13px;font-weight:600;color:var(--ink2);display:inline-block">${escH(filename)}</div>
+      ${caption ? `<div class="bubble" style="background:linear-gradient(145deg,var(--forest2),var(--forest));color:rgba(255,255,255,.94);border-bottom-right-radius:5px;box-shadow:0 4px 18px rgba(26,51,40,.22)">${escH(caption)}</div>` : ''}
+      <div class="msg-meta" style="justify-content:flex-end">${time}</div>
+    </div>`;
+  msgs.appendChild(d);
+  msgs.scrollTop = msgs.scrollHeight;
 }
 
 function addImgBubble(dataUrl, caption) {
@@ -12425,8 +12486,8 @@ function restoreHistoryBubbles() {
   if (empty) empty.remove();
   // S.history contains {role, content} — render previous exchanges
   S.history.forEach(msg => {
-    if (msg.role === 'user') addBubble('user', msg.content);
-    else if (msg.role === 'assistant') addBubble('ai', msg.content.replace(/\[TUTOR_NOTE:[\s\S]*?\]/gi, '').trim());
+    if (msg.role === 'user') addBubble('user', getTextContent(msg.content));
+    else if (msg.role === 'assistant') addBubble('ai', getTextContent(msg.content).replace(/\[TUTOR_NOTE:[\s\S]*?\]/gi, '').trim());
   });
 }
 
